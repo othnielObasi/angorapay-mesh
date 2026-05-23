@@ -1,0 +1,52 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: angora
+      POSTGRES_USER: angora
+      POSTGRES_PASSWORD: angora_dev_password
+    ports:
+      - "5438:5432"
+    volumes:
+      - angora_pgdata:/var/lib/postgresql/data
+      - ./src/angora/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U angora -d angora"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6388:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - angora_redis:/data
+
+  angora-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.angora
+    environment:
+      NODE_ENV: production
+      ANGORA_REQUIRE_AUTH: "false"
+      ANGORA_STORAGE_DRIVER: json-file
+      ANGORA_STATE_DIR: /app/.kairos-angora
+      DATABASE_URL: postgres://angora:angora_dev_password@postgres:5432/angora
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3009:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - angora_state:/app/.kairos-angora
+
+volumes:
+  angora_pgdata:
+  angora_redis:
+  angora_state:

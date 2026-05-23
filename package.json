@@ -19,7 +19,13 @@
     "test:mandate": "tsx test/test-mandate-engine.ts",
     "test:simulation": "tsx test/test-execution-simulator.ts",
     "test:oracle": "tsx test/test-oracle-integrity.ts",
-    "dashboard": "tsx src/dashboard/server.ts",
+    "dashboard": "tsx -e \"import { startDashboard } from './src/dashboard/server.ts'; startDashboard();\"",
+    "angora:self-test": "tsx src/angora/self-test.ts",
+    "angora:typecheck": "tsc --noEmit",
+    "angora:agentic-smoke": "tsx -e \"import { runAgentMission } from './src/angora/agentic/agent-mission-service.ts'; (async()=>{ const r=await runAgentMission({workspaceId:'smoke',tenantId:'smoke',userId:'smoke-user',userGoal:'Evaluate whether this BTC prediction market is mispriced after breaking news',paymentMode:'demo_fallback'}); console.log(JSON.stringify({mission:r.missionId,module:r.specialistAgent,receipts:r.receipts.length,traces:r.traces.length,checkpoints:r.checkpoints.length},null,2)); })();\"",
+    "angora:reconciliation-smoke": "tsx -e \"import { runAgentMission } from './src/angora/agentic/agent-mission-service.ts'; import { runProductionReconciliation } from './src/angora/reconciliation-service.ts'; (async()=>{ const r=await runAgentMission({workspaceId:'smoke',tenantId:'smoke',userId:'smoke-user',userGoal:'Check whether this BTC prediction market is mispriced after breaking news',paymentMode:'demo_fallback'}); const recon=runProductionReconciliation({missionId:r.missionId}); console.log(JSON.stringify({mission:r.missionId,receipts:r.receipts.length,reconciliationRun:recon.reconciliationRunId,checked:recon.checked,matched:recon.matched,pending:recon.pending,failed:recon.failed},null,2)); })();\"",
+    "angora:sdk:python:check": "node scripts/check-python-sdk.mjs",
+    "angora:full-check": "npm run angora:typecheck && npm run angora:self-test && npm run angora:sdk:python:check && npm run angora:agentic-smoke && npm run angora:reconciliation-smoke",
     "demo:onchain": "tsx scripts/demo-onchain-path.ts",
     "demo:nanopayments": "tsx scripts/demo-nanopayments.ts",
     "mcp": "tsx src/mcp/server.ts",
@@ -37,7 +43,8 @@
     "ethers": "^6.11.0",
     "express": "^4.18.0",
     "node-cron": "^3.0.3",
-    "viem": "^2.48.1"
+    "viem": "^2.48.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/express": "^4.17.0",

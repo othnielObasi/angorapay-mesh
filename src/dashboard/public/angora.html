@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Angora — Market Intelligence Agents</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8fafc;
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-solid: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #dbe3ef;
+      --cyan: #22d3ee;
+      --cyan-ink: #0369a1;
+      --slate: #020617;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --violet: #7c3aed;
+      --shadow: 0 22px 70px rgba(15, 23, 42, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% -10%, rgba(34, 211, 238, 0.30), transparent 28%),
+        radial-gradient(circle at 92% 0%, rgba(124, 58, 237, 0.18), transparent 26%),
+        linear-gradient(180deg, #ffffff 0%, var(--bg) 38%, var(--bg) 100%);
+      min-height: 100vh;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; }
+    .shell { max-width: 1440px; margin: 0 auto; padding: 24px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 18px;
+      display: grid; place-items: center;
+      background: var(--slate); color: #cffafe; font-weight: 950;
+      box-shadow: 0 16px 38px rgba(15, 23, 42, .16);
+    }
+    .brand-title { font-weight: 950; letter-spacing: -0.04em; }
+    .brand-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .18em; font-weight: 800; }
+    .top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      border-radius: 999px; padding: 7px 11px;
+      font-size: 12px; font-weight: 850;
+      border: 1px solid var(--line); background: rgba(255,255,255,.72); color: #475569;
+      white-space: nowrap;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 14px rgba(16,185,129,.6); }
+    .badge.blue { border-color: #bae6fd; background: #ecfeff; color: var(--cyan-ink); }
+    .badge.green { border-color: #bbf7d0; background: #f0fdf4; color: #047857; }
+    .badge.amber { border-color: #fde68a; background: #fffbeb; color: #b45309; }
+    .badge.red { border-color: #fecdd3; background: #fff1f2; color: #be123c; }
+    .badge.dark { border-color: #1e293b; background: var(--slate); color: #cffafe; }
+
+    .btn {
+      border: 0; border-radius: 999px; padding: 11px 15px;
+      background: var(--cyan); color: var(--slate); font-weight: 950;
+      box-shadow: 0 18px 36px rgba(34, 211, 238, .24);
+    }
+    .btn.secondary { background: #fff; border: 1px solid var(--line); box-shadow: none; color: var(--ink); }
+    .btn.dark { background: var(--slate); color: #fff; box-shadow: 0 18px 36px rgba(15,23,42,.14); }
+    .btn.full { width: 100%; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 430px;
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(203, 213, 225, .86);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      padding: 20px;
+    }
+    .card.flat { box-shadow: none; background: var(--panel-solid); }
+    .hero-copy { padding: 30px; }
+    h1 {
+      margin: 14px 0 16px;
+      font-size: clamp(42px, 5.2vw, 76px);
+      line-height: .93;
+      letter-spacing: -0.075em;
+      max-width: 860px;
+    }
+    h2 { margin: 0 0 10px; font-size: 26px; letter-spacing: -0.04em; }
+    h3 { margin: 0 0 8px; font-size: 16px; letter-spacing: -0.02em; }
+    p { margin: 0; }
+    .muted { color: var(--muted); line-height: 1.65; }
+    .small { font-size: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .hero-text { font-size: 17px; max-width: 780px; }
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+    .layer-strip {
+      margin-top: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+    }
+    .layer {
+      border: 1px solid var(--line); background: rgba(255,255,255,.72); border-radius: 22px; padding: 14px;
+    }
+    .layer strong { display: block; margin-bottom: 4px; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 16px; }
+    .summary-card { background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 15px; }
+    .summary-card .value { font-size: 31px; font-weight: 950; letter-spacing: -0.05em; margin-top: 6px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .sidebar { position: sticky; top: 18px; display: grid; gap: 14px; }
+    .nav-group { display: grid; gap: 7px; }
+    .nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: .18em; font-weight: 950; color: #0891b2; margin: 6px 2px; }
+    .nav-btn {
+      width: 100%; text-align: left; border: 1px solid var(--line); background: rgba(255,255,255,.78);
+      border-radius: 16px; padding: 10px 11px; color: #475569; font-weight: 850;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .nav-btn.active { background: var(--slate); color: white; border-color: var(--slate); }
+
+    .section { display: none; }
+    .section.active { display: block; }
+    .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .section-title { max-width: 820px; }
+
+    .mission-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr) 335px; gap: 16px; }
+    .agent-list { display: grid; gap: 10px; }
+    .agent-card {
+      border: 1px solid var(--line); background: #fff; border-radius: 20px; padding: 14px; text-align: left; transition: .15s ease;
+    }
+    .agent-card:hover { transform: translateY(-1px); border-color: #67e8f9; }
+    .agent-card.active { background: #ecfeff; border-color: #67e8f9; box-shadow: 0 18px 36px rgba(34,211,238,.12); }
+    .agent-card strong { display: block; margin-bottom: 4px; }
+
+    .chat-panel { min-height: 560px; display: flex; flex-direction: column; }
+    .chat-scroll { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 4px 0 16px; }
+    .bubble { max-width: 86%; border-radius: 22px; padding: 14px 16px; line-height: 1.55; }
+    .bubble.user { align-self: flex-end; background: var(--slate); color: #fff; }
+    .bubble.assistant { align-self: flex-start; background: #f1f5f9; color: var(--ink); }
+    .composer { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 10px; }
+    .composer textarea {
+      width: 100%; resize: vertical; min-height: 76px; border: 1px solid var(--line); border-radius: 18px; padding: 13px; outline: none; background: #fff; color: var(--ink);
+    }
+    .composer-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .field { display: grid; gap: 5px; min-width: 120px; }
+    .field label { font-size: 11px; color: var(--muted); font-weight: 850; }
+    .field input, .field select { border: 1px solid var(--line); border-radius: 999px; padding: 9px 11px; background: #fff; outline: none; }
+
+    .rail { display: grid; gap: 10px; }
+    .rail-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #e2e8f0; padding: 11px 0; }
+    .rail-row:last-child { border-bottom: 0; }
+
+    .mini-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .metric { border: 1px solid var(--line); background: #fff; border-radius: 22px; padding: 15px; }
+    .metric .value { font-size: 30px; font-weight: 950; letter-spacing: -0.05em; margin-top: 6px; }
+
+    .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 22px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    td, th { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; font-size: 14px; }
+    tr:last-child td { border-bottom: 0; }
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: #0891b2; background: #f8fafc; }
+
+    pre {
+      margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--slate); color: #cffafe;
+      border-radius: 18px; padding: 14px; overflow: auto; max-height: 420px; font-size: 12px; line-height: 1.55;
+    }
+    .two-col { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+    .three-col { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+    .timeline { display: grid; gap: 10px; }
+    .trace-row { display: grid; grid-template-columns: 110px 210px minmax(0, 1fr) 100px; gap: 12px; align-items: start; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 12px; }
+    .empty { text-align: center; padding: 38px 18px; color: var(--muted); }
+    .notice { border: 1px solid #bae6fd; background: #ecfeff; color: #075985; border-radius: 22px; padding: 14px; line-height: 1.55; }
+
+    @media (max-width: 1180px) {
+      .hero, .layout, .mission-grid { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .nav-group { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .mini-grid, .three-col { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 720px) {
+      .shell { padding: 16px; }
+      .topbar, .section-head { display: block; }
+      .top-actions { justify-content: flex-start; margin-top: 14px; }
+      .hero-copy { padding: 20px; }
+      .layer-strip, .summary-grid, .two-col, .mini-grid, .three-col, .nav-group { grid-template-columns: 1fr; }
+      .trace-row { grid-template-columns: 1fr; }
+      .bubble { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">AI</div>
+        <div>
+          <div class="brand-title">Angora</div>
+          <div class="brand-sub">Market Intelligence Agents</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="badge green"><span class="dot"></span><span id="workspaceLabel">Workspace loading</span></span>
+        <span class="badge blue">Gateway + SDK visible</span>
+        <button class="btn secondary" data-action="nav" data-target="developers">Developers</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="card hero-copy">
+        <span class="badge blue">Specialist agents + production infrastructure</span>
+        <h1>Buy trusted market intelligence before agents act.</h1>
+        <p class="muted hero-text">Angora helps prediction-market, arbitrage, and social-trading agents discover paid providers, score trust, block weak signals, pay approved services through Circle/x402, and keep receipts that reconcile payment with provider delivery.</p>
+        <div class="hero-actions">
+          <button class="btn" data-action="nav" data-target="missions">Run agent mission</button>
+          <button class="btn secondary" data-action="nav" data-target="gateway">Inspect infrastructure</button>
+        </div>
+        <div class="layer-strip">
+          <div class="layer"><strong>Product layer</strong><span class="muted small">Specialist agents, conversations, recommendations, traces.</span></div>
+          <div class="layer"><strong>Infrastructure layer</strong><span class="muted small">Gateway, providers, route scoring, x402 payments, proof, reconciliation.</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-head" style="margin-bottom:0">
+          <div><div class="brand-sub">Operating summary</div><h2>Live platform state</h2></div>
+          <span class="badge dark">multi-tenant</span>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-card"><div class="muted small">Missions</div><div id="metricMissions" class="value">--</div></div>
+          <div class="summary-card"><div class="muted small">USDC routed</div><div id="metricVolume" class="value">--</div></div>
+          <div class="summary-card"><div class="muted small">Receipts</div><div id="metricReceipts" class="value">--</div></div>
+          <div class="summary-card"><div class="muted small">Blocked</div><div id="metricBlocked" class="value">--</div></div>
+        </div>
+        <div class="notice" style="margin-top:14px">The UI keeps both sides visible: agents create real user value, while Gateway/SDK/payment/proof/reconciliation make the workflow commercially credible.</div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="sidebar card flat">
+        <div class="nav-group" id="navProduct"></div>
+        <div class="nav-group" id="navInfra"></div>
+        <div class="nav-group" id="navOps"></div>
+      </aside>
+
+      <main>
+        <section id="missions" class="section active">
+          <div class="section-head">
+            <div class="section-title"><div class="brand-sub">Product workspace</div><h2>Agent Missions</h2><p class="muted">Chat-style workspace for running specialist market-intelligence agents. Each run links to conversations, traces, provider decisions, payments, receipts, and reconciliation.</p></div>
+          </div>
+          <div class="mission-grid">
+            <div class="card flat"><h3>Specialist agents</h3><p class="muted small" style="margin-bottom:12px">Choose the real-world mission type.</p><div class="agent-list" id="agentList"></div></div>
+            <div class="card flat chat-panel">
+              <div class="chat-scroll" id="chatLog"></div>
+              <div class="composer">
+                <textarea id="missionInput" placeholder="Ask a market-intelligence question..."></textarea>
+                <div class="composer-row">
+                  <div class="field"><label>Budget</label><input id="budgetInput" value="0.05" /></div>
+                  <div class="field"><label>Payment mode</label><select id="paymentMode"><option value="demo_fallback">demo_fallback</option><option value="arc_testnet">arc_testnet</option><option value="real_x402">real_x402</option></select></div>
+                  <div class="field"><label>Proof</label><select id="proofRequired"><option value="true">required</option><option value="false">optional</option></select></div>
+                  <button class="btn" data-action="run-mission">Run intelligence mission</button>
+                </div>
+              </div>
+            </div>
+            <div class="card flat"><h3>Mission proof rail</h3><p class="muted small" style="margin-bottom:12px">Visible after each run. This is what makes the agent auditable.</p><div class="rail" id="proofRail"></div></div>
+          </div>
+        </section>
+
+        <section id="conversations" class="section"><div class="section-head"><div><div class="brand-sub">Product workspace</div><h2>Conversations</h2><p class="muted">Persistent ChatGPT-style mission history, scoped by workspace.</p></div></div><div class="card flat"><div class="table-wrap"><table><thead><tr><th>Title</th><th>Status</th><th>Agent</th><th>USDC</th><th>Receipts</th></tr></thead><tbody id="conversationRows"></tbody></table></div></div></section>
+
+        <section id="usecases" class="section"><div class="section-head"><div><div class="brand-sub">Product workspace</div><h2>Use Cases</h2><p class="muted">The product is not a generic bot. These are the real workflows Angora is built to support.</p></div></div><div class="three-col" id="useCaseCards"></div></section>
+
+        <section id="gateway" class="section"><div class="section-head"><div><div class="brand-sub">Infrastructure console</div><h2>Gateway</h2><p class="muted">The Gateway is not buried. It is the routing, policy, payment, receipt, and reconciliation engine under the agents.</p></div></div><div class="two-col"><div class="card flat"><h3>Gateway summary</h3><pre id="gatewaySummary">Loading...</pre></div><div class="card flat"><h3>Workspace state</h3><pre id="workspaceSummary">Loading...</pre></div></div></section>
+
+        <section id="marketplace" class="section"><div class="section-head"><div><div class="brand-sub">Infrastructure console</div><h2>Marketplace</h2><p class="muted">Paid intelligence providers available to specialist agents.</p></div></div><div class="card flat"><div class="table-wrap"><table><thead><tr><th>Service</th><th>Provider</th><th>Category</th><th>Price</th><th>Trust</th><th>Proof</th></tr></thead><tbody id="serviceRows"></tbody></table></div></div></section>
+
+        <section id="scorecard" class="section"><div class="section-head"><div><div class="brand-sub">Infrastructure console</div><h2>Route Scorecard</h2><p class="muted">Explains why Angora selected, approved, blocked, or downgraded a paid provider before payment.</p></div></div><div class="card flat"><div class="table-wrap"><table><thead><tr><th>Provider</th><th>Mission fit</th><th>Trust</th><th>Proof</th><th>Cost</th><th>Route score</th><th>Verdict</th></tr></thead><tbody id="scoreRows"></tbody></table></div></div></section>
+
+        <section id="policy" class="section"><div class="section-head"><div><div class="brand-sub">Infrastructure console</div><h2>Policy</h2><p class="muted">Workspace-level symbolic controls: budgets, trust thresholds, proof requirements, provider access, and payment modes.</p></div></div><div class="two-col"><div class="card flat"><h3>Policy</h3><pre id="policyOutput">Loading...</pre></div><div class="card flat"><h3>Budget</h3><pre id="budgetOutput">Loading...</pre></div></div></section>
+
+        <section id="payments" class="section"><div class="section-head"><div><div class="brand-sub">Infrastructure console</div><h2>Payments</h2><p class="muted">Payment intents and provider delivery records for the paid-intelligence workflow.</p></div></div><div class="two-col"><div class="card flat"><h3>Payment intents</h3><div class="table-wrap"><table><thead><tr><th>Intent</th><th>Status</th><th>Amount</th><th>Provider</th></tr></thead><tbody id="intentRows"></tbody></table></div></div><div class="card flat"><h3>Provider deliveries</h3><div class="table-wrap"><table><thead><tr><th>Delivery</th><th>Status</th><th>Provider</th><th>Receipt</th></tr></thead><tbody id="deliveryRows"></tbody></table></div></div></div></section>
+
+        <section id="reconciliation" class="section"><div class="section-head"><div><div class="brand-sub">Infrastructure console</div><h2>Reconciliation</h2><p class="muted">Matches payment intent, payment event, provider delivery, receipt, and settlement state.</p></div><button class="btn" data-action="run-reconciliation">Run reconciliation</button></div><div class="card flat"><pre id="reconciliationOutput">No reconciliation run yet.</pre></div></section>
+
+        <section id="proof" class="section"><div class="section-head"><div><div class="brand-sub">Infrastructure console</div><h2>Proof Receipts</h2><p class="muted">Audit packets for each paid intelligence call.</p></div></div><div class="card flat"><div class="table-wrap"><table><thead><tr><th>Receipt</th><th>Mission</th><th>Provider</th><th>Amount</th><th>Settlement</th></tr></thead><tbody id="receiptRows"></tbody></table></div></div></section>
+
+        <section id="traces" class="section"><div class="section-head"><div><div class="brand-sub">Operations / audit</div><h2>Traces</h2><p class="muted">User and audit-visible operational path for every mission. Advanced details expose scorecards, context, and checkpoints without making the main UI noisy.</p></div></div><div class="two-col"><div class="card flat"><h3>Mission trace</h3><div class="timeline" id="traceRows"></div></div><div class="card flat"><h3>Advanced inspectors</h3><div class="timeline" id="inspectorRows"></div></div></div></section>
+
+        <section id="metrics" class="section"><div class="section-head"><div><div class="brand-sub">Operations / audit</div><h2>Metrics</h2><p class="muted">Adoption and usage: users, missions, paid calls, blocked calls, USDC routed, receipts, real/testnet/fallback split.</p></div></div><div class="card flat"><div class="mini-grid" id="metricCards"></div></div></section>
+
+        <section id="providers" class="section"><div class="section-head"><div><div class="brand-sub">Provider console</div><h2>Providers</h2><p class="muted">Register and validate x402-enabled paid intelligence services.</p></div></div><div class="two-col"><div class="card flat"><h3>Provider onboarding</h3><div id="providerSteps" class="timeline"></div></div><div class="card flat"><h3>Example payload</h3><pre>{
+  "providerId": "oddsnode",
+  "service": "Prediction Market Odds API",
+  "price": "0.004 USDC",
+  "proofSupported": true,
+  "x402": true,
+  "arcSupported": true
+}</pre></div></div></section>
+
+        <section id="settings" class="section"><div class="section-head"><div><div class="brand-sub">Workspace</div><h2>Settings</h2><p class="muted">Multi-tenant workspace, members, roles, API keys, budgets, policies, provider access, and audit logs.</p></div></div><div class="two-col"><div class="card flat"><h3>Members and roles</h3><pre id="membersOutput">Loading...</pre></div><div class="card flat"><h3>Provider access</h3><pre id="providerAccessOutput">Loading...</pre></div></div></section>
+
+        <section id="developers" class="section"><div class="section-head"><div><div class="brand-sub">Developer platform</div><h2>Developers</h2><p class="muted">Use the UI or integrate with SDK/Gateway. Every SDK call is workspace-scoped and idempotency-aware.</p></div></div><div class="two-col"><div class="card flat"><h3>TypeScript SDK</h3><pre>npm install @angorapay/sdk
+
+await angora.runAgentMission({
+  agent: 'prediction_market',
+  mission: 'Check whether this BTC prediction market is mispriced.',
+  maxSpendUSDC: '0.05',
+  requiredProof: true,
+  idempotencyKey: 'mission-001-agent-run-001'
+});</pre></div><div class="card flat"><h3>API endpoint</h3><pre>POST /v1/angora/agent-missions/run
+Authorization: Bearer ang_live_xxxxx
+Idempotency-Key: mission-001-agent-run-001</pre></div></div></section>
+      </main>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Angora dashboard UI
+  - Single static file so it can be dropped into the existing integration kit without a build step.
+  - Calls the production kit API routes when available.
+  - Uses safe fallback data so the UI remains useful in local/offline preview mode.
+*/
+const state = {
+  activePage: 'missions',
+  activeAgent: 'prediction_market',
+  workspace: null,
+  dashboard: null,
+  lastMission: null,
+};
+
+const navGroups = {
+  product: {
+    label: 'Product workspace',
+    items: [
+      ['missions', 'Agent Missions'],
+      ['conversations', 'Conversations'],
+      ['usecases', 'Use Cases'],
+    ],
+  },
+  infra: {
+    label: 'Infrastructure console',
+    items: [
+      ['gateway', 'Gateway'],
+      ['marketplace', 'Marketplace'],
+      ['scorecard', 'Route Scorecard'],
+      ['policy', 'Policy'],
+      ['payments', 'Payments'],
+      ['reconciliation', 'Reconciliation'],
+      ['proof', 'Proof'],
+    ],
+  },
+  ops: {
+    label: 'Operations + adoption',
+    items: [
+      ['traces', 'Traces'],
+      ['metrics', 'Metrics'],
+      ['providers', 'Providers'],
+      ['settings', 'Settings'],
+      ['developers', 'Developers'],
+    ],
+  },
+};
+
+const agents = [
+  {
+    id: 'prediction_market',
+    label: 'Prediction Market',
+    title: 'Prediction Market Intelligence Agent',
+    sample: 'Check whether this BTC prediction market is mispriced after the news shift.',
+    description: 'Finds odds drift, sentiment shifts, liquidity quality, and +EV signals before a prediction-market decision.',
+    signals: 'Odds, sentiment, liquidity, risk, proof',
+  },
+  {
+    id: 'cross_venue_arbitrage',
+    label: 'Arbitrage',
+    title: 'Cross-Venue Arbitrage Agent',
+    sample: 'Check whether the BTC price gap across two venues survives fees and slippage.',
+    description: 'Checks cross-venue spreads, fees, slippage, latency, liquidity, and execution risk before action.',
+    signals: 'Prices, spread, liquidity, slippage, risk',
+  },
+  {
+    id: 'social_trading',
+    label: 'Social Trading',
+    title: 'Social Trading Intelligence Agent',
+    sample: 'Evaluate whether this trader signal is reliable enough to follow with reduced size.',
+    description: 'Evaluates copy-risk, trader history, social-alpha reliability, drawdown patterns, and source provenance.',
+    signals: 'Trader history, sentiment, copy-risk, drawdown, proof',
+  },
+];
+
+const fallback = {
+  dashboard: {
+    product: 'Angora Market Intelligence Agents',
+    positioning: 'Specialist agents powered by Angora Gateway, SDK, Circle/x402 payments, receipts, traces, and reconciliation.',
+    runtime: { mode: 'local_preview', paymentMode: 'demo_fallback', persistence: 'json_or_api' },
+    execution: { gateway: 'available when backend is running', dashboard: 'static preview fallback active' },
+    metrics: { gatewayCalls: 38, totalVolumeUSDC: 0.431, receiptsCreated: 67, blockedCalls: 11, realX402Calls: 18, fallbackCalls: 3, providersUsed: 6, conversations: 26, reconciled: 41 },
+  },
+  workspace: {
+    workspace: { workspaceId: 'ws_demo', name: 'Demo Workspace', plan: 'sandbox' },
+    policy: { minProviderTrust: 85, minRouteScore: 80, proofRequired: true, allowedPaymentModes: ['real_x402', 'arc_testnet', 'demo_fallback'] },
+    budget: { dailyLimitUSDC: 25, missionLimitUSDC: 0.05, currency: 'USDC' },
+    members: [{ email: 'owner@example.com', role: 'owner' }, { email: 'builder@example.com', role: 'builder' }],
+    providerAccess: [{ providerId: 'oddsnode', access: 'allowed' }, { providerId: 'greyalpha', access: 'blocked' }],
+  },
+  services: [
+    { name: 'Prediction Market Odds API', providerId: 'OddsNode', category: 'odds', price: '0.004', currency: 'USDC', trustScore: 96, proofRequired: true },
+    { name: 'News Sentiment Feed', providerId: 'SignalMesh', category: 'sentiment', price: '0.003', currency: 'USDC', trustScore: 92, proofRequired: true },
+    { name: 'Execution Risk Check', providerId: 'RiskLens', category: 'risk', price: '0.005', currency: 'USDC', trustScore: 94, proofRequired: true },
+    { name: 'Cross-Venue Price Feed', providerId: 'VenueScan', category: 'arbitrage', price: '0.006', currency: 'USDC', trustScore: 90, proofRequired: true },
+    { name: 'Unverified Alpha Feed', providerId: 'GreyAlpha', category: 'alpha', price: '0.002', currency: 'USDC', trustScore: 41, proofRequired: false },
+  ],
+  conversations: [
+    { title: 'BTC prediction-market mispricing', status: 'completed', specialistAgent: 'Prediction Market', totalUSDC: '0.013', receiptIds: ['ang_rcpt_9013', 'ang_rcpt_9014'] },
+    { title: 'ETH/SOL cross-venue spread check', status: 'running', specialistAgent: 'Arbitrage', totalUSDC: '0.011', receiptIds: [] },
+  ],
+  traces: [
+    { eventType: 'mission.created', status: 'ok', label: 'BTC market mispricing mission accepted', createdAt: '12:04:10' },
+    { eventType: 'agent.selected', status: 'ok', label: 'Prediction Market Intelligence Agent selected', createdAt: '12:04:12' },
+    { eventType: 'provider.blocked', status: 'blocked', label: 'GreyAlpha blocked: trust 41, proof missing', createdAt: '12:04:27' },
+    { eventType: 'payment.authorized', status: 'ok', label: 'OddsNode paid 0.004 USDC through x402', createdAt: '12:04:31' },
+    { eventType: 'receipt.created', status: 'ok', label: 'Receipt linked to output hash', createdAt: '12:04:38' },
+  ],
+  scorecard: [
+    { provider: 'OddsNode', missionFit: 97, trust: 96, proof: 100, cost: 94, routeScore: 96, verdict: 'selected' },
+    { provider: 'SignalMesh', missionFit: 91, trust: 92, proof: 96, cost: 96, routeScore: 92, verdict: 'approved' },
+    { provider: 'RiskLens', missionFit: 94, trust: 94, proof: 100, cost: 90, routeScore: 94, verdict: 'approved' },
+    { provider: 'GreyAlpha', missionFit: 62, trust: 41, proof: 0, cost: 96, routeScore: 41, verdict: 'blocked' },
+  ],
+  payments: [
+    { paymentIntentId: 'pi_001', status: 'settled', amountUSDC: '0.004', providerId: 'OddsNode' },
+    { paymentIntentId: 'pi_002', status: 'pending', amountUSDC: '0.003', providerId: 'SignalMesh' },
+  ],
+  deliveries: [
+    { providerDeliveryId: 'del_001', status: 'delivered', providerId: 'OddsNode', receiptId: 'ang_rcpt_9013' },
+    { providerDeliveryId: 'del_002', status: 'pending', providerId: 'SignalMesh', receiptId: 'ang_rcpt_9014' },
+  ],
+  receipts: [
+    { receiptId: 'ang_rcpt_9013', missionId: 'mission_001', providerId: 'OddsNode', amountUSDC: '0.004', settlementStatus: 'matched' },
+    { receiptId: 'ang_rcpt_9014', missionId: 'mission_001', providerId: 'SignalMesh', amountUSDC: '0.003', settlementStatus: 'pending_payment' },
+  ],
+};
+
+function $(id) { return document.getElementById(id); }
+function esc(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+}
+function statusTone(status) {
+  const text = String(status || '').toLowerCase();
+  if (['ok', 'matched', 'settled', 'delivered', 'completed', 'selected', 'approved', 'allowed'].some((x) => text.includes(x))) return 'green';
+  if (['blocked', 'failed', 'mismatch', 'duplicate'].some((x) => text.includes(x))) return 'red';
+  if (['pending', 'running', 'review', 'fallback'].some((x) => text.includes(x))) return 'amber';
+  return '';
+}
+function badge(text) { return `<span class="badge ${statusTone(text)}">${esc(text)}</span>`; }
+function tableRow(cells) { return `<tr>${cells.map((cell) => `<td>${cell}</td>`).join('')}</tr>`; }
+function jsonPretty(data) { return JSON.stringify(data ?? {}, null, 2); }
+
+async function api(path, options = {}, fallbackValue = null) {
+  try {
+    const response = await fetch(path, { headers: { 'content-type': 'application/json' }, ...options });
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    return await response.json();
+  } catch (error) {
+    console.warn('API fallback used for', path, error);
+    return fallbackValue;
+  }
+}
+
+function show(pageId) {
+  state.activePage = pageId;
+  document.querySelectorAll('.section').forEach((section) => section.classList.toggle('active', section.id === pageId));
+  document.querySelectorAll('.nav-btn').forEach((button) => button.classList.toggle('active', button.dataset.target === pageId));
+  window.location.hash = pageId;
+}
+
+function renderNavigation() {
+  const renderGroup = (targetId, group) => {
+    $(targetId).innerHTML = `<div class="nav-label">${group.label}</div>` + group.items.map(([id, label]) => (
+      `<button class="nav-btn ${id === state.activePage ? 'active' : ''}" data-action="nav" data-target="${id}"><span>${label}</span><span>›</span></button>`
+    )).join('');
+  };
+  renderGroup('navProduct', navGroups.product);
+  renderGroup('navInfra', navGroups.infra);
+  renderGroup('navOps', navGroups.ops);
+}
+
+function renderAgents() {
+  $('agentList').innerHTML = agents.map((agent) => `
+    <button class="agent-card ${agent.id === state.activeAgent ? 'active' : ''}" data-action="select-agent" data-agent="${agent.id}">
+      <strong>${esc(agent.title)}</strong>
+      <div class="muted small">${esc(agent.description)}</div>
+      <div style="margin-top:10px">${badge(agent.label)}</div>
+    </button>
+  `).join('');
+  const active = agents.find((agent) => agent.id === state.activeAgent) || agents[0];
+  $('missionInput').value = active.sample;
+}
+
+function appendMessage(role, text) {
+  const className = role === 'user' ? 'bubble user' : 'bubble assistant';
+  $('chatLog').insertAdjacentHTML('beforeend', `<div class="${className}">${esc(text)}</div>`);
+  $('chatLog').scrollTop = $('chatLog').scrollHeight;
+}
+
+function resetChat() {
+  const active = agents.find((agent) => agent.id === state.activeAgent) || agents[0];
+  $('chatLog').innerHTML = '';
+  appendMessage('user', active.sample);
+  appendMessage('assistant', 'Run the mission. Angora will scan providers, score routes, block weak sources, pay approved services, create receipts, and update the trace.');
+  renderProofRail(null);
+}
+
+function renderProofRail(result) {
+  if (!result) {
+    $('proofRail').innerHTML = [
+      ['Agent', (agents.find((agent) => agent.id === state.activeAgent) || agents[0]).label],
+      ['Budget', `${$('budgetInput')?.value || '0.05'} USDC`],
+      ['Providers', 'pending'],
+      ['USDC routed', 'pending'],
+      ['Receipts', 'pending'],
+      ['Reconciliation', 'pending'],
+    ].map(([label, value]) => `<div class="rail-row"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
+    return;
+  }
+  const receiptCount = result.receipts?.length || result.receiptIds?.length || 0;
+  $('proofRail').innerHTML = [
+    ['Mission', result.missionId || 'completed'],
+    ['Providers', result.providerDecisions?.length || result.providersUsed || 0],
+    ['Blocked', result.blockedProviders?.length || result.providerDecisions?.filter?.((x) => x.verdict === 'blocked').length || 0],
+    ['USDC routed', result.totalUSDC || result.usdcRouted || '0'],
+    ['Receipts', receiptCount],
+    ['Reconciliation', result.reconciliationStatus || 'pending'],
+  ].map(([label, value]) => `<div class="rail-row"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
+}
+
+function renderTables(data) {
+  const dashboard = data.dashboard || fallback.dashboard;
+  const metrics = dashboard.metrics || {};
+  $('metricMissions').textContent = metrics.gatewayCalls ?? metrics.missions ?? 0;
+  $('metricVolume').textContent = Number(metrics.totalVolumeUSDC ?? metrics.usdcRouted ?? 0).toFixed(3);
+  $('metricReceipts').textContent = metrics.receiptsCreated ?? metrics.receipts ?? 0;
+  $('metricBlocked').textContent = metrics.blockedCalls ?? metrics.policyBlocks ?? 0;
+  $('metricCards').innerHTML = Object.entries(metrics).slice(0, 12).map(([key, value]) => `<div class="metric"><div class="muted small">${esc(key)}</div><div class="value">${esc(value)}</div></div>`).join('');
+
+  $('gatewaySummary').textContent = jsonPretty({ product: dashboard.product, positioning: dashboard.positioning, runtime: dashboard.runtime, execution: dashboard.execution });
+  $('workspaceSummary').textContent = jsonPretty(data.workspace);
+  $('workspaceLabel').textContent = data.workspace?.workspace?.name || data.workspace?.workspaceId || 'Demo Workspace';
+  $('policyOutput').textContent = jsonPretty(data.workspace?.policy || fallback.workspace.policy);
+  $('budgetOutput').textContent = jsonPretty(data.workspace?.budget || fallback.workspace.budget);
+  $('membersOutput').textContent = jsonPretty(data.workspace?.members || fallback.workspace.members);
+  $('providerAccessOutput').textContent = jsonPretty(data.workspace?.providerAccess || fallback.workspace.providerAccess);
+
+  $('serviceRows').innerHTML = (data.services || fallback.services).map((service) => tableRow([
+    esc(service.name || service.serviceName), esc(service.providerId), esc(service.category), esc(`${service.price} ${service.currency || 'USDC'}`), esc(service.trustScore), esc(service.proofRequired || service.proofSupported ? 'yes' : 'no'),
+  ])).join('');
+
+  $('conversationRows').innerHTML = (data.conversations || fallback.conversations).map((conversation) => tableRow([
+    esc(conversation.title), badge(conversation.status), esc(conversation.specialistAgent || conversation.agent || ''), esc(conversation.totalUSDC || '0'), esc((conversation.receiptIds || []).length),
+  ])).join('');
+
+  $('traceRows').innerHTML = (data.traces || fallback.traces).map((trace) => `
+    <div class="trace-row"><span class="mono small">${esc(trace.createdAt || trace.time || '')}</span><strong>${esc(trace.eventType || trace.event)}</strong><span class="muted">${esc(trace.label || trace.detail)}</span>${badge(trace.status)}</div>
+  `).join('');
+
+  $('scoreRows').innerHTML = (data.scorecard || fallback.scorecard).map((score) => tableRow([
+    esc(score.provider), esc(score.missionFit), esc(score.trust), esc(score.proof), esc(score.cost), esc(score.routeScore), badge(score.verdict),
+  ])).join('');
+
+  $('intentRows').innerHTML = (data.paymentIntents || fallback.payments).map((payment) => tableRow([
+    esc(payment.paymentIntentId), badge(payment.status), esc(payment.amountUSDC), esc(payment.providerId),
+  ])).join('');
+  $('deliveryRows').innerHTML = (data.providerDeliveries || fallback.deliveries).map((delivery) => tableRow([
+    esc(delivery.providerDeliveryId), badge(delivery.status), esc(delivery.providerId), esc(delivery.receiptId),
+  ])).join('');
+  $('receiptRows').innerHTML = (data.receipts || fallback.receipts).map((receipt) => tableRow([
+    esc(receipt.receiptId), esc(receipt.missionId), esc(receipt.providerId), esc(receipt.amountUSDC || receipt.amount || '0'), badge(receipt.settlementStatus || receipt.reconciliationStatus || 'pending'),
+  ])).join('');
+
+  $('inspectorRows').innerHTML = [
+    ['Route Scorecard', 'Why providers were selected, approved, or blocked.'],
+    ['Context & Memory', 'Mission context, similar missions, provider reliability, and prior receipts.'],
+    ['Checkpoints', 'Recovery stages that prevent duplicate payments and lost mission state.'],
+    ['Policy Outcomes', 'Symbolic rules applied before payment and recommendation.'],
+  ].map(([title, detail], index) => `<div class="trace-row"><span class="mono small">${index + 1}</span><strong>${title}</strong><span class="muted">${detail}</span>${badge('available')}</div>`).join('');
+
+  $('useCaseCards').innerHTML = agents.map((agent) => `<div class="card flat"><h3>${esc(agent.title)}</h3><p class="muted">${esc(agent.description)}</p><div style="margin-top:12px">${badge(agent.signals)}</div></div>`).join('');
+  $('providerSteps').innerHTML = [
+    ['Register service', 'Submit category, x402 endpoint, USDC price, proof support, Arc support, and SLA.'],
+    ['Validate endpoint', 'Check schema, timeout behavior, proof fields, and delivery metadata.'],
+    ['Assign trust profile', 'Score provider reliability, proof completeness, and delivery quality.'],
+    ['Receive routed demand', 'Agent missions route paid calls when trust, price, and policy match.'],
+  ].map(([title, detail], index) => `<div class="trace-row"><span class="mono small">${index + 1}</span><strong>${title}</strong><span class="muted">${detail}</span>${badge('provider')}</div>`).join('');
+}
+
+async function loadDashboard() {
+  const [dashboard, workspace, services, conversations, traces, paymentIntents, providerDeliveries, receipts] = await Promise.all([
+    api('/v1/angora/dashboard/summary', {}, fallback.dashboard),
+    api('/v1/angora/workspaces/current', {}, fallback.workspace),
+    api('/v1/angora/services/search?max_price=1&require_verified=false', {}, { services: fallback.services }),
+    api('/v1/angora/conversations', {}, { conversations: { rows: fallback.conversations } }),
+    api('/v1/angora/agent-traces', {}, { traces: { rows: fallback.traces } }),
+    api('/v1/angora/payment-intents', {}, { paymentIntents: { rows: fallback.payments } }),
+    api('/v1/angora/provider-deliveries', {}, { providerDeliveries: { rows: fallback.deliveries } }),
+    api('/v1/angora/receipts', {}, { receipts: { rows: fallback.receipts } }),
+  ]);
+
+  state.dashboard = dashboard;
+  state.workspace = workspace;
+
+  renderTables({
+    dashboard,
+    workspace,
+    services: services.services || fallback.services,
+    conversations: conversations.conversations?.rows || conversations.conversations || fallback.conversations,
+    traces: traces.traces?.rows || traces.traces || fallback.traces,
+    paymentIntents: paymentIntents.paymentIntents?.rows || paymentIntents.paymentIntents || fallback.payments,
+    providerDeliveries: providerDeliveries.providerDeliveries?.rows || providerDeliveries.providerDeliveries || fallback.deliveries,
+    receipts: receipts.receipts?.items || receipts.receipts?.rows || receipts.receipts || fallback.receipts,
+  });
+}
+
+async function runMission() {
+  const mission = $('missionInput').value.trim();
+  if (!mission) return;
+  appendMessage('user', mission);
+  appendMessage('assistant', 'Mission started. Scanning providers, scoring routes, applying policy, and preparing payment/proof records...');
+
+  const payload = {
+    module: state.activeAgent,
+    userGoal: mission,
+    paymentMode: $('paymentMode').value,
+    budgetUSDC: $('budgetInput').value || '0.05',
+    proofRequired: $('proofRequired').value === 'true',
+  };
+  const response = await api('/v1/angora/agent-missions/run', { method: 'POST', body: JSON.stringify(payload) }, null);
+  const result = response?.result || response || {
+    missionId: `local_${Date.now()}`,
+    totalUSDC: payload.paymentMode === 'blocked' ? '0' : '0.013',
+    receipts: [{ receiptId: 'local_receipt' }],
+    providerDecisions: fallback.scorecard,
+    recommendation: { summary: 'Local preview completed: monitor the signal, use trusted providers only, and keep the proof trail attached.' },
+  };
+
+  state.lastMission = result;
+  appendMessage('assistant', result.recommendation?.summary || result.summary || 'Mission completed with provider decisions, receipts, and trace events.');
+  renderProofRail(result);
+  await loadDashboard();
+}
+
+async function runReconciliation() {
+  $('reconciliationOutput').textContent = 'Running reconciliation...';
+  const response = await api('/v1/angora/reconciliation/run', { method: 'POST', body: JSON.stringify({}) }, { run: 'local_preview', checked: 2, pending: 1, matched: 1 });
+  $('reconciliationOutput').textContent = jsonPretty(response);
+  await loadDashboard();
+}
+
+function bindEvents() {
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    const action = button.dataset.action;
+    if (action === 'nav') show(button.dataset.target);
+    if (action === 'select-agent') {
+      state.activeAgent = button.dataset.agent;
+      renderAgents();
+      resetChat();
+    }
+    if (action === 'run-mission') runMission();
+    if (action === 'run-reconciliation') runReconciliation();
+  });
+}
+
+function init() {
+  const hashPage = window.location.hash.replace('#', '');
+  if (hashPage) state.activePage = hashPage;
+  renderNavigation();
+  renderAgents();
+  resetChat();
+  bindEvents();
+  show(state.activePage);
+  loadDashboard();
+}
+
+init();
+</script>
+</body>
+</html>

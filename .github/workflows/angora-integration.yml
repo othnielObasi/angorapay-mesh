@@ -1,0 +1,36 @@
+name: Angora Integration Checks
+
+on:
+  push:
+    paths:
+      - 'src/angora/**'
+      - 'sdk/**'
+      - 'package*.json'
+      - '.github/workflows/angora-integration.yml'
+  pull_request:
+    paths:
+      - 'src/angora/**'
+      - 'sdk/**'
+      - 'package*.json'
+
+jobs:
+  angora-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project dependencies
+        run: npm install
+      - name: Typecheck Angora integration
+        run: npm run angora:typecheck
+      - name: Run Angora self tests
+        run: npm run angora:self-test
+      - name: Check Python SDK syntax
+        run: python -m py_compile sdk/python/angorapay.py
+      - name: Package TypeScript SDK
+        run: cd sdk/typescript && npm install && npm pack

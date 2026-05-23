@@ -10,4 +10,6 @@ artifacts/
 
 # Runtime state — never overwrite production data on deploy
 .kairos/
+.angora/
+.kairos-angora/
 .circle-recovery-file

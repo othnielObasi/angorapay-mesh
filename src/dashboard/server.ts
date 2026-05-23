@@ -54,6 +54,7 @@ import {
   type CommerceDocumentLinks,
   type DocumentTrackKey,
 } from '../services/commerce-documents.js';
+import { registerAngoraRoutes } from '../angora/routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_PORT = parseInt(process.env.PORT || '3000', 10);
@@ -1244,6 +1245,8 @@ export function startDashboard(port: number = DASHBOARD_PORT): void {
   });
 
   // Default route → final production dashboard
+  registerAngoraRoutes(app);
+
   app.get('/', (_req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'kairos.html'));
   });

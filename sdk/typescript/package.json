@@ -1,0 +1,17 @@
+{
+  "name": "@angorapay/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for AngoraPay Mesh market-agent service routing on Circle/x402 and Arc.",
+  "type": "module",
+  "main": "./dist/angorapay.js",
+  "types": "./dist/angorapay.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "keywords": ["angorapay", "x402", "circle", "arc", "agent", "market-agents"]
+}
