@@ -13,3 +13,4 @@ artifacts/
 .angora/
 .kairos-angora/
 .circle-recovery-file
+src/dashboard/public/angora-app/

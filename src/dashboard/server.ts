@@ -1248,7 +1248,11 @@ export function startDashboard(port: number = DASHBOARD_PORT): void {
   registerAngoraRoutes(app);
 
   app.get('/', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'kairos.html'));
+    res.sendFile(path.join(__dirname, 'public', 'angora-app', 'index.html'));
+  });
+
+  app.get('/angora', (_req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'angora-app', 'index.html'));
   });
 
   // Trade history page — separate tab
