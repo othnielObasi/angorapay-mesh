@@ -1,6 +1,62 @@
 import { readJsonFile, stateFile, writeJsonFile } from "./state-dir.js";
 import type { ServiceManifest, ServiceCategory } from "./types.js";
 
+const LIVE_DATA_SOURCES: Partial<Record<ServiceCategory, string[]>> = {
+  odds:        ["Polymarket Gamma API"],
+  kalshi_odds: ["Kalshi REST API (trading-api.kalshi.com)"],
+  sentiment:   ["Alternative.me Fear & Greed Index"],
+  risk:        ["Kraken OHLC"],
+  market_data: ["Kraken Ticker"],
+  social:      ["Alternative.me Fear & Greed Index"],
+  arbitrage:   ["Kraken Ticker", "CoinGecko simple price"],
+};
+
+function realX402Enabled() { return process.env.ANGORA_ENABLE_REAL_X402 === "true"; }
+function liveDataEnabled()  { return process.env.ANGORA_LIVE_DATA === "true"; }
+function paidMarketplaceSignerConfigured() {
+  const mnemonicSigner = Boolean(process.env.OWS_MNEMONIC || process.env.X402_MNEMONIC);
+  const circleWalletChain = (process.env.CIRCLE_WALLET_BLOCKCHAIN || "").toLowerCase();
+  const circlePolygonSigner = Boolean(
+    process.env.CIRCLE_API_KEY && process.env.CIRCLE_ENTITY_SECRET &&
+    process.env.CIRCLE_WALLET_ID && process.env.AGENT_WALLET_ADDRESS &&
+    (circleWalletChain.includes("polygon") || circleWalletChain.includes("matic")),
+  );
+  return mnemonicSigner || circlePolygonSigner;
+}
+
+export function providerRuntime(service: ServiceManifest) {
+  const marketplaceProvider  = !service.x402Url.startsWith("mock://");
+  const freeMarketplaceProvider = marketplaceProvider && Number(service.price) === 0;
+  const liveSources = LIVE_DATA_SOURCES[service.category] ?? [];
+  const realX402Ready   = marketplaceProvider && !freeMarketplaceProvider && realX402Enabled() && paidMarketplaceSignerConfigured();
+  const liveDataReady   = !marketplaceProvider && liveDataEnabled() && liveSources.length > 0;
+  const routeable       = freeMarketplaceProvider || realX402Ready || !marketplaceProvider;
+  const mode = freeMarketplaceProvider ? "live_free"
+    : realX402Ready ? "real_x402"
+    : marketplaceProvider ? "unavailable_x402"
+    : liveDataReady ? "live_data_adapter"
+    : "demo_fallback";
+  return {
+    marketplaceProvider, routeable, mode,
+    live: freeMarketplaceProvider || realX402Ready || liveDataReady,
+    liveSources, realX402Ready, liveDataReady,
+    fallbackOnly: !freeMarketplaceProvider && !realX402Ready && !liveDataReady,
+    reason: freeMarketplaceProvider
+      ? "Free marketplace provider endpoint is routeable without x402 payment."
+      : realX402Ready
+      ? "Real x402 provider endpoint is enabled with a configured signer."
+      : marketplaceProvider
+      ? "Marketplace endpoint is listed but not routeable until ANGORA_ENABLE_REAL_X402 and a compatible signer are configured."
+      : liveDataReady
+      ? `Built-in provider is backed by ${liveSources.join(", ")} when ANGORA_LIVE_DATA=true.`
+      : "Built-in provider is routeable through deterministic demo fallback until live data is enabled.",
+  };
+}
+
+export function enrichServiceRuntime(service: ServiceManifest) {
+  return { ...service, runtime: providerRuntime(service) };
+}
+
 // Circle Agent Marketplace providers (agents.circle.com/services)
 // These use real x402 payment-gated endpoints — active when KAIROS_ENABLE_REAL_X402=true.
 const CIRCLE_MARKETPLACE_SERVICES: ServiceManifest[] = [

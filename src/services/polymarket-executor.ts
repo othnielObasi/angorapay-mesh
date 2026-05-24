@@ -181,10 +181,21 @@ async function findRelevantMarket(marketTarget: string): Promise<PolymarketMarke
     const markets = await res.json() as PolymarketMarket[];
     if (!Array.isArray(markets)) return null;
 
+    // Generic words that appear in sports/unrelated markets — exclude from scoring.
+    const NOISE_WORDS = new Set(["cross", "venue", "spread", "market", "price", "check", "odds", "rate", "target", "year", "end", "whether", "will", "the", "for", "approval"]);
+
     // Include short tokens like "ETF", "SOL", "BTC" (length > 2) so tickers match.
-    const keywords = marketTarget.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+    const keywords = marketTarget.toLowerCase().split(/\s+/)
+      .filter((w) => w.length > 2 && !NOISE_WORDS.has(w));
+
+    // If no meaningful keywords remain (e.g. generic mission descriptions), skip.
+    if (keywords.length === 0) return null;
+
+    // Only score against crypto/financial/macro markets — reject sports/entertainment.
+    const CRYPTO_FIN_SIGNALS = ["bitcoin", "btc", "ethereum", "eth", "crypto", "solana", "sol", "fed", "rate", "etf", "price", "coinbase", "usd", "defi", "nft", "token", "inflation", "recession"];
     const scored = markets
       .filter((m) => m.active && !m.closed && m.question)
+      .filter((m) => CRYPTO_FIN_SIGNALS.some((sig) => (m.question ?? "").toLowerCase().includes(sig)))
       .map((m) => ({
         market: m,
         score: keywords.reduce((a, kw) => a + ((m.question ?? "").toLowerCase().includes(kw) ? 1 : 0), 0),
