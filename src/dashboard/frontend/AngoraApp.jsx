@@ -22,17 +22,12 @@ import {
 const APP_NAME = "AngoraPay Mesh";
 
 const tabs = [
-  { id: "chat", label: "Agent Chat", icon: MessageSquare },
-  { id: "run", label: "Live Demo", icon: Gauge },
-  { id: "market", label: "Marketplace", icon: Store },
-  { id: "scorecard", label: "Route Scorecard", icon: ShieldCheck },
-  { id: "policy", label: "Policy", icon: Settings2 },
-  { id: "providers", label: "Providers", icon: UploadCloud },
-  { id: "history", label: "Execution History", icon: Activity },
-  { id: "proof", label: "Proof", icon: FileCheck2 },
+  { id: "workspace", label: "Workspace", icon: MessageSquare },
+  { id: "marketplace", label: "Marketplace", icon: Store },
+  { id: "routing", label: "Policy & Routing", icon: ShieldCheck },
+  { id: "proof", label: "Payments & Proof", icon: FileCheck2 },
   { id: "reconciliation", label: "Reconciliation", icon: CheckCircle2 },
-  { id: "metrics", label: "Submission Metrics", icon: BarChart3 },
-  { id: "developers", label: "Developers", icon: Code2 },
+  { id: "metrics", label: "Metrics & Dev", icon: BarChart3 },
 ];
 
 const rfpAreas = [
@@ -343,7 +338,7 @@ async function loadLiveSnapshot() {
 }
 
 function runSelfTests() {
-  console.assert(tabs.length === 11, "Angora UI should expose eleven workspace tabs");
+  console.assert(tabs.length === 6, "Angora UI should expose six purposeful console sections");
   console.assert(new Set(tabs.map((tab) => tab.id)).size === tabs.length, "tab IDs should be unique");
   console.assert(approvedServices(marketServices).length === 6, "six market services should be approved");
   console.assert(blockedServices(marketServices).length === 1, "one market service should be blocked");
@@ -671,17 +666,17 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700 ring-1 ring-cyan-200"><Globe2 className="h-5 w-5" /></div>
             <div><p className="text-sm font-black text-slate-950">{APP_NAME}</p><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Console</p></div>
           </button>
-          <div className="flex gap-2 overflow-auto">
+          <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:justify-end" aria-label="Console sections">
             {tabs.map((tabItem) => {
               const Icon = tabItem.icon;
               const active = activeTab === tabItem.id;
               return (
-                <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-black transition", active ? "bg-slate-950 text-white" : "bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-950")}>
+                <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition", active ? "bg-slate-950 text-white" : "bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-950")}>
                   <Icon className="h-4 w-4" />{tabItem.label}
                 </button>
               );
             })}
-          </div>
+          </nav>
         </div>
         <div className="mb-5 grid gap-3 md:grid-cols-4">
           <Stat label="Agent state" value={latestResult ? "active" : "ready"} icon={MessageSquare} />
@@ -1037,9 +1032,72 @@ function DeveloperPanel() {
   return <Developers />;
 }
 
+function MarketplaceWorkspace({ live }) {
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        eyebrow="Marketplace"
+        title="Find the market services the agent can safely buy"
+      />
+      <MarketplacePanel live={live} />
+      <ProviderPanel live={live} />
+    </div>
+  );
+}
+
+function RoutingWorkspace({ live }) {
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        eyebrow="Policy & routing"
+        title="Decide what the agent is allowed to call"
+      />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+        <ScorecardPanel live={live} />
+        <PolicyPanel live={live} />
+      </div>
+    </div>
+  );
+}
+
+function PaymentsProofWorkspace({ live, latestResult }) {
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        eyebrow="Payments & proof"
+        title="Inspect what was paid for and what evidence was written"
+      />
+      <ProofPanel live={live} latestResult={latestResult} />
+      <HistoryPanel live={live} />
+    </div>
+  );
+}
+
+function MetricsDeveloperWorkspace({ live }) {
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        eyebrow="Metrics & developer surface"
+        title="Show traction, runtime activity, and integration paths"
+      />
+      <MetricsPanel live={live} />
+      <DeveloperPanel />
+    </div>
+  );
+}
+
+function SectionHeader({ eyebrow, title }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white/80 p-5">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">{eyebrow}</p>
+      <h2 className="mt-1 text-2xl font-black text-slate-950">{title}</h2>
+    </div>
+  );
+}
+
 export default function AngoraUiCanvas() {
   const [view, setView] = useState("console");
-  const [tab, setTab] = useState("chat");
+  const [tab, setTab] = useState("workspace");
   const [completed, setCompleted] = useState(0);
   const [live, setLive] = useState(null);
   const [agentGoal, setAgentGoal] = useState("Evaluate whether this BTC prediction market is mispriced after breaking news and route the paid services needed for a proof-backed recommendation.");
@@ -1059,8 +1117,18 @@ export default function AngoraUiCanvas() {
     refreshLive();
   }, []);
 
-  const openConsole = (target = "run") => {
-    setTab(target);
+  const openConsole = (target = "workspace") => {
+    const legacyTargets = {
+      chat: "workspace",
+      run: "workspace",
+      market: "marketplace",
+      scorecard: "routing",
+      policy: "routing",
+      providers: "marketplace",
+      history: "proof",
+      developers: "metrics",
+    };
+    setTab(legacyTargets[target] || target);
     setView("console");
   };
 
@@ -1120,19 +1188,14 @@ export default function AngoraUiCanvas() {
 
   const Panel = useMemo(() => {
     const panelMap = {
-      chat: AgentChatPanel,
-      run: RunPanel,
-      market: MarketplacePanel,
-      scorecard: ScorecardPanel,
-      policy: PolicyPanel,
-      providers: ProviderPanel,
-      history: HistoryPanel,
-      proof: ProofPanel,
+      workspace: AgentChatPanel,
+      marketplace: MarketplaceWorkspace,
+      routing: RoutingWorkspace,
+      proof: PaymentsProofWorkspace,
       reconciliation: ReconciliationPanel,
-      metrics: MetricsPanel,
-      developers: DeveloperPanel,
+      metrics: MetricsDeveloperWorkspace,
     };
-    return panelMap[tab] || RunPanel;
+    return panelMap[tab] || AgentChatPanel;
   }, [tab]);
 
   if (view === "landing") {
@@ -1140,7 +1203,7 @@ export default function AngoraUiCanvas() {
   }
 
   return (
-    <ConsoleShell activeTab={tab} setActiveTab={setTab} goHome={() => setView("landing")}>
+    <ConsoleShell activeTab={tab} setActiveTab={setTab} goHome={() => setView("landing")} live={live} latestResult={latestResult}>
       <Panel runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} />
     </ConsoleShell>
   );
