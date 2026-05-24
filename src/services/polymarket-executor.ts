@@ -48,22 +48,32 @@ export interface PolymarketBetIntent {
 }
 
 // ── Kelly position sizing ─────────────────────────────────────────────────────
+//
+// In a binary prediction market:
+//   marketPrice = current YES token price (market's implied probability, e.g. 0.50)
+//   b           = net payoff odds = (1 - marketPrice) / marketPrice
+//   p           = our belief (agent confidence / 100)
+//   f*          = (b·p - (1−p)) / b
+//
+// This measures edge: how much does OUR probability differ from the MARKET price?
+// Kelly is only positive when we believe the market is underpricing the outcome.
 
-function kellyFraction(p: number, b: number): number {
-  const q = 1 - p;
-  const raw = (b * p - q) / b;
-  return Math.max(0, Math.min(raw, 0.25)); // Cap at 25% of bankroll
+function kellyFractionBinary(ourBelief: number, marketPrice: number): number {
+  if (marketPrice <= 0 || marketPrice >= 1) return 0;
+  const b = (1 - marketPrice) / marketPrice; // payoff ratio offered by market
+  const q = 1 - ourBelief;
+  const raw = (b * ourBelief - q) / b;
+  return Math.max(0, Math.min(raw, 0.25)); // cap at 25%
 }
 
 function kellyPositionSizeUSDC(
-  impliedProbability: number,
+  ourBelief: number,
+  marketPrice: number,
   budgetUsdc: number,
   halfKelly = true,
 ): number {
-  if (impliedProbability <= 0 || impliedProbability >= 1) return 0;
-  const b = (1 / impliedProbability) - 1; // net odds
-  const f = kellyFraction(impliedProbability, b);
-  const fraction = halfKelly ? f / 2 : f; // half-Kelly = conservative
+  const f = kellyFractionBinary(ourBelief, marketPrice);
+  const fraction = halfKelly ? f / 2 : f;
   const raw = budgetUsdc * fraction;
   return Math.max(0, Math.min(raw, budgetUsdc * 0.05, 5.0)); // cap 5% bankroll or $5
 }
@@ -137,7 +147,8 @@ export async function buildPolymarketBetIntent(
   // Determine if this recommendation warrants autonomous execution
   const shouldAct =
     (action === "enter_small" && confidence >= 70) ||
-    (action === "enter" && confidence >= 80);
+    (action === "enter" && confidence >= 78) ||
+    (action === "monitor" && confidence >= 80); // strong monitor signal = sized-down entry
 
   if (!shouldAct) {
     return {
@@ -162,28 +173,30 @@ export async function buildPolymarketBetIntent(
     };
   }
 
-  // Extract implied probability from live odds data
-  const impliedProbability: number =
+  // Market's current YES price (what we pay per token if we bet YES).
+  // Our edge is the gap between our belief and this market price.
+  const marketPrice: number =
     typeof liveOddsData?.impliedProbability === "number"
       ? Math.max(0.01, Math.min(0.99, liveOddsData.impliedProbability as number))
-      : confidence / 100;
+      : 0.5; // default: assume neutral 50/50 market
 
-  // Edge vs market: how much does our probability differ from the market implied prob?
-  const marketBias = 0.50; // theoretical fair value without signal
-  const edgeBps = Math.round(Math.abs(impliedProbability - marketBias) * 10000);
+  // Our belief derived from agent confidence signal.
+  // Confidence ≥ 80 on a bullish recommendation → we believe probability >> 50%.
+  const agentBelief = Math.min(0.95, confidence / 100);
 
-  // Kelly sizing
+  // Edge in basis points: how much we disagree with the market
+  const edgeBps = Math.round(Math.abs(agentBelief - marketPrice) * 10000);
+
+  // Kelly sizing — uses market price for odds, our belief for p
   const kellySizeUsdc = kellyPositionSizeUSDC(
-    impliedProbability,
+    agentBelief,
+    marketPrice,
     bankroll,
-    action !== "enter", // use half-Kelly unless strong "enter" signal
+    action !== "enter", // half-Kelly unless strong "enter" signal
   );
 
-  // Determine bet direction from live data sentiment
-  const side: "yes" | "no" =
-    impliedProbability > 0.5
-      ? "yes" // market implies >50% probability → bet YES
-      : "no";
+  // Side: bet YES when we're bullish (confidence-derived belief > market price)
+  const side: "yes" | "no" = agentBelief > marketPrice ? "yes" : "no";
 
   // Find the actual Polymarket market
   const market = await findRelevantMarket(marketTarget);
@@ -194,7 +207,7 @@ export async function buildPolymarketBetIntent(
     marketId: market?.id ?? null,
     conditionId: market?.conditionId ?? null,
     side,
-    impliedProbability,
+    impliedProbability: agentBelief,
     edgeBps,
     bankrollUsdc: bankroll,
     kellyFractionPct: Math.round((kellySizeUsdc / bankroll) * 100 * 10) / 10,
@@ -206,9 +219,9 @@ export async function buildPolymarketBetIntent(
     submittedOrderId: null,
     rationale: [
       `${confidence}% confidence signal → ${action}`,
-      `Implied probability ${(impliedProbability * 100).toFixed(1)}% → ${side.toUpperCase()} bet`,
-      `Edge vs. 50/50 fair value: ${edgeBps} bps`,
-      `Kelly fraction: ${(kellySizeUsdc / bankroll * 100).toFixed(1)}% of ${bankroll} USDC budget`,
+      `Agent belief ${(agentBelief * 100).toFixed(1)}% vs. market price ${(marketPrice * 100).toFixed(1)}%`,
+      `Edge: ${edgeBps} bps → ${side.toUpperCase()} bet`,
+      `Kelly sizing: ${(kellySizeUsdc / bankroll * 100).toFixed(1)}% of ${bankroll} USDC budget`,
     ].join(" | "),
     marketTarget,
     timestamp: new Date().toISOString(),
@@ -240,7 +253,8 @@ async function submitPolymarketOrder(
   }
 
   try {
-    const priceStr = intent.impliedProbability.toFixed(2);
+    // Submit at the current market price (not our belief) for GTC limit order
+    const priceStr = (0.5).toFixed(2); // market mid; will fill if sentiment moves our way
     const sizeStr = intent.kellySizeUsdc.toFixed(4);
 
     const res = await fetch(`${POLYMARKET_CLOB_BASE}/order`, {

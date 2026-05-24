@@ -1638,15 +1638,20 @@ function actionStyle(action = "") {
   return "bg-amber-100 text-amber-800";
 }
 
-function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, selectedMarket }) {
-  const decisions = latestResult?.decisions || [];
+function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, selectedMarket, messages = [] }) {
+  const chatEndRef = React.useRef(null);
   const recommendation = latestResult?.recommendation;
   const receipts = latestResult?.receipts || [];
-  const delivered = decisions.filter((d) => d.status !== "blocked");
-  const blockedCount = decisions.filter((d) => d.status === "blocked").length;
-  const sources = [...new Set(delivered.map((d) => CATEGORY_SOURCE[d.category]).filter(Boolean))];
+  const latestDecisions = latestResult?.decisions || [];
+  const delivered = latestDecisions.filter((d) => d.status !== "blocked");
+  const blockedCount = latestDecisions.filter((d) => d.status === "blocked").length;
+  const turnCount = Math.floor(messages.length / 2);
   const walletAddr = "0x4991dd462f7672b737571b194b6cd6f271773d9b";
   const walletArcUrl = `https://testnet.arcscan.app/address/${walletAddr}`;
+
+  React.useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, agentRunning]);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -1654,66 +1659,113 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
       <Glass className="flex min-h-[560px] flex-col border-y border-slate-200">
         <div className="flex items-center justify-between border-b border-slate-200 p-5">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Step 2 — Ask the agent</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">
+              {turnCount === 0 ? "Step 2 — Ask the agent" : `Conversation — ${turnCount} turn${turnCount !== 1 ? "s" : ""}`}
+            </p>
             <h2 className="mt-1 text-xl font-black text-slate-950">{selectedMarket?.name || "Market Intelligence Agent"}</h2>
           </div>
-          <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>
-            {agentRunning ? "running…" : latestResult ? "complete" : "ready"}
+          <Pill tone={agentRunning ? "blue" : messages.length > 0 ? "good" : "neutral"}>
+            {agentRunning ? "running…" : messages.length > 0 ? "active" : "ready"}
           </Pill>
         </div>
 
         <div className="flex-1 space-y-4 overflow-auto p-5">
-          {!latestResult && !agentRunning && (
+          {messages.length === 0 && !agentRunning && (
             <div className="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">How this works</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Run Market Intelligence Agents — real data, Circle payments, Arc settlement</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                The agent buys real intelligence — odds from <strong>Polymarket</strong>, prices from <strong>Kraken</strong>, sentiment from the <strong>Fear & Greed Index</strong> — paying each provider in USDC on Arc testnet. GPT-4o mini generates the recommendation from the live data.
+                The agent buys real intelligence — odds from <strong>Polymarket</strong>, prices from <strong>Kraken</strong>, sentiment from the <strong>Fear & Greed Index</strong> — paying each provider in USDC on Arc testnet. GPT-4o mini generates the recommendation. Ask follow-up questions after the first response.
               </p>
             </div>
           )}
 
-          {latestResult && (
-            <div className="ml-auto max-w-[86%] rounded-[22px] bg-slate-950 px-5 py-4 text-white">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-50">You</p>
-              <p className="mt-2 text-sm leading-6">{latestResult.context?.userGoal || agentGoal}</p>
-            </div>
-          )}
+          {messages.map((msg, i) => {
+            if (msg.role === "user") {
+              return (
+                <div key={i} className="ml-auto max-w-[86%] rounded-[22px] bg-slate-950 px-5 py-4 text-white">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-50">You</p>
+                  <p className="mt-2 text-sm leading-6">{msg.text}</p>
+                </div>
+              );
+            }
+            const result = msg.result;
+            if (!result) {
+              return (
+                <div key={i} className="max-w-[86%] rounded-[22px] bg-red-50 px-5 py-4 ring-1 ring-red-100">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-600">Agent</p>
+                  <p className="mt-2 text-sm text-slate-600">{msg.error || "Agent temporarily unavailable."}</p>
+                </div>
+              );
+            }
+            const rec = result.recommendation;
+            const msgDelivered = (result.decisions || []).filter((d) => d.status !== "blocked");
+            const msgSources = [...new Set(msgDelivered.map((d) => CATEGORY_SOURCE[d.category]).filter(Boolean))];
+            return (
+              <div key={i} className="max-w-[86%] space-y-3 rounded-[22px] bg-white/80 px-5 py-5 ring-1 ring-slate-200/70">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Angora Agent</p>
+                {rec && (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={cx("rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wide", actionStyle(rec.action))}>
+                        {(rec.action || "monitor").replace(/_/g, " ")}
+                      </span>
+                      <span className="text-xs text-slate-500">{rec.confidence}% confidence</span>
+                      {result.llmSource === "openai" && (
+                        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-black text-violet-700 ring-1 ring-violet-100">GPT-4o mini</span>
+                      )}
+                    </div>
+                    <p className="text-sm leading-6 text-slate-700">{rec.summary}</p>
+                    {rec.reasons?.slice(0, 2).map((r) => (
+                      <p key={r} className="border-t border-slate-100 pt-2 text-xs leading-5 text-slate-500">{r}</p>
+                    ))}
+                  </>
+                )}
+                {msgSources.length > 0 && (
+                  <div className="border-t border-slate-100 pt-3 flex flex-wrap gap-1.5">
+                    {msgSources.map((s) => (
+                      <span key={s} className="rounded-full bg-cyan-50 px-2.5 py-1 text-[10px] font-black text-cyan-700 ring-1 ring-cyan-100">{s}</span>
+                    ))}
+                    {result.receipts?.length > 0 && (
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700 ring-1 ring-emerald-100">{result.receipts.length} Arc receipts</span>
+                    )}
+                  </div>
+                )}
+                {result.betIntent && result.betIntent.status !== "skipped" && (
+                  <div className="border-t border-slate-100 pt-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">Autonomous bet intent</p>
+                    <p className="mt-1 text-xs text-slate-700">
+                      {result.betIntent.side?.toUpperCase()} · ${result.betIntent.kellySizeUsdc?.toFixed(4)} Kelly · {result.betIntent.edgeBps} bps edge
+                    </p>
+                  </div>
+                )}
+                {result.usycPosition && (
+                  <div className="border-t border-slate-100 pt-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600">USYC yield allocation</p>
+                    <p className="mt-1 text-xs text-slate-700">${result.usycPosition.amountUsdc?.toFixed(4)} at {(result.usycPosition.estimatedApyBps / 100).toFixed(1)}% APY</p>
+                  </div>
+                )}
+                {result.cctpSettlement && (
+                  <div className="border-t border-slate-100 pt-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">CCTP cross-chain</p>
+                    <p className="mt-1 text-xs text-slate-700">Arc → {result.cctpSettlement.destinationChain} · ${result.cctpSettlement.amountUsdc?.toFixed(4)}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {agentRunning && (
             <div className="max-w-[86%] rounded-[22px] bg-white/80 px-5 py-4 ring-1 ring-cyan-100">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Agent working</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">Querying Polymarket, Kraken, and Fear & Greed — paying each in USDC on Arc testnet…</p>
-            </div>
-          )}
-
-          {latestResult && recommendation && (
-            <div className="max-w-[86%] space-y-4 rounded-[22px] bg-white/80 px-5 py-5 ring-1 ring-slate-200/70">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Angora Agent</p>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={cx("rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wide", actionStyle(recommendation.action))}>
-                  {(recommendation.action || "monitor").replace(/_/g, " ")}
-                </span>
-                <span className="text-xs text-slate-500">{recommendation.confidence}% confidence</span>
-                {latestResult.llmSource === "openai" && (
-                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-black text-violet-700 ring-1 ring-violet-100">GPT-4o mini</span>
-                )}
+              <div className="mt-3 flex gap-1.5">
+                {[0, 1, 2].map((j) => (
+                  <div key={j} className="h-1.5 w-1.5 animate-bounce rounded-full bg-cyan-400" style={{ animationDelay: `${j * 150}ms` }} />
+                ))}
               </div>
-              <p className="text-sm leading-6 text-slate-700">{recommendation.summary}</p>
-              {recommendation.reasons?.slice(0, 3).map((r) => (
-                <p key={r} className="border-t border-slate-100 pt-2 text-xs leading-5 text-slate-500">{r}</p>
-              ))}
-              {sources.length > 0 && (
-                <div className="border-t border-slate-100 pt-3">
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Live data from</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {sources.map((s) => (
-                      <span key={s} className="rounded-full bg-cyan-50 px-2.5 py-1 text-[10px] font-black text-cyan-700 ring-1 ring-cyan-100">{s}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
+          <div ref={chatEndRef} />
         </div>
 
         <div className="border-t border-slate-200 bg-white/70 p-4">
@@ -1721,9 +1773,15 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
             <textarea
               value={agentGoal}
               onChange={(e) => setAgentGoal(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !agentRunning && agentGoal.trim().length >= 8) {
+                  e.preventDefault();
+                  runAgentMission();
+                }
+              }}
               rows={2}
               className="resize-none rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300"
-              placeholder="Describe the market intelligence mission…"
+              placeholder={messages.length > 0 ? "Ask a follow-up question…" : "Describe the market intelligence mission…"}
             />
             <button
               type="button"
@@ -1731,19 +1789,19 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
               disabled={agentRunning || agentGoal.trim().length < 8}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-6 font-black text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Play className="h-4 w-4" />{agentRunning ? "Running…" : "Run"}
+              <Play className="h-4 w-4" />{agentRunning ? "Running…" : messages.length > 0 ? "Send" : "Run"}
             </button>
           </div>
-          <p className="mt-2 text-[10px] text-slate-400">Paid in USDC · Settled on Arc testnet · Receipt on every provider call</p>
+          <p className="mt-2 text-[10px] text-slate-400">Paid in USDC · Arc settlement · Enter to send · Shift+Enter for new line</p>
         </div>
       </Glass>
 
-      {/* Right sidebar */}
+      {/* Right sidebar — always shows latest result */}
       <div className="space-y-4">
         {latestResult ? (
           <>
             <Glass className="border-y border-slate-200 p-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Step 3 — Proof & result</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Latest result</p>
               <div className="mt-4 space-y-3">
                 <RouteLine label="Action" value={(recommendation?.action || "—").replace(/_/g, " ")} tone="blue" />
                 <RouteLine label="Confidence" value={`${recommendation?.confidence ?? 0}%`} tone="good" />
@@ -1752,6 +1810,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                 <RouteLine label="Blocked" value={String(blockedCount)} tone={blockedCount ? "bad" : "neutral"} />
                 <RouteLine label="USDC spent" value={`${latestResult.totals?.usdcRouted || "0"} USDC`} tone="good" />
                 <RouteLine label="Arc receipts" value={String(receipts.length)} tone="good" />
+                <RouteLine label="Turns" value={String(turnCount)} tone="good" />
                 <RouteLine label="Reasoning" value={latestResult.llmSource === "openai" ? (latestResult.llmModel || "gpt-4o-mini") : "deterministic"} tone={latestResult.llmSource === "openai" ? "good" : "warn"} />
               </div>
               {receipts.length > 0 && (
@@ -1784,7 +1843,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                     {latestResult.betIntent.side.toUpperCase()} @ {(latestResult.betIntent.impliedProbability * 100).toFixed(1)}%
                   </span>
                   <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-black text-violet-700 ring-1 ring-violet-100">
-                    Kelly size: ${latestResult.betIntent.kellySizeUsdc.toFixed(4)} USDC
+                    Kelly: ${latestResult.betIntent.kellySizeUsdc.toFixed(4)}
                   </span>
                   <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[11px] font-black text-cyan-700 ring-1 ring-cyan-100">
                     {latestResult.betIntent.edgeBps} bps edge
@@ -1802,7 +1861,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                   </span>
                 </div>
                 <p className="mt-2 text-sm text-slate-600">
-                  Agent confidence too low to deploy capital. ${latestResult.usycPosition.amountUsdc.toFixed(4)} USDC allocated to USYC (tokenized money market) until a better entry signal appears.
+                  Low-confidence signal. ${latestResult.usycPosition.amountUsdc.toFixed(4)} USDC allocated to USYC (tokenized money market) pending better entry.
                 </p>
               </Glass>
             )}
@@ -1815,8 +1874,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                   </span>
                 </div>
                 <p className="mt-2 text-sm text-slate-600">
-                  ${latestResult.cctpSettlement.amountUsdc.toFixed(4)} USDC bridging Arc testnet → {latestResult.cctpSettlement.destinationChain} for cross-venue settlement.
-                  Circle attests the burn; no bridging risk.
+                  ${latestResult.cctpSettlement.amountUsdc.toFixed(4)} USDC Arc → {latestResult.cctpSettlement.destinationChain}. Circle-attested burn; no bridging risk.
                 </p>
               </Glass>
             )}
@@ -1831,6 +1889,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                 ["LLM recommendation", "GPT-4o mini synthesises live Polymarket, Kraken, and sentiment data into an actionable call."],
                 ["Arc settlement", "Real USDC nanopayments on Arc testnet — viewable on ArcScan."],
                 ["Autonomous execution", "Kelly-criterion Polymarket bet intent built and signed by the agent after high-confidence signal."],
+                ["Multi-turn", "Ask follow-up questions — the agent re-runs with fresh data each turn."],
               ].map(([title, desc]) => (
                 <div key={title} className="flex gap-3">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-500" />
@@ -2733,6 +2792,7 @@ export default function AngoraUiCanvas() {
   const [agentGoal, setAgentGoal] = useState(discoverableMarkets[0].mission);
   const [agentRunning, setAgentRunning] = useState(false);
   const [latestResult, setLatestResult] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [reconciliationRunning, setReconciliationRunning] = useState(false);
 
   const refreshLive = async () => {
@@ -2767,17 +2827,22 @@ export default function AngoraUiCanvas() {
   const selectMarketAndMission = (market) => {
     setSelectedMarket(market);
     setAgentGoal(market.mission);
+    setMessages([]);
+    setLatestResult(null);
     setTab("demo");
     setView("console");
   };
 
   const runAgentMission = async () => {
+    const currentGoal = agentGoal.trim();
+    if (!currentGoal || agentRunning) return;
     setAgentRunning(true);
+    setMessages((prev) => [...prev, { role: "user", text: currentGoal }]);
     try {
       const response = await api("/v1/angora/agent-missions/run", {
         method: "POST",
         body: JSON.stringify({
-          userGoal: agentGoal,
+          userGoal: currentGoal,
           marketTarget: selectedMarket?.name,
           module: selectedMarket?.module,
           asset: selectedMarket?.asset,
@@ -2788,9 +2853,11 @@ export default function AngoraUiCanvas() {
         }),
       });
       setLatestResult(response.result);
+      setMessages((prev) => [...prev, { role: "agent", result: response.result }]);
       setCompleted(runSteps.length);
       await refreshLive();
     } catch (error) {
+      setMessages((prev) => [...prev, { role: "agent", result: null, error: "Agent temporarily unavailable." }]);
       console.warn("Angora agent mission unavailable", error);
     } finally {
       setAgentRunning(false);
@@ -2844,7 +2911,7 @@ export default function AngoraUiCanvas() {
 
   return (
     <ConsoleShell activeTab={tab} setActiveTab={setTab} goHome={() => setView("landing")} live={live} latestResult={latestResult}>
-      <Panel setTab={setTab} runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} selectedMarket={selectedMarket} setSelectedMarket={setSelectedMarket} selectMarketAndMission={selectMarketAndMission} openConsole={openConsole} />
+      <Panel setTab={setTab} runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} messages={messages} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} selectedMarket={selectedMarket} setSelectedMarket={setSelectedMarket} selectMarketAndMission={selectMarketAndMission} openConsole={openConsole} />
     </ConsoleShell>
   );
 }
