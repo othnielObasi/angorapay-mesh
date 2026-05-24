@@ -159,6 +159,7 @@ export async function buildLlmRecommendation(input: {
     "Base your answer only on the supplied verified provider decisions, route scores, receipts, and policy verdicts.",
     "You must not claim a trade was executed. You must not override policy, spend limits, or proof requirements.",
     "Give decision-support language suitable for a production financial workflow.",
+    "When both Polymarket (category: odds) and Kalshi (category: kalshi_odds) data are present, compare their impliedProbability values. A divergence above 500 bps is meaningful signal worth noting in your summary and reasons.",
   ].join(" ");
   try {
     const raw = await callOpenAiJson<Record<string, unknown>>({

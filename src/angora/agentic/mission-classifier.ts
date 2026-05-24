@@ -18,7 +18,7 @@ export function rfpTrackForModule(module: AgentMissionType): RfpTrack {
 export function categoriesForModule(module: AgentMissionType): ServiceCategory[] {
   if (module === "cross_venue_arbitrage") return ["market_data", "arbitrage", "risk", "proof"];
   if (module === "social_trading") return ["social", "sentiment", "risk", "proof"];
-  return ["odds", "sentiment", "risk", "proof"];
+  return ["odds", "kalshi_odds", "sentiment", "risk", "proof"];
 }
 
 export function agentIdForModule(module: AgentMissionType): string {
@@ -45,7 +45,8 @@ export function intentsForModule(module: AgentMissionType): Array<{ category: Se
     ];
   }
   return [
-    { category: "odds", intent: "Fetch live prediction-market odds and implied probability" },
+    { category: "odds", intent: "Fetch live Polymarket prediction-market odds and implied probability" },
+    { category: "kalshi_odds", intent: "Fetch live Kalshi regulated market odds and cross-market divergence vs Polymarket" },
     { category: "sentiment", intent: "Fetch news and sentiment evidence for the prediction market" },
     { category: "risk", intent: "Check liquidity, volatility, and execution readiness before market action" },
     { category: "proof", intent: "Generate proof bundle for prediction-market intelligence mission" },

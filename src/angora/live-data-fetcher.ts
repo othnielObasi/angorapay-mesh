@@ -141,6 +141,84 @@ async function fetchLiveSocial(payload: Record<string, unknown>): Promise<Record
   };
 }
 
+interface KalshiMarket {
+  ticker?: string;
+  title?: string;
+  yes_ask_dollars?: string;
+  yes_bid_dollars?: string;
+  liquidity_dollars?: string;
+  volume_24h_fp?: string;
+  open_interest_fp?: string;
+  status?: string;
+  close_time?: string;
+}
+
+async function fetchKalshiOdds(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const asset = normalizeAsset(payload.asset ?? payload.marketContext ?? "BTC");
+  const cryptoKeywords = [
+    asset.toLowerCase(),
+    "bitcoin", "btc", "ethereum", "eth", "crypto",
+    "fed rate", "interest rate", "cpi", "inflation",
+    "recession", "gdp", "employment",
+  ];
+
+  const res = await fetchWithTimeout(
+    "https://trading-api.kalshi.com/trade-api/v2/markets?limit=200&status=active",
+    10000,
+  );
+  if (!res.ok) throw new Error(`Kalshi API ${res.status}`);
+  const json = await res.json() as { markets?: KalshiMarket[] };
+  if (!json.markets?.length) throw new Error("No Kalshi markets");
+
+  const relevant = json.markets
+    .filter((m) => cryptoKeywords.some((kw) => m.title?.toLowerCase().includes(kw)))
+    .sort((a, b) => Number(b.liquidity_dollars ?? 0) - Number(a.liquidity_dollars ?? 0));
+
+  const market = relevant[0] ?? null;
+  if (!market) {
+    // Fall back to most liquid active market if no keyword match (still real Kalshi data)
+    const fallback = [...json.markets].sort(
+      (a, b) => Number(b.liquidity_dollars ?? 0) - Number(a.liquidity_dollars ?? 0),
+    )[0];
+    if (!fallback) throw new Error("No Kalshi markets available");
+    const yesBid = Number(fallback.yes_bid_dollars ?? 0);
+    const yesAsk = Number(fallback.yes_ask_dollars ?? 0);
+    const midPrice = (yesBid + yesAsk) / 2;
+    return {
+      source: "kalshi",
+      market: fallback.title,
+      ticker: fallback.ticker,
+      yesBid, yesAsk,
+      impliedProbability: midPrice,
+      liquidity: Number(fallback.liquidity_dollars ?? 0),
+      volume24h: Number(fallback.volume_24h_fp ?? 0),
+      closeTime: fallback.close_time,
+      divergenceBps: null,
+      confidence: 0.72,
+      note: "No crypto/macro keyword match — showing most liquid active Kalshi market",
+    };
+  }
+
+  const yesBid = Number(market.yes_bid_dollars ?? 0);
+  const yesAsk = Number(market.yes_ask_dollars ?? 0);
+  const midPrice = (yesBid + yesAsk) / 2;
+
+  return {
+    source: "kalshi",
+    market: market.title,
+    ticker: market.ticker,
+    yesBid,
+    yesAsk,
+    impliedProbability: Number(midPrice.toFixed(4)),
+    liquidity: Number(market.liquidity_dollars ?? 0),
+    volume24h: Number(market.volume_24h_fp ?? 0),
+    openInterest: Number(market.open_interest_fp ?? 0),
+    closeTime: market.close_time,
+    divergenceBps: null, // filled in by LLM reasoning when Polymarket data is also present
+    confidence: 0.93,
+  };
+}
+
 async function fetchLiveArbitrage(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
   const asset = normalizeAsset(payload.asset);
   const pair = krakenPair(asset);
@@ -183,6 +261,7 @@ export async function fetchLiveData(
   try {
     switch (category) {
       case "odds":        return await fetchLiveOdds(payload);
+      case "kalshi_odds": return await fetchKalshiOdds(payload);
       case "market_data": return await fetchLiveMarketData(payload);
       case "sentiment":   return await fetchLiveSentiment(payload);
       case "risk":        return await fetchLiveRisk(payload);

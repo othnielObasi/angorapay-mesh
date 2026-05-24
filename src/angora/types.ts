@@ -15,6 +15,7 @@ export type RfpTrack =
 
 export type ServiceCategory =
   | "odds"
+  | "kalshi_odds"
   | "news"
   | "sentiment"
   | "risk"
