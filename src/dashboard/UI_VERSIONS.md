@@ -1,13 +1,16 @@
 # Dashboard UI Versions
 
-## Active (Production)
+## Active
 
-- **Final**: `src/dashboard/KairosDashboard.final.jsx`
-  - Full 9-section governance control plane (the live UI)
-  - Served at `/` via `src/dashboard/public/index.html`
+- **AngoraPay Mesh**: `src/dashboard/public/angora.html`
+  - Market-intelligence agent workspace
+  - Provider routing, policy, payment, proof, traces, and reconciliation views
+  - Served at `/angora.html`
 
-## Archived
+## Legacy Foundation
 
-- **v1**: `src/dashboard/public/index.v1.html` — earlier packaged dashboard
-- **v2**: `src/dashboard/versions/KairosDashboard.v2.jsx` — prior tabbed control-plane
-- **switcher**: `src/dashboard/public/ui-switcher.html` — legacy version picker
+- `src/dashboard/public/kairos.html`
+  - Inherited runtime/proof dashboard retained while AngoraPay Mesh becomes the primary product surface.
+- `src/dashboard/public/index.html`
+- `src/dashboard/public/index.v2.html`
+- `src/dashboard/versions/KairosDashboard.v2.jsx`

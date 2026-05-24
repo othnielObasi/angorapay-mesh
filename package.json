@@ -1,7 +1,7 @@
 {
-  "name": "kairos",
+  "name": "angorapay-mesh",
   "version": "0.1.0",
-  "description": "Arc-native agentic payments runtime with Circle integration",
+  "description": "Market-intelligence agents with AngoraPay Mesh routing, policy, receipts, and reconciliation",
   "type": "module",
   "main": "src/agent/index.ts",
   "scripts": {
@@ -32,8 +32,8 @@
     "test:mcp": "tsx test/test-mcp-surface.ts",
     "prod": "NODE_ENV=production tsx src/agent/index.ts",
     "pm2:start": "pm2 start ecosystem.config.cjs",
-    "pm2:stop": "pm2 stop kairos-agent",
-    "pm2:logs": "pm2 logs kairos-agent"
+    "pm2:stop": "pm2 stop angorapay-mesh",
+    "pm2:logs": "pm2 logs angorapay-mesh"
   },
   "dependencies": {
     "@circle-fin/developer-controlled-wallets": "^10.3.0",
@@ -57,8 +57,9 @@
     "circle",
     "usdc",
     "ai-agent",
-    "agent-runtime"
+    "market-intelligence",
+    "angorapay-mesh"
   ],
-  "author": "Kairos",
+  "author": "AngoraPay Mesh",
   "license": "MIT"
 }

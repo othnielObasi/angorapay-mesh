@@ -1,10 +1,10 @@
 module.exports = {
   apps: [
     {
-      name: 'kairos-agent',
+      name: 'angorapay-mesh',
       script: 'npx',
       args: 'tsx src/agent/index.ts',
-      cwd: '/opt/kairos',
+      cwd: '/opt/angorapay-mesh',
       env: {
         NODE_ENV: 'production',
         MODE: 'live',
@@ -18,8 +18,8 @@ module.exports = {
 
       // Logging
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      error_file: '/opt/kairos/logs/error.log',
-      out_file: '/opt/kairos/logs/out.log',
+      error_file: '/opt/angorapay-mesh/logs/error.log',
+      out_file: '/opt/angorapay-mesh/logs/out.log',
       merge_logs: true,
       max_size: '50M',
 

@@ -1,676 +1,154 @@
-<p align="center">
-  <h1 align="center">Kairos</h1>
-  <p align="center"><strong>The agent pays for its own governance.</strong></p>
-  <p align="center">
-    <a href="#core-thesis">Core Thesis</a> &bull;
-    <a href="#tracks-covered">Tracks Covered</a> &bull;
-    <a href="#what-kairos-proves">What Kairos Proves</a> &bull;
-    <a href="#why-kairos-is-different">Why Kairos Is Different</a> &bull;
-    <a href="#detailed-track-mapping">Track Mapping</a> &bull;
-    <a href="#commerce-studio">Commerce Studio</a> &bull;
-    <a href="#production-deployment">Production</a> &bull;
-    <a href="#runtime-api-highlights">API</a>
-  </p>
-  <p align="center">
-    Built for the <strong>Agentic Economy on Arc</strong>· April 2026<br>
-    <strong>Live:</strong> <a href="https://kairos.nov-tia.com">kairos.nov-tia.com</a>
-  </p>
-</p>
+# AngoraPay Mesh
 
----
+Market-intelligence agents that can buy trusted paid signals, enforce policy, generate receipts, and reconcile payment with provider delivery.
 
-Kairos is an Arc-native agentic payments runtime built for high-frequency, usage-based USDC settlement. It is designed for the Agentic Economy on Arc and covers all four tracks through one connected runtime: agent-to-agent governance payments, paid API monetization, usage-based compute billing, and real-time micro-commerce settlement.
+AngoraPay Mesh is the product layer for real market-facing agents. The inherited runtime remains useful as an Arc/Circle/x402 proof foundation, but the application identity, API, SDKs, and operator experience are AngoraPay Mesh.
 
-Kairos demonstrates that an autonomous system can pay for governance, paid data, compute, and micro-commerce actions one step at a time without gas overhead destroying the economics.
+## What AngoraPay Mesh Does
 
-Kairos is not presented as a generic trading bot. The market loop is the workload that produces repeated, economically meaningful actions. The product being demonstrated is the payment, governance, and proof runtime around that workload.
+AngoraPay Mesh helps agents answer one operational question before they act:
 
-The unique idea is simple:
+> Which intelligence should the agent buy, which provider should it trust, what should be blocked, how should payment happen, and how can the paid signal be proven later?
 
-> The agent pays for its own governance.
+The platform combines:
 
-Most agent systems treat governance, safety, monitoring, and audit as hidden backend overhead. Kairos makes them visible, metered, and verifiable. The agent does not only pay for external services. It also pays for the oversight required before it can act.
+- specialist market-intelligence agents
+- provider discovery and route scoring
+- policy, trust, and spend controls
+- Circle/x402 payment boundaries
+- receipts, traces, checkpoints, and proof bundles
+- reconciliation between payment and provider delivery
+- workspace-scoped API keys and audit logs
+- TypeScript and Python SDKs
 
-That means Kairos is not only showing that agents can make payments. It is showing that autonomous agents can become economically accountable before they act.
+## Primary Users
 
-## Core Thesis
+AngoraPay Mesh is built for:
 
-Autonomous agents will consume data, models, tools, APIs, settlement rails, and governance services at high frequency. If those actions are priced only through subscriptions, monthly invoices, or opaque platform costs, the economics of agentic systems become hard to inspect.
+- agent builders integrating paid intelligence into autonomous workflows
+- prediction-market teams evaluating odds, liquidity, event movement, and news shifts
+- trading-agent teams checking cross-venue arbitrage, fees, slippage, and execution risk
+- social/copy-trading teams evaluating trader reliability and signal quality
+- paid intelligence providers exposing x402-compatible services
+- workspace admins managing policies, budgets, API keys, and provider access
+- auditors reviewing traces, receipts, payment records, and reconciliation outcomes
 
-Kairos makes the economics visible at the level of the individual action.
+## Specialist Agents
 
-In one runtime cycle, Kairos can produce paid events across four layers:
+### Prediction Market Intelligence Agent
 
-1. **Governance**: the agent pays for mandate checks, oracle integrity, simulation, risk routing, supervisory review, and reflective oversight.
-2. **Data**: the agent pays for market, sentiment, news, and PRISM-style context through x402-backed sources.
-3. **Compute**: the agent pays for runtime reasoning and SAGE reflection as metered inference events.
-4. **Settlement**: the approved action produces an Arc USDC micro-commerce receipt.
+Evaluates whether a prediction market may be mispriced or positive expected value.
 
-This creates a new operating model:
+Typical paid intelligence:
 
-> The agent pays for the right to act, and every paid step can be inspected.
+- odds feed
+- liquidity depth
+- news or sentiment movement
+- probability shift
+- risk check
+- proof receipt
 
-## Tracks Covered
+### Cross-Venue Arbitrage Agent
 
-Kairos covers all four tracks in one connected runtime.
+Evaluates whether a price gap across venues survives fees, slippage, liquidity, latency, and risk.
 
-The tracks are not implemented as separate demos. A single Kairos decision cycle can trigger paid data access, governance billing, compute billing, and Arc micro-commerce settlement.
+Typical paid intelligence:
 
-| Hackathon Track | Kairos Implementation | Proof Surface |
-|---|---|---|
-| **Track 1: Agent-to-Agent Payment Loop** | Kairos bills governance stages as sub-cent USDC events. The agent pays for mandate checks, oracle integrity, simulation, supervisory review, risk routing, LLM reasoning, and SAGE reflection. | Dashboard track card, `Settlement Ledger`, governance receipt rows, Arcscan links where confirmed |
-| **Track 2: Per-API Monetization Engine** | Kairos consumes paid data through AIsa/x402 for price, sentiment, financial news, PRISM-style context, and crypto spot fallback. Each paid data request can create a USDC receipt. | Track 2 source counters, x402 mode status, `Settlement Ledger`, paid API receipt rows |
-| **Track 3: Usage-Based Compute Billing** | Kairos bills runtime reasoning and SAGE reflection as metered compute events. Gemini 3 Flash handles runtime reasoning, while Gemini 3 Pro powers reflection with failover support. | Compute billing rows, model/provider readiness, `Settlement Ledger`, SAGE status |
-| **Track 4: Real-Time Micro-Commerce Flow** | Kairos settles approved actions or proof-commerce events using small Arc USDC receipts, by default `0.009 USDC`. It also generates invoice, receipt, and delivery-proof bundles. | Track 4 status, `Settlement Ledger`, `Execution History`, document links, Arcscan verification |
+- venue price feeds
+- spread check
+- liquidity check
+- fee estimate
+- slippage estimate
+- execution-risk check
+- proof receipt
 
-The important point is that Kairos is not merely claiming track compatibility. It produces inspectable proof for each track:
+### Social Trading Intelligence Agent
 
-- Track 1 proves the agent pays for governance.
-- Track 2 proves the agent pays for data.
-- Track 3 proves the agent pays for reasoning and reflection.
-- Track 4 proves approved actions can generate Arc micro-commerce settlement receipts.
+Evaluates whether a trader, influencer, or social-alpha signal is reliable enough to follow.
 
-Together, the four tracks show the full Kairos thesis:
+Typical paid intelligence:
 
-> An autonomous agent can pay for the full operating stack required to act safely: governance, data, compute, and settlement.
+- trader history
+- signal consistency
+- social sentiment
+- drawdown pattern
+- copy-risk score
+- source credibility
+- proof receipt
 
-## Key Capabilities
-
-| Capability | Description |
-|---|---|
-| **Payment-as-governance** | Every governance stage costs $0.001 USDC and the agent cannot act without paying for oversight |
-| **All four hackathon tracks** | One cycle fires paid events across governance, data, compute, and settlement |
-| **On-chain audit trail** | Every paid action has Circle attribution and Arc transaction proof |
-| **x402 native data layer** | Five paid data sources flow through AIsa x402 and Circle Gateway |
-| **Gemini-first reasoning** | Gemini 3 Flash runtime inference plus Gemini 3 Pro reflection with failover |
-| **Full Circle stack** | Arc, USDC, Circle Nanopayments, Circle Wallets, and Circle Gateway in one runtime |
-| **Production runtime** | Node.js + TypeScript + PM2 on Vultr with MCP and Kraken bridge surfaces |
-| **Two-surface proof** | `/transactions` (Settlement Ledger) for payment proof and `/execution` for action context |
-| **Commerce Studio** | Function Calling over live tools, multimodal invoice analysis, and Arc proof settlement |
-
----
-
-## Live
-
-| Surface | URL | Purpose |
-|---|---|---|
-| Dashboard | `https://kairos.nov-tia.com` | Surface for all four tracks |
-| Settlement Ledger | `https://kairos.nov-tia.com/transactions` | Every paid action in one audit trail; |
-| Execution History | `https://kairos.nov-tia.com/execution` | Governed action and outcome log (entry, exit, PnL, artifacts; `/trades` also works) |
-| Document Vault (auxiliary) | `https://kairos.nov-tia.com/documents` | Optional document-only view; invoice, receipt, and proof links are already available from Settlement Ledger rows |
-| Commerce Studio | `https://kairos.nov-tia.com/commerce` | Gemini Function Calling, multimodal receipt analysis, and Arc proof settlement |
-| MCP interface | `https://kairos.nov-tia.com/mcp` | JSON-RPC tools, resources, and prompts for agents/operators |
-| Agent card | `https://kairos.nov-tia.com/.well-known/agent-card.json` | Public agent discovery metadata |
-| Arc block explorer | `https://testnet.arcscan.app` | Independent verification of Arc transaction hashes |
-
----
-
-## What Kairos Proves
-
-Kairos is built to prove an economic model, not only to render a UI:
-
-- Per-action pricing at or below one cent.
-- 50+ real Arc transaction receipts during the live demo loop.
-- USDC-denominated settlement across governance, APIs, compute, and approved actions.
-- x402-backed paid API consumption through AIsa and Circle infrastructure.
-- Gemini 3 Flash runtime reasoning, Gemini 3 Pro SAGE reflection, and resilient failover when providers fail.
-- Gemini function calling for live wallet, proof, and Track 4 inspection plus multimodal receipt or invoice analysis.
-- Native Kairos invoice, receipt, and delivery-proof bundle generation for first-party Track 4 events.
-- Cross-track invoice, receipt, and proof generation so Tracks 1 to 3 are inspectable without reading raw ledger rows.
-- A transparent margin story: this type of high-frequency agent activity works on Arc, but breaks on high-fee payment rails.
-
-Important: `Runtime cycles` on the dashboard are decision-loop counts. They are not the same thing as verified Arc transactions. Use `Real Arc txns`, the Settlement Ledger page, and Arcscan links for on-chain proof.
-
-## Why Kairos Is Different
-
-Kairos is different from a normal agent payment demo because the payment is not only for external services.
-
-The agent also pays for its own control layer.
-
-| Conventional agent system | Kairos model |
-|---|---|
-| Governance is hidden backend overhead | Governance is a paid, inspectable runtime event |
-| Safety checks are logged after the fact | Safety checks are metered before action |
-| Compute cost is bundled into platform spend | Reasoning and reflection are billed per use |
-| Payment is usually subscription-based | Payment happens per action |
-| Audit trails are secondary | Proof is part of the runtime loop |
-| The agent acts first and explains later | The agent pays for oversight before it acts |
-
-Kairos therefore proves a stronger thesis than "agents can pay for things."
-
-It proves that an autonomous runtime can expose the economics of its own operation:
-
-- what data was bought
-- what reasoning was used
-- what governance checks were paid for
-- what action was approved
-- what settlement proof was produced
-- which transaction can be independently verified
-
-That is why the trading loop should be understood as the workload, not the product. The product is the economic governance runtime around the workload.
-
-## What Kairos Actually Is
-
-Kairos has five layers working together:
-
-1. Data plane: paid market, sentiment, and PRISM-style context fetched through AIsa and x402.
-2. Governance plane: mandate, oracle, supervisory, simulator, risk-router, LLM, and SAGE stages that bill the runtime per action.
-3. Compute plane: runtime reasoning and reflective learning billed like metered infrastructure.
-4. Execution plane: approved actions can be settled on Arc, routed to Kraken, or recorded locally depending on readiness.
-5. Proof plane: dashboard, Settlement Ledger, Execution History, MCP, and Arcscan links expose what happened in a judge-friendly way.
-
-At runtime, one long-running Node.js process owns the agent loop, dashboard API, and MCP interface:
+## Architecture
 
 ```text
-Paid APIs and market inputs
+Product UI / SDK / External Agent
         |
         v
-AIsa x402 / live feeds / sentiment / PRISM
+Angora API Routes
         |
         v
-Kairos runtime loop
-        |
-        +--> mandate checks
-        +--> oracle integrity
-        +--> supervisory governance
-        +--> risk router and simulation
-        +--> Gemini/OpenAI/Claude reasoning
-        +--> SAGE reflection
+Mission Orchestrator
         |
         v
-Arc USDC settlement and proof
+Specialist Agent Runtime
         |
-        +--> dashboard
-        +--> settlement ledger
-        +--> execution history
-        +--> MCP tools/resources/prompts
+        v
+Context, Memory, Checkpoints, Policy
+        |
+        v
+Provider Discovery and Route Scoring
+        |
+        v
+Circle/x402 Payment Boundary
+        |
+        v
+Provider Delivery, Receipt, Trace
+        |
+        v
+Payment Ledger and Reconciliation
 ```
 
-## How To Read The Dashboard
+The product layer lives in `src/angora`. The dashboard page is served from `src/dashboard/public/angora.html`.
 
-The dashboard is intentionally compact. These are the terms that matter:
+## API Surface
 
-| Term | Meaning |
-| --- | --- |
-| `Real Arc txns` | Verified Arc receipts across all four tracks counted as live proof |
-| `Pending (not verified yet)` | A receipt exists but the final Arc hash has not yet been hydrated |
-| `Fallback` | The runtime recorded the event without a verifiable on-chain receipt |
-| `Runtime cycles` | Decision loops completed by the agent, not on-chain transactions |
-| `Track status` | Current proof state for that track, such as `LIVE x402`, `COMPUTE BILLED`, or `ARC SETTLED` |
-| `Recent Nanopayments` | Most recent receipts that support the live proof story |
+The canonical API prefix is:
 
-The main dashboard is optimized for judges. It should answer:
-
-- Is Kairos live?
-- Are the four tracks represented?
-- Is USDC actually being spent or settled?
-- Is there real Arc proof behind the claims?
-
-Long explanations belong in this README, `Settlement Ledger`, or the docs under [`docs/`](docs).
-
-## Detailed Track Mapping
-
-Each hackathon track maps to a concrete runtime path in Kairos. The sections below explain exactly what triggers each track, what gets billed or settled, what appears on the dashboard, and what appears in History.
-
-### Track 1: Agent-to-Agent Payment Loop
-
-Track 1 is the governance billing loop. Every time Kairos runs a meaningful governance stage, it can bill that stage as a sub-cent USDC action.
-
-What triggers Track 1:
-
-- Mandate checks
-- Oracle integrity checks
-- Simulator or scenario checks
-- Supervisory meta-agent decisions
-- Risk router review
-- LLM reasoning
-- SAGE reflection
-
-What gets billed:
-
-- `governance-mandate`
-- `governance-oracle`
-- `governance-simulator`
-- `governance-supervisory`
-- `governance-risk-router`
-- LLM and SAGE-linked governance receipts where applicable
-
-How the flow works:
-
-1. A governance stage runs during the decision cycle.
-2. `billEvent("governance-*")` creates a nanopayment receipt.
-3. The receipt is stored in the billing store as a Track 1 event.
-4. The dashboard stage counters and Track 1 card update.
-5. `Settlement Ledger` receives the corresponding payment row.
-
-What settles:
-
-- A small Arc USDC receipt for the governance action when the signer and settlement path are ready.
-- If the signer is unavailable, Kairos records a fallback receipt instead of bypassing safety.
-
-What the dashboard proves:
-
-- Which governance stages are active.
-- How often they have been billed.
-- Track 1 spend and receipt status.
-
-What `Settlement Ledger` shows:
-
-- Payment rows labeled for the governance stage that produced them.
-- Receipt amount, status, reference, and Arc verifier when confirmed.
-
-Why this matters:
-
-Track 1 proves that an autonomous runtime can meter and pay for its own internal agent stages instead of hiding all governance inside one opaque monthly cost.
-
-### Track 2: Per-API Monetization Engine
-
-Track 2 is Kairos's paid data plane. It pays for external information per request using AIsa over x402 and turns those paid responses into normalized inputs for the rest of the runtime.
-
-What Track 2 currently buys:
-
-- Spot price data
-- Social sentiment data
-- Financial news
-- PRISM-style reasoning and market context
-- Crypto spot fallback through AIsa Perplexity Sonar when needed
-
-What the flow does:
-
-1. The runtime needs fresh price, sentiment, or PRISM context.
-2. `normalisation.ts` verifies that x402 is ready.
-3. Kairos calls the AIsa endpoint.
-4. The response is normalized into the shapes the strategy, oracle, and market-state logic expect.
-5. `billEvent("data-*")` creates the paid receipt.
-6. The receipt is added to Track 2 billing totals and source-level breakdowns.
-7. The dashboard Track 2 card and `Settlement Ledger` update.
-
-What settles:
-
-- A sub-cent or low-cent Arc USDC receipt per paid API request when the x402 signer is active.
-
-Track 2 source mapping in the current runtime:
-
-| Internal billing key | Current upstream source in production | Purpose |
-| --- | --- | --- |
-| `coingecko` | AIsa financial prices or AIsa Perplexity spot-price path | Primary price slot in legacy downstream shape |
-| `kraken` | AIsa financial prices or AIsa Perplexity spot-price path | Secondary price slot in legacy downstream shape |
-| `feargreed` | AIsa Twitter advanced search | Sentiment proxy |
-| `alphavantage` | AIsa financial news | News sentiment proxy |
-| `prism` | AIsa Perplexity Sonar | PRISM-style reasoning and directional context |
-
-Important note:
-
-The `coingecko`, `kraken`, `feargreed`, and `alphavantage` labels still exist as internal compatibility keys because older downstream code expects those categories. In production Track 2, those labels do not necessarily mean Kairos is calling those vendors directly. The paid upstream request is the AIsa or x402-backed source listed above.
-
-What the dashboard proves:
-
-- Source-level call counts.
-- Spend by source.
-- Whether the data plane is running in `x402`, `fallback`, or `disabled` mode.
-
-What `Settlement Ledger` shows:
-
-- One ledger row per paid data receipt.
-- The event name, source, amount, receipt state, and verifier.
-
-What fallback means for Track 2:
-
-- If AIsa is configured but the signer is missing, Track 2 reports fallback mode.
-- If an AIsa endpoint fails, Kairos only uses safe fallbacks where the strategy can still operate responsibly.
-- Fallback receipts do not count as verified x402 proof.
-
-Why this matters:
-
-Track 2 proves that data providers can charge per request and still be economically viable when the consumer is an agent making many tiny calls.
-
-### Track 3: Usage-Based Compute Billing
-
-Track 3 is Kairos's metered compute layer. It bills both real-time reasoning and reflective learning as separate compute actions.
-
-Track 3 has two subflows:
-
-- Runtime reasoning: the explanation layer for each decision.
-- SAGE reflection: the learning layer that reviews accumulated outcomes and proposes bounded improvements.
-
-#### Runtime reasoning flow
-
-What it does:
-
-- Builds a structured prompt from price, risk, sentiment, position, and SAGE context.
-- Produces a human-readable explanation of why the action was approved or rejected.
-- Bills that explanation as metered compute.
-
-Current runtime failover order in the code:
-
-1. Gemini runtime models using the primary Gemini key
-2. Gemini runtime models using the secondary Gemini key
-3. OpenAI `gpt-4o-mini`
-4. Claude `claude-sonnet-4-20250514`
-5. Deterministic no-API fallback
-
-Recommended production configuration:
-
-```bash
-GEMINI_RUNTIME_MODELS=gemini-3-flash-preview
-GEMINI_REFLECTION_MODELS=gemini-3-pro-preview,gemini-3-flash-preview
+```text
+/v1/angora
 ```
 
-What gets billed:
-
-- `compute-llm`
-
-What the dashboard proves:
-
-- That Kairos is charging per inference.
-- Which model family is active or available.
-- Whether compute billing is live or in fallback mode.
-
-#### SAGE reflection flow
-
-What it does:
-
-- Watches closed trade outcomes and contextual features.
-- Waits for enough outcomes and cooldown cycles.
-- Asks a Gemini reflection model to propose insights, playbook rules, and bounded weight changes.
-- Applies only safe, caged changes.
-- Bills that reflection as a separate compute event.
-
-Current SAGE model order:
-
-1. Gemini 3 Pro reflection model
-2. Gemini 3 Flash reflection fallback
-
-What gets billed:
-
-- `compute-sage`
-
-What `Settlement Ledger` shows for Track 3:
-
-- Separate receipt rows for inference and reflection.
-- Model labels where available.
-- Arc verification when the compute receipt is confirmed on-chain.
-
-Important distinction:
-
-Track 3 is not "the model made the trade." The risk engine still decides. The model explains the decision and SAGE learns within strict bounds. That distinction is part of the safety story.
-
-Why this matters:
-
-Track 3 proves that agents can pay for compute in the same metered way they pay for APIs or settlement. It turns reasoning itself into a billable economic action.
-
-### Track 4: Real-Time Micro-Commerce Flow
-
-Track 4 is Kairos's micro-commerce settlement layer. This is the track most likely to be misunderstood, so the important distinction is stated plainly:
-
-Track 4 does not mean "every underlying trade notional settles on Arc."
-
-In the current implementation, Track 4 proves that an approved Kairos action can produce a real Arc USDC micro-commerce receipt. The receipt is the on-chain settlement proof for the action or checkout event.
-
-There are two related things inside Track 4:
-
-- The underlying approved action or execution decision
-- The small Arc USDC receipt that settles or proves that action
-
-Those are related, but they are not the same value.
-
-What Track 4 currently settles:
-
-- A small Arc USDC payment, by default `0.009 USDC`, to `MICRO_COMMERCE_SETTLEMENT_ADDRESS`
-- The payment represents an approved action or a proof-commerce checkout event
-
-What Track 4 now generates automatically for Kairos-native flows:
-
-- A Kairos invoice page with the reference merchant, amount, and action context
-- A Kairos receipt page with the bounded Arc proof settlement
-- A Kairos delivery-proof page with the reviewed or fulfilled commerce context
-
-Manual upload is still supported for third-party receipts or invoices that originate outside Kairos. Native first-party Track 4 flows no longer depend on the user supplying those documents.
-
-Current Track 4 event types:
-
-| Event | What it means |
-| --- | --- |
-| `track4-approved-action` | A risk-approved non-neutral action created a micro-commerce settlement receipt |
-| `track4-proof-capsule` | A periodic proof-commerce checkout emitted a live Arc receipt even when the market loop stayed neutral |
-
-How the flow works:
-
-1. Kairos reaches a risk-approved action, or a proof-commerce interval is reached.
-2. The runtime attempts Arc settlement through the Track 4 micro-commerce path.
-3. `settleMicroCommerceEvent()` creates the receipt.
-4. The checkpoint or micro-commerce store records the event.
-5. Kairos generates a native invoice, receipt, and delivery-proof bundle for the event.
-6. The dashboard Track 4 card updates.
-7. `Settlement Ledger` receives the payment row and document links.
-8. If applicable, `Execution History` also receives the execution context for the underlying action and its commerce-document links.
-
-Track 4 state meanings:
-
-| State | Meaning |
-| --- | --- |
-| `ARC SETTLED` | A confirmed Arc receipt exists for the Track 4 action |
-| `VERIFYING` | The receipt was submitted but the final Arc hash is still being resolved |
-| `KRAKEN LIVE` | Exchange execution happened, but Arc settlement was not the proof path |
-| `PAPER EXECUTION` | Kraken paper execution was recorded, not on-chain settlement |
-| `LOCAL ONLY` | The action was recorded locally without external settlement proof |
-| `IDLE` | No qualifying Track 4 action has been produced yet |
-
-What the Track 4 metrics mean:
-
-- `actions recorded`: how many Track 4-eligible action events were observed
-- `settled volume`: the sum of Track 4 settlement proof represented by the runtime
-- `recent events`: the most recent Arc micro-commerce receipts or execution proof rows
-
-Important distinction on value:
-
-The underlying action may involve a much larger economic notional than the Track 4 receipt amount. The receipt amount is the micro-commerce settlement proof. The action notional is the size of the governed action behind that proof.
-
-What the dashboard proves:
-
-- Whether Track 4 is actually settling on Arc
-- Whether it is falling back to Kraken live, Kraken paper, or local-only execution
-- Recent proof links for the latest settled micro-commerce events
-
-What `Settlement Ledger` shows:
-
-- The Track 4 payment or settlement receipt itself
-- Receipt amount, mode, status, reference, and Arc verifier
-- Document links when Kairos generated a native invoice, receipt, and delivery-proof bundle for that event
-
-What `Execution History` shows:
-
-- The underlying governed action or execution lifecycle
-- Entry, exit, PnL, close reason, artifact, and related tx link if present
-- Commerce-document links when the execution produced a first-party Track 4 bundle
-
-Why Track 4 has both `Settlement Ledger` and `Execution History`:
-
-One approved Kairos action can generate two different records:
-
-- A trade or execution record showing what Kairos decided to do
-- A payment or settlement record showing how that action was economically settled or proven
-
-That is why `Execution History` relates to Track 4 without being the same thing as the Track 4 proof ledger.
-
-Why this matters:
-
-Track 4 proves the most visible part of the hackathon thesis: a user or agent interaction can trigger immediate USDC settlement per interaction instead of relying on subscriptions or batched invoices.
-
-## Commerce Studio
-
-The Google partner requirements are surfaced in production at `https://kairos.nov-tia.com/commerce`.
-
-This page has two live workflows:
-
-### 1. Gemini function-calling assistant
-
-What it does:
-
-- Uses Gemini 3 Flash function calling against live Kairos backend tools
-- Explains current gateway balance, Arc proof counts, and Track 4 settlement state
-- Can preview a proof settlement without sending a transaction
-- Can optionally mint a proof receipt only when the operator explicitly enables settlement actions
-- Falls back to OpenAI operator summarization if Gemini quota or availability fails, while keeping settlement actions opt-in
-- Links newly generated invoice, receipt, and proof pages from settlement results, while the full archive lives on `/documents`
-
-What tools Gemini can call:
-
-- `get_gateway_balance`
-- `get_arc_receipt_summary`
-- `get_track4_micro_commerce_status`
-- `preview_commerce_proof_settlement`
-- `settle_commerce_proof_receipt` when settlement actions are enabled
-
-Why this matters:
-
-This closes the gap between "Gemini is configured in the backend" and "Gemini is visibly driving agent commerce logic in the shipped product."
-
-### 2. Gemini multimodal commerce proof
-
-What it does:
-
-- Accepts a receipt, invoice, or delivery-proof image
-- Uses Gemini multimodal analysis to extract merchant, invoice number, date, totals, and issues
-- Produces a settlement recommendation of `approve`, `review`, or `reject`
-- Prepares a bounded Arc proof receipt preview capped at `<= 0.01 USDC`
-- Falls back to OpenAI vision analysis if Gemini multimodal calls are unavailable at runtime
-
-What Kairos now creates itself:
-
-- Native Track 4 commerce events create their own invoice, receipt, and delivery-proof pages automatically.
-- External commerce events can still be uploaded for Gemini review before any proof receipt is minted.
-
-Important distinction:
-
-The multimodal flow does not settle the full invoice amount on Arc. It creates a tiny proof receipt for the reviewed commerce event. The invoice total remains the reference notional, while the proof receipt is the judge-facing settlement evidence.
-
-Native commerce document routes:
-
-- `/api/commerce/documents`
-- `/api/commerce/documents/:eventId`
-- `/api/documents`
-- `/api/documents/:eventId`
-- `/documents`
-- `/commerce/docs/:eventId/invoice`
-- `/commerce/docs/:eventId/receipt`
-- `/commerce/docs/:eventId/delivery-proof`
-- `/documents/:eventId/invoice`
-- `/documents/:eventId/receipt`
-- `/documents/:eventId/delivery-proof`
-
-Recommended configuration:
-
-```bash
-GEMINI_FUNCTION_MODELS=gemini-3-flash-preview
-GEMINI_MULTIMODAL_MODELS=gemini-3-pro-preview,gemini-3-flash-preview
-COMMERCE_PROOF_SETTLEMENT_AMOUNT_USDC=0.009
-COMMERCE_PROOF_SETTLEMENT_MAX_USDC=0.01
+Core routes include:
+
+```text
+GET  /v1/angora/health
+GET  /v1/angora/ready
+GET  /v1/angora/dashboard/summary
+
+POST /v1/angora/agent-missions/run
+GET  /v1/angora/conversations
+GET  /v1/angora/agent-traces
+GET  /v1/angora/agent-checkpoints
+
+POST /v1/angora/gateway/call
+GET  /v1/angora/services/search
+GET  /v1/angora/route/simulate
+
+POST /v1/angora/providers/register
+POST /v1/angora/providers/:providerId/validate
+
+GET  /v1/angora/payment-intents
+GET  /v1/angora/payment-events
+GET  /v1/angora/provider-deliveries
+GET  /v1/angora/receipts
+POST /v1/angora/reconciliation/run
+GET  /v1/angora/reconciliation/runs
+
+POST /v1/angora/auth/keys
+GET  /v1/angora/auth/keys
+POST /v1/angora/auth/keys/rotate
+POST /v1/angora/auth/keys/:keyId/revoke
 ```
 
-## Settlement Ledger vs Execution History
-
-These two surfaces answer different questions.
-
-### Settlement Ledger
-
-Use `https://kairos.nov-tia.com/transactions` when the question is:
-
-- What got paid?
-- What got settled?
-- Is there a real Arc receipt for it?
-- Which invoice, receipt, or delivery-proof bundle belongs to that commerce event?
-- Which hackathon track does this support?
-
-`Settlement Ledger` is the consolidated proof ledger across:
-
-- Track 1 governance receipts
-- Track 2 paid API receipts
-- Track 3 compute receipts
-- Track 4 micro-commerce receipts
-- operator or audit receipts where applicable
-
-### Document routes
-
-Use `https://kairos.nov-tia.com/documents` as an auxiliary document route when you want a doc-only view.
-
-For the primary judge workflow, use `Settlement Ledger` and open Invoice/Receipt/Proof links directly from each ledger row.
-
-### Execution History
-
-Use `https://kairos.nov-tia.com/execution` when the question is:
-
-- What action did Kairos take?
-- When was a position opened or closed?
-- What was the PnL?
-- What artifact explains the action?
-- Which native commerce documents were generated from that action?
-
-`Execution History` is the execution log. It is related most closely to Track 4, but it is not itself the Track 4 proof ledger.
-
-## MCP Surface
-
-Kairos is not only a dashboard. It also exposes an MCP interface over HTTP JSON-RPC so other agents and operator tools can inspect and use it programmatically.
-
-What the MCP surface exposes:
-
-- Market and trust state
-- Mandate and capital rights
-- Positions and performance
-- Trade explanation and history
-- DEX routing context
-- Kraken and feed status
-- Operator controls
-- Prompts for incidents, trade explanations, and trust summaries
-
-Why it matters:
-
-The MCP endpoint turns Kairos into a composable agent service rather than a static demo page.
-
-## Production Deployment
-
-Kairos is deployed as a long-running PM2-managed Node.js service on a VPS behind Nginx.
-
-Current production shape:
-
-| Component | Value |
-| --- | --- |
-| PM2 app name | `kairos-agent` |
-| Working directory | `/opt/kairos` |
-| Process entrypoint | `npx tsx src/agent/index.ts` |
-| Dashboard port | `3000` |
-| MCP runtime port | `3001` |
-| Public domain | `https://kairos.nov-tia.com` |
-| Persistent runtime directory | `.kairos/` |
-
-Operational notes:
-
-- `.kairos/` stores runtime state, price history, SAGE state, and micro-commerce records.
-- Restarting PM2 does not delete `.kairos/`, and the billing snapshot now reloads the persisted Arc receipt counters on boot.
-- The live dashboard keeps recent Track 1 to 3 receipt feeds in sync from that persisted snapshot instead of starting again from zero after deploys.
-
-### Kraken CLI status
-
-The Kraken execution bridge is now installed and validated on the production server.
-
-Current validation surfaces:
-
-- `/api/kraken/cli`
-- `/api/kraken/snapshot`
-- `/api/kraken/preflight`
-
-What that means:
-
-- The `kraken` binary is installed in a system path visible to the runtime.
-- Kairos can health-check the CLI directly.
-- Paper mode can be initialized and used by the runtime.
-- API key presence is being detected by the production process.
-
-Important limit:
-
-Kraken readiness improves Track 4 and execution-side validation, but the highest-value hackathon proof for Kairos remains Arc-settled USDC receipts, not paper fills.
-
-## Environment Setup
+## Local Development
 
 Install dependencies:
 
@@ -678,164 +156,160 @@ Install dependencies:
 npm install
 ```
 
-Create a local environment file:
-
-```bash
-cp .env.example .env
-```
-
-### Required Arc and Circle values
-
-```bash
-CIRCLE_API_KEY=
-CIRCLE_ENTITY_SECRET=
-CIRCLE_WALLET_SET_ID=
-CIRCLE_WALLET_ID=
-AGENT_WALLET_ADDRESS=
-GOVERNANCE_BILLING_ADDRESS=
-MICRO_COMMERCE_SETTLEMENT_ADDRESS=
-RPC_URL=https://rpc.testnet.arc.network
-CHAIN_ID=5042002
-```
-
-### Required x402 and paid-data signer values
-
-Use Circle Wallets or a mnemonic signer:
-
-```bash
-OWS_MNEMONIC=
-X402_MNEMONIC=
-AISA_BASE_URL=https://api.aisa.one/apis/v2
-GATEWAY_CONTRACT=0x0077777d7eba4688bdef3e311b846f25870a19b9
-```
-
-### Track 3 AI configuration
-
-```bash
-GEMINI_API_KEY_PRIMARY=
-GEMINI_API_KEY_SECONDARY=
-GEMINI_RUNTIME_MODELS=gemini-3-flash-preview
-GEMINI_REFLECTION_MODELS=gemini-3-pro-preview,gemini-3-flash-preview
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-```
-
-### Track 4 proof-commerce configuration
-
-```bash
-TRACK4_SETTLEMENT_AMOUNT_USDC=0.009
-TRACK4_PROOF_COMMERCE_ENABLED=true
-TRACK4_PROOF_COMMERCE_INTERVAL_CYCLES=5
-```
-
-### Kraken bridge configuration
-
-```bash
-KRAKEN_API_KEY=
-KRAKEN_API_SECRET=
-KRAKEN_PAPER_TRADING=true
-KRAKEN_CLI_PATH=kraken
-KRAKEN_CLI_TIMEOUT_MS=30000
-```
-
-## Local Development
-
-Build and test:
+Run checks:
 
 ```bash
 npm run build
-npm test
-npm run test:mcp
+npm run angora:full-check
 ```
 
-Run the full runtime locally:
+Start the dashboard/API server:
 
 ```bash
-npm run start:arc
+npm run dashboard
 ```
 
-Local defaults:
+Open:
 
-- Dashboard: `http://localhost:3000`
-- MCP runtime: `http://localhost:3001/mcp`
+```text
+http://localhost:3000/angora.html
+```
 
-Useful commands:
+Check health:
 
-| Command | Purpose |
-| --- | --- |
-| `npm run build` | Type-check and compile the project |
-| `npm test` | Run the test suite |
-| `npm run test:mcp` | Validate the MCP surface |
-| `npm run start:arc` | Start the full agent, dashboard, and MCP runtime |
-| `npm run dashboard` | Start only the dashboard server |
-| `npm run mcp` | Start only the MCP server |
-| `npm run circle:bootstrap` | Generate or register Circle wallet configuration |
-| `npm run demo:nanopayments` | Exercise nanopayment behavior |
-| `npm run demo:onchain` | Exercise the on-chain demo path |
+```bash
+curl http://localhost:3000/v1/angora/health
+```
 
-## Runtime API Highlights
+Run a local demo mission with auth disabled:
 
-| Route | Purpose |
-| --- | --- |
-| `/api/status` | Runtime status, track state, MCP summary, provider readiness |
-| `/api/billing` | Billing totals, Arc transaction count, spend, and receipt summaries |
-| `/api/transactions` | Consolidated proof ledger used by `Settlement Ledger` |
-| `/api/checkpoints` | Governance checkpoints and execution outcomes |
-| `/api/health` | Health summary for monitoring |
-| `/api/feeds/status` | Data-feed and x402 readiness |
-| `/api/sage/status` | SAGE learning and reflection state |
-| `/api/operator/state` | Operator controls and pause state |
-| `/api/gateway-balance` | Circle Gateway or x402 wallet balance |
-| `/api/kraken/cli` | Kraken CLI installation and health |
-| `/api/kraken/snapshot` | Kraken balance, open orders, trades, ticker, and CLI status |
-| `/api/kraken/preflight` | Execution readiness check for the Kraken bridge |
+```bash
+ANGORA_AUTH_DISABLED=true npm run dashboard
+```
 
-## Security And Secrets
+```bash
+curl -X POST http://localhost:3000/v1/angora/demo/market-mission \
+  -H "Content-Type: application/json" \
+  -d "{\"payload\":{\"asset\":\"BTC\",\"market\":\"BTC prediction market\",\"horizon\":\"intraday\"}}"
+```
 
-- Never commit `.env`, `.env.arc`, `.kairos/`, `.circle-recovery-file/`, or private keys.
-- Circle API keys, entity secrets, wallet recovery files, Gemini keys, OpenAI keys, Anthropic keys, Kraken keys, Alpha Vantage keys, and mnemonics must stay outside Git.
-- The dashboard intentionally exposes only proof summaries and public metadata.
-- Billing failures do not bypass governance. Kairos records pending or fallback receipts instead of silently pretending settlement happened.
+## Payment Modes
 
-## Verification Checklist
+Payment modes must remain explicit:
 
-Use this checklist before demos or production reviews:
+```text
+demo_fallback
+arc_testnet
+real_x402
+blocked
+failed
+pending
+local_proof
+```
 
-1. `npm run build` passes.
-2. `npm test` passes.
-3. `npm run test:mcp` passes.
-4. `https://kairos.nov-tia.com` returns `200`.
-5. `/transactions`, `/execution`, `/mcp`, and `/.well-known/agent-card.json` return `200`.
-6. `/api/billing` shows `realTxns >= 50` when the demo proof target is being exercised.
-7. Track 2 reports `x402` mode or explains fallback clearly.
-8. Track 3 shows Gemini readiness or clear provider failover state.
-9. Track 4 shows `ARC SETTLED` when live micro-commerce receipts are landing on Arc.
-10. `Settlement Ledger` contains Arcscan-verifiable hashes for confirmed receipts.
-11. `/api/kraken/cli` and `/api/kraken/preflight` report healthy when Kraken execution is part of the demo story.
-12. PM2 shows `kairos-agent` online.
+Demo mode must not pretend to be real settlement. Real x402 should only be enabled after provider endpoints, Circle credentials, webhook verification, idempotency, and settlement reconciliation are configured.
 
-## Documentation Index
+## Storage
 
-The README is the product and operator overview. The deeper technical documents live here:
+The current local runtime uses JSON-backed state so it can run immediately.
 
-| Document | Purpose |
-| --- | --- |
-| [Architecture](docs/ARCHITECTURE.md) | Components, trust boundaries, deployment shape, and ownership |
-| [System Flows](docs/SYSTEM_FLOWS.md) | End-to-end runtime flows for billing, settlement, MCP, and recovery |
-| [Repository Structure](docs/REPO_STRUCTURE.md) | Directory-by-directory and module-by-module repo layout |
+Default state paths:
 
-## Project Positioning
+```text
+.kairos-angora/
+ANGORA_STATE_DIR
+KAIROS_ANGORA_STATE_DIR
+KAIROS_DATA_DIR/angora
+```
 
-Kairos is best understood as a programmable economic operating layer for an autonomous runtime:
+For real multi-user production, use PostgreSQL. The schema target is:
 
-- It pays for data like an API consumer.
-- It pays for compute like metered infrastructure.
-- It pays for governance like an accountable agent.
-- It settles approved actions like a micro-commerce system.
-- It exposes all of that through a live proof surface that a judge, operator, or other agent can verify.
+```text
+src/angora/db/migrations/001_angora_platform.sql
+```
 
-That is the core claim of the project:
+## SDKs
 
-> Kairos makes autonomous agents economically accountable before they act.
+TypeScript SDK:
 
-The market loop is only the workload. Kairos is the payment, governance, and proof runtime around that workload.
+```text
+sdk/typescript
+```
+
+Python SDK:
+
+```text
+sdk/python
+```
+
+These SDKs are integrated in this repository but are not yet published externally.
+
+## Deployment
+
+Docker assets:
+
+```text
+Dockerfile.angora
+docker-compose.angora.yml
+```
+
+Environment templates:
+
+```text
+.env.angora.example
+.env.angora.production.example
+```
+
+For production, configure:
+
+```text
+ANGORA_REQUIRE_AUTH=true
+ANGORA_API_KEY_PREFIX=ag_live
+ANGORA_STATE_DIR=/var/lib/angora/state
+DATABASE_URL=postgres://...
+CIRCLE_API_KEY=...
+CIRCLE_WALLET_ID=...
+CIRCLE_ENTITY_SECRET=...
+```
+
+## Important Status
+
+Completed:
+
+- Angora backend mounted at `/v1/angora/*`
+- Angora dashboard available at `/angora.html`
+- TypeScript and Python SDKs added
+- JSON-backed local stores added
+- PostgreSQL schema target added
+- route scoring, policy checks, receipts, payment ledgers, traces, and reconciliation added
+- local build and Angora full checks passing
+
+Not completed yet:
+
+- npm SDK publishing
+- PyPI SDK publishing
+- hosted gateway deployment
+- production Circle/x402 credential configuration
+- PostgreSQL repository adapter wiring
+- merge from feature branch into `main`
+
+## Documentation
+
+Angora-specific docs live under:
+
+```text
+docs/ANGORA_*.md
+```
+
+Useful entry points:
+
+- `docs/ANGORA_AGENTIC_MERGE_NOTES.md`
+- `docs/ANGORA_PRODUCTION_HARDENING_NOTES.md`
+- `docs/ANGORA_PRODUCTION_RECONCILIATION_LEDGER.md`
+- `docs/ANGORA_UI_PRODUCT_UPGRADE_V8.md`
+
+## Product Position
+
+AngoraPay Mesh is the paid-intelligence operating layer for market agents.
+
+Specialist agents make the product usable. The gateway, SDK, payment, proof, and reconciliation layers make it trustworthy.
