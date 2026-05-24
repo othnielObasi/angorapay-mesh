@@ -660,7 +660,9 @@ function CodeBlock({ title, code }) {
   );
 }
 
-function ConsoleShell({ activeTab, setActiveTab, goHome, children }) {
+function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, children }) {
+  const metrics = live?.dashboard?.metrics;
+  const runtime = live?.dashboard?.runtime;
   return (
     <Background>
       <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
@@ -681,6 +683,12 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, children }) {
             })}
           </div>
         </div>
+        <div className="mb-5 grid gap-3 md:grid-cols-4">
+          <Stat label="Agent state" value={latestResult ? "active" : "ready"} icon={MessageSquare} />
+          <Stat label="Gateway calls" value={String(metrics?.gatewayCalls || 0)} icon={Route} />
+          <Stat label="Receipts" value={String(metrics?.receiptsCreated || live?.receipts?.length || 0)} icon={FileCheck2} />
+          <Stat label="Runtime requests" value={String(runtime?.requests || 0)} icon={Activity} />
+        </div>
         {children}
       </div>
     </Background>
@@ -699,6 +707,10 @@ function Stat({ label, value, icon: Icon }) {
 }
 
 function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, live }) {
+  const traces = latestResult?.traces || live?.traces || [];
+  const checkpoints = latestResult?.checkpoints || live?.checkpoints || [];
+  const receipts = latestResult?.receipts || live?.receipts || [];
+  const recommendation = latestResult?.recommendation;
   const messages = latestResult
     ? [
         { role: "user", content: latestResult.context?.userGoal || agentGoal },
@@ -709,50 +721,81 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
       ];
   const decisions = latestResult?.decisions || [];
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <Glass className="p-5">
-        <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Agent chat</p>
-            <h2 className="mt-1 text-2xl font-black text-slate-950">Market-intelligence mission workspace</h2>
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
+      <Glass className="flex min-h-[680px] flex-col overflow-hidden">
+        <div className="border-b border-slate-200/80 bg-white/80 p-5">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Agent workspace</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">Ask, route, pay, prove</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">The agent classifies the mission, selects a specialist module, buys trusted market services, records receipts, and returns a proof-backed recommendation.</p>
+            </div>
+            <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>{agentRunning ? "running mission" : latestResult ? "mission complete" : "ready"}</Pill>
           </div>
-          <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>{agentRunning ? "running" : latestResult ? "completed" : "ready"}</Pill>
         </div>
-        <div className="space-y-3">
+        <div className="flex-1 space-y-4 overflow-auto p-5">
           {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={cx("rounded-2xl p-4 ring-1", message.role === "user" ? "ml-8 bg-slate-950 text-white ring-slate-800" : "mr-8 bg-white/80 text-slate-700 ring-slate-200")}>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-60">{message.role}</p>
+            <div key={`${message.role}-${index}`} className={cx("max-w-[88%] rounded-lg p-4 ring-1", message.role === "user" ? "ml-auto bg-slate-950 text-white ring-slate-800" : "bg-white/90 text-slate-700 ring-slate-200")}>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-60">{message.role === "user" ? "Builder" : "Angora agent"}</p>
               <p className="mt-2 text-sm leading-6">{message.content}</p>
+              {message.role === "assistant" && recommendation?.reasons?.length ? (
+                <div className="mt-3 space-y-2">
+                  {recommendation.reasons.slice(0, 3).map((reason) => <p key={reason} className="rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">{reason}</p>)}
+                </div>
+              ) : null}
             </div>
           ))}
+          {agentRunning ? (
+            <div className="max-w-[88%] rounded-lg bg-white/90 p-4 text-slate-700 ring-1 ring-cyan-200">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Angora agent</p>
+              <p className="mt-2 text-sm leading-6">Running mission: discovering providers, scoring routes, checking policy, attempting payment, and writing receipts.</p>
+            </div>
+          ) : null}
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
-          <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-28 resize-none rounded-2xl border border-slate-200 bg-white/90 p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
-          <button type="button" onClick={runAgentMission} disabled={agentRunning || agentGoal.trim().length < 8} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
-            <Play className="h-4 w-4" />Run agent
-          </button>
+        <div className="border-t border-slate-200/80 bg-slate-50/70 p-4">
+          <div className="mb-3 flex flex-wrap gap-2">
+            {["Prediction market", "BTC", "0.05 USDC budget", "Arc testnet", "Proof required"].map((chip) => <Pill key={chip} compact tone="blue">{chip}</Pill>)}
+          </div>
+          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+            <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-24 resize-none rounded-lg border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
+            <button type="button" onClick={runAgentMission} disabled={agentRunning || agentGoal.trim().length < 8} className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
+              <Play className="h-4 w-4" />Run agent
+            </button>
+          </div>
         </div>
       </Glass>
       <div className="space-y-5">
         <Glass className="p-5">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Agent output</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Mission control</p>
           <div className="mt-4 space-y-3">
             <RouteLine label="Specialist" value={latestResult?.specialistAgent || "auto"} tone="blue" />
             <RouteLine label="RFP track" value={latestResult?.rfpTrack || "pending"} tone="purple" />
             <RouteLine label="USDC routed" value={latestResult?.totals?.usdcRouted || "0.000000"} tone="good" />
-            <RouteLine label="Receipts" value={String(latestResult?.totals?.receiptsCreated || live?.receipts?.length || 0)} tone="good" />
+            <RouteLine label="Receipts" value={String(latestResult?.totals?.receiptsCreated || receipts.length || 0)} tone="good" />
+            <RouteLine label="Confidence" value={recommendation ? `${Math.round(recommendation.confidence * 100)}%` : "pending"} tone="blue" />
           </div>
         </Glass>
         <Glass className="p-5">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Decisions</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Live trace</p>
           <div className="mt-4 space-y-3">
-            {(decisions.length ? decisions : live?.execution?.slice(0, 4) || []).map((item, index) => (
-              <div key={item.receipt?.receiptId || item.id || index} className="rounded-2xl bg-white/70 p-3 ring-1 ring-slate-200">
+            {(traces.length ? traces.slice(0, 6) : decisions.length ? decisions : live?.execution?.slice(0, 4) || []).map((item, index) => (
+              <div key={item.traceId || item.receipt?.receiptId || item.id || index} className="rounded-lg bg-white/70 p-3 ring-1 ring-slate-200">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-black text-slate-900">{item.serviceName || item.serviceId || item.category}</p>
+                  <p className="text-sm font-black text-slate-900">{item.label || item.serviceName || item.serviceId || item.category}</p>
                   <Pill compact tone={item.status === "blocked" ? "bad" : "good"}>{item.status}</Pill>
                 </div>
-                <p className="mt-1 text-xs leading-5 text-slate-500">{item.routeReason || item.policyVerdict}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{item.details?.reason || item.routeReason || item.policyVerdict || item.eventType || "Recorded by the Angora mission runtime."}</p>
+              </div>
+            ))}
+          </div>
+        </Glass>
+        <Glass className="p-5">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Recoverable checkpoints</p>
+          <div className="mt-4 space-y-2">
+            {(checkpoints.length ? checkpoints.slice(0, 5) : [{ stage: "waiting", status: "saved", resumeFrom: "Run a mission to create checkpoints" }]).map((checkpoint, index) => (
+              <div key={checkpoint.checkpointId || index} className="flex items-center justify-between gap-3 rounded-lg bg-white/70 px-3 py-2 ring-1 ring-slate-200">
+                <span className="text-xs font-semibold text-slate-700">{checkpoint.stage}</span>
+                <Pill compact tone={checkpoint.status === "terminal" ? "bad" : "good"}>{checkpoint.status}</Pill>
               </div>
             ))}
           </div>
@@ -995,8 +1038,8 @@ function DeveloperPanel() {
 }
 
 export default function AngoraUiCanvas() {
-  const [view, setView] = useState("landing");
-  const [tab, setTab] = useState("run");
+  const [view, setView] = useState("console");
+  const [tab, setTab] = useState("chat");
   const [completed, setCompleted] = useState(0);
   const [live, setLive] = useState(null);
   const [agentGoal, setAgentGoal] = useState("Evaluate whether this BTC prediction market is mispriced after breaking news and route the paid services needed for a proof-backed recommendation.");
