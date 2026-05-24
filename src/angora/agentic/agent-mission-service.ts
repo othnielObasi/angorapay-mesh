@@ -362,12 +362,16 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
   const oddsDecision = decisions.find((d) => d.category === "odds" && d.status === "delivered");
   const liveOddsData = (oddsDecision?.execution as Record<string, unknown> | undefined)?.data as Record<string, unknown> | null ?? null;
 
-  const betIntent = await buildPolymarketBetIntent(
-    recommendation,
-    liveOddsData,
-    context.marketTarget,
-    context.budgetUSDC,
-  ).catch(() => null);
+  // Polymarket bet intent is only relevant for prediction market missions.
+  // Arbitrage and social-trading missions have different execution paths.
+  const betIntent = module === "prediction_market"
+    ? await buildPolymarketBetIntent(
+        recommendation,
+        liveOddsData,
+        context.marketTarget,
+        context.budgetUSDC,
+      ).catch(() => null)
+    : null;
 
   // ── Circle USYC: park idle capital when signal is weak ──────────────────────
   // Risk-off capital allocation — agent earns yield while waiting for better entry.
