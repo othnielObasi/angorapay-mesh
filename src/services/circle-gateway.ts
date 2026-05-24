@@ -55,10 +55,11 @@ export async function sendGatewayNanopayment(
     idempotencyKey?: string;
   },
 ): Promise<GatewayNanopaymentResult> {
-  const walletId = process.env.CIRCLE_WALLET_ID;
-  const bearerToken = getCircleBearerToken();
+  const apiKey    = process.env.CIRCLE_API_KEY;
+  const entitySecret = process.env.CIRCLE_ENTITY_SECRET;
+  const walletId  = process.env.CIRCLE_WALLET_ID;
 
-  if (!bearerToken || !walletId) {
+  if (!apiKey || !entitySecret || !walletId) {
     return {
       transferId: null, txHash: null, referenceId: null,
       status: "failed", mode: "dcw_fallback", feeUSDC: 0,
@@ -66,63 +67,45 @@ export async function sendGatewayNanopayment(
     };
   }
 
-  const idempotencyKey =
-    meta.idempotencyKey || `gw_nano_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
   try {
-    const res = await fetch(
-      `${getCircleBase()}/v1/w3s/developer/transactions/transfer`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${bearerToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idempotencyKey,
-          walletId,
-          destinationAddress: to,
-          blockchain: "ARC-TESTNET",
-          tokenAddress: ARC_USDC_TOKEN,
-          amounts: [amountUsdc.toFixed(6)],
-          fee: { type: "level", config: { feeLevel: "LOW" } },
-          note: `AngoraPay Gateway | ${meta.type || "governance"} | ${meta.eventName}`,
-        }),
-      },
+    // Use Circle DCW SDK — it handles entitySecretCiphertext automatically.
+    // Raw fetch to /v1/w3s/developer/transactions/transfer returns 401 because
+    // Circle DCW endpoints require a per-request encrypted entity secret that
+    // the SDK generates; a plain Bearer token is not sufficient.
+    const { CircleDeveloperControlledWalletsClient } = await import(
+      "@circle-fin/developer-controlled-wallets"
     );
+    const client = new CircleDeveloperControlledWalletsClient({ apiKey, entitySecret });
 
-    const body = await res.json() as {
-      data?: {
-        transaction?: {
-          id?: string;
-          txHash?: string;
-          state?: string;
-          createDate?: string;
-        };
-      };
-      message?: string;
-    };
+    const amountRaw = (amountUsdc * 1e6).toFixed(0); // USDC 6 decimals → integer string
 
-    if (!res.ok) {
-      throw new Error(`Circle Gateway ${res.status}: ${body.message || "unknown"}`);
-    }
+    const { data } = await (client as any).createContractExecutionTransaction({
+      walletId,
+      contractAddress: ARC_USDC_TOKEN,
+      abiFunctionSignature: "transfer(address,uint256)",
+      abiParameters: [to, amountRaw],
+      fee: { type: "level", config: { feeLevel: "LOW" } },
+      blockchain: "ARC-TESTNET",
+    });
 
-    const tx = body.data?.transaction;
+    const tx = (data as any)?.transaction ?? data;
+    const transferId: string | null = tx?.id ?? (data as any)?.transactionId ?? null;
+    const txHash: string | null     = tx?.txHash ?? null;
+
+    console.log(`[GATEWAY] Circle DCW transfer sent: id=${transferId ?? "?"} tx=${txHash ?? "pending"} to=${to} amount=${amountUsdc} USDC`);
+
     return {
-      transferId: tx?.id ?? null,
-      txHash: tx?.txHash ?? null,
-      referenceId: tx?.id ?? null,
-      status: tx?.state === "COMPLETE" ? "complete" : "pending",
+      transferId,
+      txHash,
+      referenceId: transferId,
+      status: txHash ? "complete" : "pending",
       mode: "gateway",
-      feeUSDC: 0, // Gateway batches; gas-free for nanopayment amounts
+      feeUSDC: 0,
       amountUSDC: amountUsdc,
       to,
     };
   } catch (err) {
-    console.warn(
-      "[GATEWAY] Nanopayment via transfer API failed, DCW fallback active:",
-      (err as Error).message,
-    );
+    console.warn("[GATEWAY] Circle DCW transfer failed:", (err as Error).message?.slice(0, 120));
     return {
       transferId: null, txHash: null, referenceId: null,
       status: "failed", mode: "dcw_fallback", feeUSDC: 0,

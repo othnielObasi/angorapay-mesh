@@ -1671,11 +1671,8 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
 
         <div className="flex-1 space-y-4 overflow-auto p-5">
           {messages.length === 0 && !agentRunning && (
-            <div className="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Run Market Intelligence Agents — real data, Circle payments, Arc settlement</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                The agent buys real intelligence — odds from <strong>Polymarket</strong>, prices from <strong>Kraken</strong>, sentiment from the <strong>Fear & Greed Index</strong> — paying each provider in USDC on Arc testnet. GPT-4o mini generates the recommendation. Ask follow-up questions after the first response.
-              </p>
+            <div className="flex h-full items-center justify-center py-16">
+              <p className="text-sm text-slate-400">Pick a market above and run the agent to start</p>
             </div>
           )}
 
