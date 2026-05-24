@@ -1,7 +1,7 @@
 import type { AgentMissionInput, AgentMissionType, AgentProviderDecision, AgentContextPacket } from "./types.js";
 import type { ServiceCategory } from "../types.js";
 
-const DEFAULT_MODEL = "gpt-5.4-mini";
+const DEFAULT_MODEL = "gpt-4o-mini";
 const OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions";
 const VALID_MODULES: AgentMissionType[] = ["prediction_market", "cross_venue_arbitrage", "social_trading"];
 

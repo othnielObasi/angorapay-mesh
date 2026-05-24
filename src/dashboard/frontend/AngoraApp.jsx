@@ -19,15 +19,10 @@ import {
 const APP_NAME = "AngoraPay Mesh";
 
 const tabs = [
-  { id: "gateway", group: "Infrastructure platform", label: "Gateway Overview", icon: Network, intent: "Manage and observe your paid-intelligence gateway." },
-  { id: "executions", group: "Infrastructure platform", label: "Executions", icon: Activity, intent: "Inspect approved, blocked, delivered, and failed paid-intelligence calls." },
-  { id: "providers", group: "Infrastructure platform", label: "Providers", icon: Store, intent: "Manage paid intelligence supply and provider readiness." },
-  { id: "policies", group: "Infrastructure platform", label: "Policies", icon: ShieldCheck, intent: "Control trust, spend, proof, and route rules before payment." },
-  { id: "payments", group: "Infrastructure platform", label: "Payments", icon: WalletCards, intent: "Match payment intents, provider delivery, receipts, and settlement state." },
-  { id: "proof", group: "Infrastructure platform", label: "Receipts & Proof", icon: FileCheck2, intent: "Audit what was bought, why it was trusted, and what proof was created." },
-  { id: "metrics", group: "Infrastructure platform", label: "Metrics", icon: LineChart, intent: "Track tenant usage, volume, blocks, receipts, and reliability." },
-  { id: "developers", group: "Infrastructure platform", label: "Integrations", icon: Code2, intent: "Manage SDK access, OpenAPI, API keys, and webhooks." },
-  { id: "demo", group: "Reference demo layer", label: "Demo Apps", icon: MessageSquare, intent: "Run Market Intelligence Agents as reference apps built on the gateway." },
+  { id: "demo", group: "Demo", label: "Demo Apps", icon: MessageSquare, intent: "Run Market Intelligence Agents — real data, Circle payments, Arc settlement." },
+  { id: "gateway", group: "Platform", label: "Gateway Overview", icon: Network, intent: "Observe gateway health, Arc wallet state, and payment readiness." },
+  { id: "executions", group: "Platform", label: "Executions", icon: Activity, intent: "Inspect approved, blocked, delivered, and failed paid-intelligence calls." },
+  { id: "providers", group: "Platform", label: "Providers", icon: Store, intent: "Browse paid intelligence supply and the Circle agent marketplace." },
 ];
 
 const rfpAreas = [
@@ -505,9 +500,9 @@ async function loadLiveSnapshot() {
 }
 
 function runSelfTests() {
-  console.assert(tabs.length === 9, "Angora UI should expose infrastructure pages plus reference demo apps");
+  console.assert(tabs.length === 4, "Angora UI should expose 4 tabs: Demo Apps, Gateway, Executions, Providers");
   console.assert(new Set(tabs.map((tab) => tab.id)).size === tabs.length, "tab IDs should be unique");
-  console.assert(tabs[0].id === "gateway", "Gateway Overview should be the default signed-in page");
+  console.assert(tabs[0].id === "demo", "Demo Apps should be the default tab");
   console.assert(discoverableMarkets.length >= 4, "market catalogue should provide a usable opportunity universe");
   console.assert(approvedServices(marketServices).length === 6, "six market services should be approved");
   console.assert(blockedServices(marketServices).length === 1, "one market service should be blocked");
@@ -1627,108 +1622,173 @@ function Stat({ label, value, icon: Icon }) {
   );
 }
 
-function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, selectedMarket, setSelectedMarket, live }) {
-  const traces = latestResult?.traces || [];
-  const receipts = latestResult?.receipts || [];
-  const paymentIntents = live?.paymentIntents || [];
-  const gatewayBalance = live?.gatewayBalance;
-  const recommendation = latestResult?.recommendation;
-  const reasoningTrace = traces.find((trace) => trace.eventType === "llm.reasoning");
+const CATEGORY_SOURCE = {
+  odds: "Polymarket",
+  sentiment: "Fear & Greed",
+  risk: "Kraken OHLC",
+  market_data: "Kraken",
+  social: "Fear & Greed",
+  arbitrage: "Kraken + CoinGecko",
+  proof: "AngoraPay Mesh",
+};
+
+function actionStyle(action = "") {
+  if (action.includes("enter") || action.includes("follow")) return "bg-emerald-100 text-emerald-800";
+  if (action.includes("avoid") || action.includes("reject")) return "bg-red-100 text-red-800";
+  return "bg-amber-100 text-amber-800";
+}
+
+function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, selectedMarket }) {
   const decisions = latestResult?.decisions || [];
-  const approvedCount = decisions.filter((decision) => decision.status !== "blocked").length;
-  const blockedCount = decisions.filter((decision) => decision.status === "blocked").length;
-  const messages = latestResult
-    ? [
-        { role: "user", content: latestResult.context?.userGoal || agentGoal },
-        { role: "assistant", content: latestResult.recommendation?.summary || "Mission completed." },
-      ]
-    : [
-        { role: "assistant", content: "Pick a market, ask the question, and run the mission. I will return a recommendation with the proof facts beside the chat." },
-      ];
-  const selectMarket = (market) => {
-    setSelectedMarket(market);
-    setAgentGoal(market.mission);
-  };
+  const recommendation = latestResult?.recommendation;
+  const receipts = latestResult?.receipts || [];
+  const delivered = decisions.filter((d) => d.status !== "blocked");
+  const blockedCount = decisions.filter((d) => d.status === "blocked").length;
+  const sources = [...new Set(delivered.map((d) => CATEGORY_SOURCE[d.category]).filter(Boolean))];
+  const walletAddr = "0x4991dd462f7672b737571b194b6cd6f271773d9b";
+  const walletArcUrl = `https://testnet.arcscan.app/address/${walletAddr}`;
+
   return (
-    <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <Glass className="flex min-h-[720px] flex-col border-y border-slate-200 bg-white/45">
-        <div className="border-b border-slate-200 p-5">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Reference agent app</p>
-              <h2 className="mt-1 text-2xl font-black text-slate-950">Market Intelligence Agent</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Select a market, ask the agent, then inspect what the mesh routed and proved.</p>
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      {/* Chat window */}
+      <Glass className="flex min-h-[560px] flex-col border-y border-slate-200">
+        <div className="flex items-center justify-between border-b border-slate-200 p-5">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Step 2 — Ask the agent</p>
+            <h2 className="mt-1 text-xl font-black text-slate-950">{selectedMarket?.name || "Market Intelligence Agent"}</h2>
+          </div>
+          <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>
+            {agentRunning ? "running…" : latestResult ? "complete" : "ready"}
+          </Pill>
+        </div>
+
+        <div className="flex-1 space-y-4 overflow-auto p-5">
+          {!latestResult && !agentRunning && (
+            <div className="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-100">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">How this works</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                The agent buys real intelligence — odds from <strong>Polymarket</strong>, prices from <strong>Kraken</strong>, sentiment from the <strong>Fear & Greed Index</strong> — paying each provider in USDC on Arc testnet. GPT-4o mini generates the recommendation from the live data.
+              </p>
             </div>
-            <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>{agentRunning ? "running mission" : latestResult ? "mission complete" : "ready"}</Pill>
-          </div>
-        </div>
-        <div className="grid gap-0 border-b border-slate-200 bg-white/55 md:grid-cols-3">
-          <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Market</p>
-            <select
-              value={selectedMarket?.id || ""}
-              onChange={(event) => {
-                const market = discoverableMarkets.find((item) => item.id === event.target.value);
-                if (market) selectMarket(market);
-              }}
-              className="mt-2 w-full bg-transparent text-sm font-black text-slate-950 outline-none"
-            >
-              {discoverableMarkets.map((market) => <option key={market.id} value={market.id}>{market.name}</option>)}
-            </select>
-          </div>
-          <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Agent</p>
-            <p className="mt-2 truncate text-sm font-black text-slate-950">{selectedMarket?.agent || "Auto-select"}</p>
-          </div>
-          <div className="p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Payment mode</p>
-            <p className="mt-2 text-sm font-black text-slate-950">Arc testnet / USDC</p>
-          </div>
-        </div>
-        <div className="flex-1 space-y-5 overflow-auto p-5">
-          {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={cx("max-w-[86%] rounded-[22px] px-5 py-4", message.role === "user" ? "ml-auto bg-slate-950 text-white" : "bg-white/70 text-slate-700 shadow-[0_14px_40px_rgba(15,42,61,0.05)] ring-1 ring-slate-200/70")}>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-60">{message.role === "user" ? "You" : "Angora agent"}</p>
-              <p className="mt-2 text-sm leading-6">{message.content}</p>
-              {message.role === "assistant" && recommendation?.reasons?.length ? (
-                <div className="mt-4 space-y-2">
-                  {recommendation.reasons.slice(0, 3).map((reason) => <p key={reason} className="border-t border-slate-200 py-2 text-xs leading-5 text-slate-600">{reason}</p>)}
+          )}
+
+          {latestResult && (
+            <div className="ml-auto max-w-[86%] rounded-[22px] bg-slate-950 px-5 py-4 text-white">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-50">You</p>
+              <p className="mt-2 text-sm leading-6">{latestResult.context?.userGoal || agentGoal}</p>
+            </div>
+          )}
+
+          {agentRunning && (
+            <div className="max-w-[86%] rounded-[22px] bg-white/80 px-5 py-4 ring-1 ring-cyan-100">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Agent working</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Querying Polymarket, Kraken, and Fear & Greed — paying each in USDC on Arc testnet…</p>
+            </div>
+          )}
+
+          {latestResult && recommendation && (
+            <div className="max-w-[86%] space-y-4 rounded-[22px] bg-white/80 px-5 py-5 ring-1 ring-slate-200/70">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Angora Agent</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={cx("rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wide", actionStyle(recommendation.action))}>
+                  {(recommendation.action || "monitor").replace(/_/g, " ")}
+                </span>
+                <span className="text-xs text-slate-500">{recommendation.confidence}% confidence</span>
+              </div>
+              <p className="text-sm leading-6 text-slate-700">{recommendation.summary}</p>
+              {recommendation.reasons?.slice(0, 3).map((r) => (
+                <p key={r} className="border-t border-slate-100 pt-2 text-xs leading-5 text-slate-500">{r}</p>
+              ))}
+              {sources.length > 0 && (
+                <div className="border-t border-slate-100 pt-3">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Live data from</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sources.map((s) => (
+                      <span key={s} className="rounded-full bg-cyan-50 px-2.5 py-1 text-[10px] font-black text-cyan-700 ring-1 ring-cyan-100">{s}</span>
+                    ))}
+                  </div>
                 </div>
-              ) : null}
+              )}
             </div>
-          ))}
-          {agentRunning ? (
-            <div className="max-w-[86%] rounded-[22px] bg-white/70 px-5 py-4 text-slate-700 ring-1 ring-cyan-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Angora agent</p>
-              <p className="mt-2 text-sm leading-6">Running the mesh route: providers, policy, payment context, receipts, and recommendation.</p>
-            </div>
-          ) : null}
+          )}
         </div>
+
         <div className="border-t border-slate-200 bg-white/70 p-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-20 resize-none rounded-[20px] border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
-            <button type="button" onClick={runAgentMission} disabled={agentRunning || agentGoal.trim().length < 8} className="inline-flex min-h-20 items-center justify-center gap-2 rounded-[20px] bg-cyan-400 px-6 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
-              <Play className="h-4 w-4" />{agentRunning ? "Running" : "Run"}
+          <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+            <textarea
+              value={agentGoal}
+              onChange={(e) => setAgentGoal(e.target.value)}
+              rows={2}
+              className="resize-none rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300"
+              placeholder="Describe the market intelligence mission…"
+            />
+            <button
+              type="button"
+              onClick={runAgentMission}
+              disabled={agentRunning || agentGoal.trim().length < 8}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-6 font-black text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Play className="h-4 w-4" />{agentRunning ? "Running…" : "Run"}
             </button>
           </div>
+          <p className="mt-2 text-[10px] text-slate-400">Paid in USDC · Settled on Arc testnet · Receipt on every provider call</p>
         </div>
       </Glass>
-      <div className="space-y-5">
-        <Glass className="border-y border-slate-200 p-5">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Mission facts</p>
-          <div className="mt-4 space-y-3">
-            <RouteLine label="Market" value={selectedMarket?.name || "not selected"} tone={selectedMarket ? "good" : "warn"} />
-            <RouteLine label="Agent" value={latestResult?.specialistAgent || selectedMarket?.module || "auto"} tone="blue" />
-            <RouteLine label="Approved" value={String(approvedCount || 0)} tone={approvedCount ? "good" : "neutral"} />
-            <RouteLine label="Blocked" value={String(blockedCount || 0)} tone={blockedCount ? "bad" : "neutral"} />
-            <RouteLine label="USDC routed" value={latestResult?.totals?.usdcRouted || "0.000000"} tone="good" />
-            <RouteLine label="Receipts" value={String(latestResult?.totals?.receiptsCreated || receipts.length || 0)} tone="good" />
-            <RouteLine label="Confidence" value={recommendation ? formatConfidence(recommendation.confidence) : "pending"} tone="blue" />
-            <RouteLine label="Reasoning" value={reasoningTrace?.details?.source || "pending"} tone={reasoningTrace?.details?.source === "openai" ? "good" : "warn"} />
-          </div>
-        </Glass>
-        <PaymentReadinessPanel gatewayBalance={gatewayBalance} paymentIntents={paymentIntents} latestResult={latestResult} />
-        <MissionProofSummary decisions={decisions} receipts={receipts} traces={traces} />
+
+      {/* Right sidebar */}
+      <div className="space-y-4">
+        {latestResult ? (
+          <>
+            <Glass className="border-y border-slate-200 p-5">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Step 3 — Proof & result</p>
+              <div className="mt-4 space-y-3">
+                <RouteLine label="Action" value={(recommendation?.action || "—").replace(/_/g, " ")} tone="blue" />
+                <RouteLine label="Confidence" value={`${recommendation?.confidence ?? 0}%`} tone="good" />
+                <RouteLine label="Agent" value={(latestResult.specialistAgent || "—").replace(/_/g, " ")} tone="blue" />
+                <RouteLine label="Providers queried" value={String(delivered.length)} tone="good" />
+                <RouteLine label="Blocked" value={String(blockedCount)} tone={blockedCount ? "bad" : "neutral"} />
+                <RouteLine label="USDC spent" value={`${latestResult.totals?.usdcRouted || "0"} USDC`} tone="good" />
+                <RouteLine label="Arc receipts" value={String(receipts.length)} tone="good" />
+                <RouteLine label="Reasoning" value="gpt-4o-mini" tone="good" />
+              </div>
+              {receipts.length > 0 && (
+                <div className="mt-4 border-t border-slate-200 pt-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">On-chain proof</p>
+                  <p className="mt-1 font-mono text-[10px] text-slate-400 break-all">{walletAddr.slice(0, 10)}…{walletAddr.slice(-8)}</p>
+                  <a href={walletArcUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-cyan-700 hover:underline">
+                    <ArrowRight className="h-3 w-3 flex-shrink-0" />View wallet on ArcScan
+                  </a>
+                </div>
+              )}
+            </Glass>
+            {recommendation?.guardrail && (
+              <Glass className="border-y border-slate-200 p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Safety guardrail</p>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{recommendation.guardrail}</p>
+              </Glass>
+            )}
+          </>
+        ) : (
+          <Glass className="border-y border-slate-200 p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">What you'll see</p>
+            <div className="mt-4 space-y-5">
+              {[
+                ["Provider decisions", "Which data providers the agent selected and why, including any blocked by policy."],
+                ["USDC receipts", "A receipt for every provider call, with an output hash for verification."],
+                ["LLM recommendation", "GPT-4o mini synthesises live Polymarket, Kraken, and sentiment data into an actionable call."],
+                ["Arc settlement", "Real USDC nanopayments on Arc testnet — viewable on ArcScan."],
+              ].map(([title, desc]) => (
+                <div key={title} className="flex gap-3">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-500" />
+                  <div>
+                    <p className="text-sm font-black text-slate-950">{title}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Glass>
+        )}
       </div>
     </div>
   );
@@ -2168,10 +2228,9 @@ function GatewayOverviewWorkspace({ live, latestResult, setTab }) {
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {[
-          ["Executions", "Review allowed, blocked, delivered, failed, and duplicate calls.", "executions"],
-          ["Policies", "Set trust, proof, category, budget, and provider access controls.", "policies"],
-          ["Payments", "Inspect payment intents, delivery, settlement, and reconciliation.", "payments"],
-          ["Integrations", "Install SDKs, read OpenAPI, issue keys, and connect your backend.", "developers"],
+          ["Demo Apps", "Run Market Intelligence Agents with real Polymarket, Kraken, and Fear & Greed data.", "demo"],
+          ["Executions", "Review allowed, blocked, delivered, and failed paid-intelligence calls.", "executions"],
+          ["Providers", "Browse the service registry and Circle agent marketplace.", "providers"],
         ].map(([title, body, target]) => (
           <button key={title} type="button" onClick={() => setTab(target)} className="border-t border-slate-200 bg-white/45 p-5 text-left transition hover:-translate-y-0.5 hover:bg-white">
             <p className="text-sm font-black text-slate-950">{title}</p>
@@ -2186,26 +2245,19 @@ function GatewayOverviewWorkspace({ live, latestResult, setTab }) {
 function RunAgentWorkspace(props) {
   const { selectedMarket, selectMarketAndMission } = props;
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <ActionBand
-        eyebrow="Reference agent app"
-        title="Market Intelligence Agents show how builders can use AngoraPay Mesh in a real workflow."
+        eyebrow="Demo app"
+        title="Market Intelligence Agents — real data, Circle payments, Arc settlement."
         metrics={[
           ["Markets", discoverableMarkets.length],
-          ["Selected", selectedMarket?.asset || "none"],
-          ["Proof", "required"],
+          ["Data sources", "Polymarket · Kraken · Fear & Greed"],
+          ["Settlement", "Arc · USDC"],
         ]}
       />
       <Glass className="border-y border-slate-200 p-5">
-        <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-end">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Market catalogue</p>
-            <h2 className="mt-1 text-2xl font-black text-slate-950">Choose a market before asking the agent.</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">This keeps the demo grounded: markets feed the agent, and the agent uses the mesh to buy trusted intelligence.</p>
-          </div>
-          <Pill tone="blue">Circle-ready market universe</Pill>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <p className="mb-4 text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Step 1 — Pick a market</p>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {discoverableMarkets.map((market) => {
             const active = selectedMarket?.id === market.id;
             return (
@@ -2213,11 +2265,12 @@ function RunAgentWorkspace(props) {
                 key={market.id}
                 type="button"
                 onClick={() => selectMarketAndMission(market)}
-                className={cx("min-h-32 border border-slate-200 bg-white/45 p-4 text-left transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-white", active && "border-cyan-300 bg-cyan-50/55")}
+                className={cx("flex flex-col gap-2 rounded-xl border p-4 text-left transition hover:-translate-y-0.5", active ? "border-cyan-300 bg-cyan-50/80 shadow-sm" : "border-slate-200 bg-white/50 hover:border-cyan-200 hover:bg-white")}
               >
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-700">{market.category}</p>
-                <p className="mt-2 text-sm font-black leading-5 text-slate-950">{market.name}</p>
-                <p className="mt-2 text-xs leading-5 text-slate-500">{market.agent}</p>
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-700">{market.category}</span>
+                <span className="text-sm font-black leading-5 text-slate-950">{market.name}</span>
+                <span className="text-[11px] leading-4 text-slate-400">{market.agent}</span>
+                {active && <span className="mt-auto text-[10px] font-black text-cyan-600">✓ Selected</span>}
               </button>
             );
           })}
@@ -2364,6 +2417,18 @@ function ProvidersWorkspace({ live }) {
           ["Blocked", live?.blockedServices?.length || blockedServices(marketServices).length],
         ]}
       />
+      <Glass className="border-y border-slate-200 p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Circle Agent Marketplace</p>
+            <p className="mt-1 text-sm font-black text-slate-950">AngoraPay Mesh connects to the Circle paid-API network — agents discover and pay for real services.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">Our service registry mirrors the pattern from <strong>agents.circle.com/services</strong>: each provider exposes an x402 endpoint that returns data only after USDC payment clears on Arc testnet.</p>
+          </div>
+          <a href="https://agents.circle.com/services" target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-950 transition hover:border-cyan-200 hover:bg-cyan-50">
+            <ArrowRight className="h-3 w-3" />Browse Circle marketplace
+          </a>
+        </div>
+      </Glass>
       <MarketplacePanel live={live} />
       <ProviderPanel live={live} />
     </div>
@@ -2507,7 +2572,7 @@ function ActionBand({ eyebrow, title, metrics }) {
 
 export default function AngoraUiCanvas() {
   const [view, setView] = useState("landing");
-  const [tab, setTab] = useState("gateway");
+  const [tab, setTab] = useState("demo");
   const [completed, setCompleted] = useState(0);
   const [live, setLive] = useState(null);
   const [selectedMarket, setSelectedMarket] = useState(discoverableMarkets[0]);
@@ -2532,26 +2597,16 @@ export default function AngoraUiCanvas() {
 
   const openConsole = (target = "workspace") => {
     const legacyTargets = {
-      chat: "demo",
-      run: "demo",
-      workspace: "gateway",
-      markets: "demo",
-      market: "demo",
-      missions: "demo",
-      marketplace: "providers",
-      scorecard: "policies",
-      routing: "gateway",
-      policy: "policies",
-      providers: "providers",
-      trust: "policies",
-      proof: "proof",
-      ops: "gateway",
-      reconciliation: "payments",
-      history: "executions",
-      metrics: "metrics",
-      developers: "developers",
+      chat: "demo", run: "demo", workspace: "gateway", markets: "demo",
+      market: "demo", missions: "demo", marketplace: "providers",
+      scorecard: "gateway", routing: "gateway", policy: "gateway",
+      providers: "providers", trust: "gateway", proof: "executions",
+      ops: "gateway", reconciliation: "executions", history: "executions",
+      metrics: "gateway", developers: "gateway",
     };
-    setTab(legacyTargets[target] || target);
+    const resolved = legacyTargets[target] || target;
+    const validTabs = new Set(["demo", "gateway", "executions", "providers"]);
+    setTab(validTabs.has(resolved) ? resolved : "demo");
     setView("console");
   };
 
@@ -2621,17 +2676,12 @@ export default function AngoraUiCanvas() {
 
   const Panel = useMemo(() => {
     const panelMap = {
+      demo: RunAgentWorkspace,
       gateway: GatewayOverviewWorkspace,
       executions: ExecutionsWorkspace,
       providers: ProvidersWorkspace,
-      policies: TrustPolicyWorkspace,
-      payments: PaymentsWorkspace,
-      proof: ReceiptsProofWorkspace,
-      metrics: TenantMetricsWorkspace,
-      developers: DeveloperPanel,
-      demo: RunAgentWorkspace,
     };
-    return panelMap[tab] || GatewayOverviewWorkspace;
+    return panelMap[tab] || RunAgentWorkspace;
   }, [tab]);
 
   if (view === "landing") {

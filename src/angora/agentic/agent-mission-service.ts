@@ -19,6 +19,7 @@ import { buildLlmMissionPlan, buildLlmRecommendation } from "./llm-reasoning.js"
 import { addTraceEvent, listTraceEvents } from "./trace-store.js";
 import type { AgentContextPacket, AgentMissionInput, AgentMissionResult, AgentProviderDecision, AgentTraceEvent, MissionCheckpoint } from "./types.js";
 import { agentId, decimalSum, nowIso } from "./util.js";
+import { billEvent } from "../../services/nanopayments.js";
 
 function makeExecutionRecord(input: {
   request: AngoraGatewayCallRequest;
@@ -228,6 +229,19 @@ async function runProviderCall(input: {
   recordProviderDelivery({ paymentIntentId: paymentIntent.paymentIntentId, receipt, missionId: input.mission.missionId, providerId: decision.selectedService.providerId, serviceId: decision.selectedService.serviceId, providerResult, proofSupported: decision.selectedService.proofRequired });
   const execution = addExecutionRecord(makeExecutionRecord({ request, status: providerResult.ok ? "delivered" : "failed", decision, receiptId: receipt.receiptId, outputHash: receipt.outputHash, providerResult }));
   trace({ context: input.context, eventType: "receipt.created", label: `Receipt ${receipt.receiptId} created`, status: providerResult.ok ? "completed" : "failed", agentId: input.agentId, providerId: decision.selectedService.providerId, serviceId: decision.selectedService.serviceId, routeScore: decision.scorecard?.routeScore, receiptId: receipt.receiptId, executionId: execution.id, details: { receipt, providerResult } });
+
+  if (providerResult.ok) {
+    void billEvent(`angora.provider.delivery:${input.category}`, {
+      source: input.context.specialistAgent,
+      type: "data",
+      mode: providerResult.executionMode,
+    }).then((nano) => {
+      if (nano.txHash && !nano.txHash.startsWith("pending_")) {
+        providerResult.txHash = nano.txHash;
+        providerResult.explorerUrl = `https://testnet.arcscan.app/tx/${nano.txHash}`;
+      }
+    });
+  }
 
   return {
     category: input.category,

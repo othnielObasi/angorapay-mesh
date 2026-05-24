@@ -1,232 +1,155 @@
 <p align="center">
   <h1 align="center">AngoraPay Mesh</h1>
-  <p align="center"><strong>The paid-intelligence gateway for market-agent workflows.</strong></p>
+  <p align="center"><strong>Paid-intelligence routing for market-agent workflows — real data, Circle nanopayments, Arc testnet settlement.</strong></p>
   <p align="center">
     <a href="#core-thesis">Core Thesis</a> &bull;
     <a href="#what-angorapay-mesh-proves">What It Proves</a> &bull;
+    <a href="#live-data-sources">Live Data</a> &bull;
+    <a href="#circle-nanopayments--arc-testnet">Circle & Arc</a> &bull;
     <a href="#specialist-agents">Specialist Agents</a> &bull;
-    <a href="#product-surfaces">Product Surfaces</a> &bull;
     <a href="#runtime-architecture">Architecture</a> &bull;
     <a href="#api-highlights">API</a> &bull;
-    <a href="#local-development">Development</a> &bull;
-    <a href="#production-path">Production</a>
+    <a href="#local-development">Development</a>
   </p>
 </p>
 
 ---
 
-AngoraPay Mesh is the infrastructure platform for paid-intelligence routing, policy enforcement, Circle/x402 payment boundaries, receipts, traces, and reconciliation.
+AngoraPay Mesh is a paid-intelligence gateway for market-agent workflows.
 
-The signed-in product is a developer tenant console:
+Specialist agents buy real data from Polymarket, Kraken, and the Fear & Greed Index, paying each provider in USDC on Arc testnet via Circle nanopayments. GPT-4o mini synthesises the live signals into an actionable recommendation. Every provider call produces a Circle payment receipt with an output hash.
 
-```text
-Developer signs up
-        |
-        v
-Workspace / tenant
-        |
-        v
-API key + module policy
-        |
-        v
-Gateway / SDK call
-        |
-        v
-Decision + payment context + receipt + reconciliation
+The demo runs live at:
+
+```
+http://108.61.173.24/
 ```
 
-Market Intelligence Agents are the reference application built on top of that infrastructure. They show how a developer can use the mesh to build a practical agent product that buys trusted signals, validates provider quality, and returns a proof-backed recommendation.
+Agent wallet on Arc testnet: `0x4991dd462f7672b737571b194b6cd6f271773d9b`  
+[View wallet on ArcScan →](https://testnet.arcscan.app/address/0x4991dd462f7672b737571b194b6cd6f271773d9b)
 
-The core question is simple:
-
-> Which intelligence should the agent buy, which provider should it trust, what should be blocked, how should payment happen, and how can the paid signal be proven later?
-
-AngoraPay Mesh is not a generic trading bot. The specialist agents are a demo and reference product. The gateway, SDK, payment, proof, policy, and reconciliation layers are the platform moat that other developers can build on.
-
-## Platform Layers
-
-Angora combines two layers on one platform:
-
-| Layer | Role | Answers |
-| --- | --- | --- |
-| AngoraPay Mesh | Core infrastructure for provider discovery, trust scoring, route scorecards, policy, spend control, Circle/x402 payment context, receipts, reconciliation, workspace controls, and SDK/API access | Should this agent pay this provider, and can we prove what happened? |
-| Market Intelligence Agents | Reference app built on the mesh, including Prediction Market Intelligence, Cross-Venue Arbitrage, and Social Trading Intelligence agents | What should I do with this market question after buying and validating trusted intelligence? |
-
-The product priority is infrastructure first:
-
-1. Gateway Overview
-2. Executions
-3. Providers
-4. Policies
-5. Payments
-6. Receipts & Proof
-7. Metrics
-8. Developers
-9. Demo Apps
-
-The market-intelligence workflow lives under Demo Apps as the first reference application, not as the whole platform.
-
-The combined flow is:
-
-```text
-Discoverable Markets
-        |
-        v
-Market Intelligence Agents
-        |
-        v
-AngoraPay Mesh
-        |
-        v
-Circle/x402 + Providers + Receipts + Reconciliation
-```
+---
 
 ## Core Thesis
 
-Market-facing agents will consume paid signals, data feeds, risk checks, liquidity context, social intelligence, proof writers, and execution-readiness tools at high frequency.
+Market-facing agents will consume paid signals at high frequency — odds, prices, sentiment, risk, arbitrage data — through providers they cannot pre-vet.
 
-If those calls are handled as opaque subscriptions or unverified API requests, teams cannot easily answer:
+If those calls are handled as opaque subscriptions or unverified API requests, teams cannot answer:
 
 - what did the agent buy?
 - why did it trust that provider?
 - what policy allowed or blocked the call?
-- what did the provider deliver?
 - did payment reconcile with delivery?
 - can an auditor inspect the full path later?
 
-AngoraPay Mesh makes that flow inspectable at the level of the individual provider call.
-
-In one mission, AngoraPay Mesh can:
-
-1. classify the user goal,
-2. select the right specialist agent,
-3. build context and checkpoints,
-4. discover paid providers,
-5. score routes by trust, fit, cost, proof support, and latency,
-6. enforce workspace policy and spend limits,
-7. pass approved calls through the Circle/x402 payment boundary,
-8. record delivery and output hashes,
-9. generate receipts and traces,
-10. reconcile payment, delivery, and proof records.
-
-This creates the operating model:
-
-> The agent buys intelligence only after trust, policy, and spend checks pass.
+AngoraPay Mesh makes the full path inspectable at the level of the individual provider call.
 
 ## What AngoraPay Mesh Proves
-
-AngoraPay Mesh is built to prove a commercial workflow, not only to render a dashboard.
 
 | Claim | Proof Surface |
 | --- | --- |
 | Agents can run concrete market-intelligence missions | Agent Missions, Conversations, Traces |
-| Paid providers can be discovered and scored | Marketplace, Services Search, Route Scorecard |
-| Weak or non-compliant providers can be blocked before payment | Policy Engine, Spend Limits, Provider Access |
-| Approved calls can create payment and proof records | Payment Intents, Payment Events, Receipts |
-| Provider delivery can be matched against payment state | Provider Deliveries, Reconciliation Runs |
+| Live data is bought from real external APIs | Polymarket gamma API, Kraken public Ticker + OHLC, Alternative.me Fear & Greed |
+| Providers are paid per call in USDC on Arc testnet | Circle nanopayments, Arc testnet transactions, ArcScan links |
+| Weak or non-compliant providers are blocked before payment | Policy Engine, Spend Limits, Provider Access |
+| Approved calls produce Circle payment receipts | Payment Intents, Receipts, Output Hashes |
+| GPT-4o mini produces evidence-grounded recommendations | LLM Reasoning Layer, Deterministic Fallback |
 | Developers can integrate without using the UI | TypeScript SDK, Python SDK, `/v1/angora/*` APIs |
-| Teams can operate the system safely | Workspaces, API Keys, Roles, Budgets, Audit Logs |
 
-The infrastructure value proposition:
+## Live Data Sources
 
-> Developers can operationalize Circle/x402 paid-agent workflows with routing, policy, proof, reconciliation, tenant controls, and SDK access.
+When `ANGORA_LIVE_DATA=true`, each specialist agent buys real data from the following external sources before generating a recommendation.
 
-The reference-app value proposition:
+| Category | Source | API |
+| --- | --- | --- |
+| Odds | Polymarket | `gamma-api.polymarket.com/markets` |
+| Sentiment | Alternative.me | `api.alternative.me/fng` |
+| Risk | Kraken | `api.kraken.com/0/public/OHLC` (hourly, annualised vol) |
+| Market data | Kraken | `api.kraken.com/0/public/Ticker` |
+| Social | Alternative.me | `api.alternative.me/fng` (7-day window) |
+| Arbitrage | Kraken + CoinGecko | Ticker spread vs CoinGecko simple price |
 
-> Teams can run market-intelligence agents that buy trusted paid signals, block weak providers, control spend, generate proof, and reconcile payment with delivery through a UI or SDK.
+Each live call is wrapped in the Circle/x402 payment boundary. If a live call fails, the system falls back to deterministic mock data and records the fallback in the mission trace.
 
-## Primary Users
+## Circle Nanopayments & Arc Testnet
 
-| User | What They Need |
-| --- | --- |
-| Agent builders | SDK/API access for paid intelligence missions and receipts |
-| Prediction-market teams | odds, liquidity, event movement, news shifts, and mispricing checks |
-| Trading-agent teams | cross-venue price, spread, fee, slippage, liquidity, and risk checks |
-| Social/copy-trading teams | trader reliability, signal quality, drawdown, and credibility checks |
-| Paid intelligence providers | service registration, validation, usage, receipts, and reputation |
-| Workspace admins | API keys, roles, policies, budgets, provider access, and audit logs |
-| Auditors and evaluators | traces, receipts, payment records, delivery records, and reconciliation |
+AngoraPay Mesh integrates with Circle's nanopayment infrastructure for per-call provider settlement on Arc testnet.
+
+**Settlement path:**
+
+```text
+Agent mission triggers provider call
+        |
+        v
+Circle/x402 payment boundary
+        |
+        v
+USDC nanopayment on Arc testnet (Chain ID 5042002)
+        |
+        v
+Circle payment receipt with output hash
+        |
+        v
+ArcScan confirmation
+```
+
+**Configuration:**
+
+```text
+CIRCLE_API_KEY=...
+CIRCLE_ENTITY_SECRET=...
+CIRCLE_WALLET_ID=...
+AGENT_WALLET_ADDRESS=0x4991dd462f7672b737571b194b6cd6f271773d9b
+GOVERNANCE_BILLING_ADDRESS=0x4991dd462f7672b737571b194b6cd6f271773d9b
+ANGORA_DEMO_ARC_TESTNET=true
+```
+
+**Arc testnet details:**
+
+```text
+RPC:    https://rpc.testnet.arc.network
+Chain:  5042002
+USDC:   0x3600000000000000000000000000000000000000
+```
+
+**Circle Agent Marketplace:**
+
+AngoraPay Mesh mirrors the pattern from [agents.circle.com/services](https://agents.circle.com/services) — each provider in the service registry exposes an x402 endpoint that delivers data only after USDC payment clears. Real marketplace providers can be added without changing the mission orchestration layer.
 
 ## Specialist Agents
 
-AngoraPay Mesh starts with three specialist market-intelligence agents.
+Three specialist market-intelligence agents ship as the reference application.
 
-| Agent | Purpose | Typical Output |
+| Agent | Purpose | Data Bought |
 | --- | --- | --- |
-| Prediction Market Intelligence | Evaluate whether a prediction market is mispriced or positive expected value | `enter`, `monitor`, `avoid`, or `reduce_size` with confidence and receipts |
-| Cross-Venue Arbitrage | Evaluate whether a price gap survives fees, slippage, liquidity, latency, and risk | `execute`, `monitor`, or `reject` with net spread and risk |
-| Social Trading Intelligence | Evaluate whether a trader, influencer, or social-alpha signal is reliable enough to follow | `follow`, `follow_reduced_size`, `monitor`, or `reject` |
+| Prediction Market Intelligence | Evaluate whether a prediction market is mispriced or positive expected value | Polymarket odds, Fear & Greed sentiment, Kraken volatility |
+| Cross-Venue Arbitrage | Evaluate whether a price gap survives fees, slippage, liquidity, and risk | Kraken ticker, Kraken OHLC risk, Kraken vs CoinGecko arbitrage |
+| Social Trading Intelligence | Evaluate whether a trader or social-alpha signal is reliable enough to follow | Fear & Greed (7-day), sentiment index, Kraken volatility |
 
-### Prediction Market Intelligence
+### Running a mission
 
-Typical intelligence:
-
-- odds feed
-- liquidity depth
-- news and sentiment movement
-- probability shift
-- risk check
-- proof receipt
-
-Example mission:
-
-```text
-Check whether this BTC prediction market is mispriced after the news shift.
+```bash
+curl -X POST http://108.61.173.24/v1/angora/agent-missions/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userGoal": "Is this BTC prediction market mispriced after the news shift?",
+    "context": { "asset": "BTC" }
+  }'
 ```
 
-### Cross-Venue Arbitrage
+The response includes:
 
-Typical intelligence:
+- `decisions[]` — which providers were selected, scored, and approved or blocked
+- `recommendation` — action, confidence, summary, reasons, and guardrail from GPT-4o mini
+- `receipts[]` — Circle payment receipts with output hashes
+- `totals` — USDC routed, receipts created
 
-- venue A and venue B price feeds
-- spread check
-- liquidity check
-- fee estimate
-- slippage estimate
-- execution-risk check
-- proof receipt
+## Platform Layers
 
-Example mission:
-
-```text
-Check whether the BTC price gap across two venues survives fees and slippage.
-```
-
-### Social Trading Intelligence
-
-Typical intelligence:
-
-- trader history
-- signal consistency
-- social sentiment
-- drawdown pattern
-- copy-risk score
-- source credibility
-- proof receipt
-
-Example mission:
-
-```text
-Evaluate whether this trader signal is reliable enough to follow with reduced size.
-```
-
-## Product Surfaces
-
-| Surface | Route or Path | Purpose |
-| --- | --- | --- |
-| Angora console | `/angora` | Tenant Gateway console for executions, providers, policies, payments, receipts/proof, metrics, developers, and reference demo apps |
-| Legacy static workspace | `/angora.html` | Older static UI retained for compatibility |
-| API root | `/v1/angora` | Canonical Angora API prefix |
-| Health | `/v1/angora/health` | Service health check |
-| Readiness | `/v1/angora/ready` | Storage and runtime readiness |
-| OpenAPI contract | `/v1/angora/openapi.json` | Public Gateway API contract for SDK/client generation |
-| Dashboard summary | `/v1/angora/dashboard/summary` | Product overview data for the UI |
-| Agent missions | `/v1/angora/agent-missions/run` | Run specialist market-intelligence missions |
-| Gateway call | `/v1/angora/gateway/call` | Route one paid provider call through policy and payment boundaries |
-| Receipts | `/v1/angora/receipts` | Inspect proof records for paid calls |
-| Reconciliation | `/v1/angora/reconciliation/run` | Compare payment, delivery, receipt, and webhook state |
-| TypeScript SDK | `sdk/typescript` | JS/TS integration client |
-| Python SDK | `sdk/python` | Python integration client |
+| Layer | Role |
+| --- | --- |
+| AngoraPay Mesh | Core infrastructure: provider discovery, trust scoring, route scorecards, policy, spend control, Circle/x402 payment boundary, receipts, reconciliation, workspace controls, SDK/API access |
+| Market Intelligence Agents | Reference app: Prediction Market Intelligence, Cross-Venue Arbitrage, Social Trading Intelligence |
 
 ## Runtime Architecture
 
@@ -234,19 +157,16 @@ Evaluate whether this trader signal is reliable enough to follow with reduced si
 Product UI / SDK / External Agent
         |
         v
-Angora API Routes
+Angora API Routes  (/v1/angora/*)
         |
         v
-Mission Orchestrator
+Mission Orchestrator + Mission Classifier
         |
         v
-Mission Classifier + Specialist Agent Runtime
+Specialist Agent Runtime
         |
         v
-LLM Reasoning Layer + Deterministic Fallback
-        |
-        v
-Context Builder + Adaptive Memory + Checkpoints
+LLM Reasoning (GPT-4o mini) + Deterministic Fallback
         |
         v
 Provider Discovery + Route Scorecard
@@ -258,54 +178,28 @@ Policy, Trust, Spend, and Idempotency Checks
 Circle/x402 Payment Boundary
         |
         v
-Provider Delivery + Output Hash + Receipt
+Live Data Fetcher → Polymarket / Kraken / Alternative.me
         |
         v
-Payment Ledger + Delivery Ledger + Reconciliation Ledger
+Provider Delivery + Output Hash + Circle Receipt
         |
         v
-Conversation History + Traces + Metrics + Audit Logs
+Arc Testnet Nanopayment Settlement
+        |
+        v
+Conversation History + Traces + Reconciliation Ledger
 ```
 
-The main product implementation lives in:
+## AI Reasoning
 
-```text
-src/angora/
-src/dashboard/public/angora.html
-sdk/
-docs/ANGORA_*.md
-```
+When `OPENAI_API_KEY` is configured, agent missions use GPT-4o mini for:
 
-## Key Capabilities
-
-| Capability | Description |
-| --- | --- |
-| Mission orchestration | Classifies user goals and selects specialist agents |
-| LLM reasoning | Uses OpenAI, when configured, to interpret practical mission intent and write production recommendation summaries |
-| Context engineering | Builds mission packets from goal, provider history, policy, memory, and receipts |
-| Adaptive retrieval | Uses mission, provider, receipt, and policy memory to improve routing |
-| Long coordination | Stores checkpoints so long-running missions can be inspected and resumed |
-| Provider marketplace | Registers, validates, searches, and scores paid intelligence services |
-| Route scorecard | Scores providers by fit, trust, proof, cost, reliability, and latency |
-| Policy engine | Blocks providers that fail trust, proof, category, payment, or budget rules |
-| Payment executor | Isolates Circle/x402 payment behavior from agent logic |
-| Receipt engine | Stores mission, provider, payment, output hash, and settlement proof data |
-| Reconciliation | Detects pending payment, missing delivery, mismatches, duplicates, and missing receipts |
-| Workspace controls | Scopes API keys, roles, policies, budgets, provider access, and audit records |
-| SDK access | Lets external apps run missions, call the gateway, and inspect receipts/traces |
-
-## Production AI Reasoning
-
-AngoraPay Mesh now supports a production LLM reasoning layer for practical market-agent workflows.
-
-When `OPENAI_API_KEY` is set, agent missions use OpenAI for:
-
-- mission interpretation and specialist selection,
+- mission interpretation and specialist agent selection,
 - practical market target and asset extraction,
-- evidence-based recommendation summaries,
+- evidence-based recommendation summaries grounded in live data,
 - human-readable risk flags and guardrails.
 
-The LLM does not control money movement. These systems remain deterministic and enforced by code:
+The LLM does not control money movement. These remain deterministic:
 
 - provider discovery and route scoring,
 - trust and policy gates,
@@ -319,12 +213,12 @@ Recommended configuration:
 
 ```text
 ANGORA_LLM_ENABLED=true
-ANGORA_LLM_MODEL=gpt-5.4-mini
+ANGORA_LLM_MODEL=gpt-4o-mini
 ANGORA_LLM_TIMEOUT_MS=12000
-OPENAI_API_KEY=...
+OPENAI_API_KEY=sk-...
 ```
 
-If no key is configured, Angora continues with deterministic fallback reasoning and records that fallback in the mission trace. OpenAI's current model guidance recommends GPT-5.5 for complex reasoning and coding, with smaller variants such as `gpt-5.4-mini` for lower latency and cost. Angora defaults to `gpt-5.4-mini` so real product usage remains responsive, while allowing `ANGORA_LLM_MODEL` to be upgraded for higher-stakes deployments.
+If no key is configured, Angora continues with deterministic fallback reasoning and records the fallback in the mission trace.
 
 ## API Highlights
 
@@ -334,15 +228,12 @@ If no key is configured, Angora continues with deterministic fallback reasoning 
 POST /v1/angora/agent-missions/run
 ```
 
-Example body:
+Body:
 
 ```json
 {
-  "userGoal": "Check whether this BTC prediction market is mispriced after the news shift.",
-  "paymentMode": "demo_fallback",
-  "maxSpendUSDC": "0.05",
-  "minProviderTrustScore": 85,
-  "proofRequired": true
+  "userGoal": "Is this ETH prediction market mispriced after the Fed announcement?",
+  "context": { "asset": "ETH" }
 }
 ```
 
@@ -352,18 +243,7 @@ Example body:
 POST /v1/angora/gateway/call
 ```
 
-The gateway handles:
-
-- auth and rate limits
-- idempotency
-- mission lookup
-- provider discovery
-- policy evaluation
-- spend limit evaluation
-- x402 payment boundary
-- provider delivery
-- receipt creation
-- execution history
+Routes one paid provider call through policy evaluation, spend limit check, Circle/x402 payment boundary, delivery, and receipt creation.
 
 ### Reconciliation
 
@@ -372,66 +252,40 @@ POST /v1/angora/reconciliation/run
 GET  /v1/angora/reconciliation/runs
 ```
 
-Reconciliation compares:
+Compares payment intents, payment events, provider deliveries, receipts, output hashes, and idempotency keys.
 
-- payment intents
-- payment events
-- provider deliveries
-- receipts
-- webhook events
-- output hashes
-- idempotency keys
+### Health
+
+```http
+GET /v1/angora/health
+GET /v1/angora/ready
+GET /v1/angora/openapi.json
+```
+
+## Product Surfaces
+
+| Surface | Path | Purpose |
+| --- | --- | --- |
+| Angora console | `/` | Gateway console: Demo Apps, Overview, Executions, Providers |
+| API root | `/v1/angora` | Canonical API prefix |
+| Agent missions | `/v1/angora/agent-missions/run` | Run specialist market-intelligence missions |
+| Gateway call | `/v1/angora/gateway/call` | Route one paid provider call |
+| Receipts | `/v1/angora/receipts` | Inspect proof records |
+| Reconciliation | `/v1/angora/reconciliation/run` | Compare payment, delivery, and receipt state |
+| OpenAPI | `/v1/angora/openapi.json` | Public API contract |
+| TypeScript SDK | `sdk/typescript` | JS/TS integration client |
+| Python SDK | `sdk/python` | Python integration client |
 
 ## Payment Modes
 
-Payment modes are explicit by design:
-
 ```text
-real_x402
-arc_testnet
-demo_fallback
-blocked
-failed
-pending
-local_proof
+arc_testnet      — live USDC on Arc testnet via Circle nanopayments
+real_x402        — real x402 endpoint with signed authorization
+demo_fallback    — deterministic mock, no real payment
+blocked          — provider blocked by policy before payment
+failed           — payment or delivery failed
+pending          — awaiting batch settlement
 ```
-
-Demo mode must not pretend to be real settlement. Real x402 should only be enabled after Circle credentials, provider endpoint verification, webhook signature verification, idempotency protection, and reconciliation checks are configured.
-
-## Storage Model
-
-The current runtime uses JSON-backed stores for fast local and demo deployment.
-
-Default local state paths:
-
-```text
-.kairos-angora/
-ANGORA_STATE_DIR
-KAIROS_ANGORA_STATE_DIR
-KAIROS_DATA_DIR/angora
-```
-
-Production database target:
-
-```text
-src/angora/db/migrations/001_angora_platform.sql
-```
-
-The included PostgreSQL schema covers:
-
-- workspaces and members
-- API keys
-- conversations and messages
-- missions and checkpoints
-- traces
-- provider services
-- route evaluations
-- policy evaluations
-- payment intents and events
-- provider deliveries
-- receipts
-- reconciliation runs and items
-- audit logs
 
 ## Local Development
 
@@ -441,23 +295,22 @@ Install dependencies:
 npm install
 ```
 
-Run full checks:
+Build backend and frontend:
 
 ```bash
 npm run build
-npm run angora:full-check
 ```
 
 Start the dashboard and API server:
 
 ```bash
-npm run dashboard
+npm run start:dashboard
 ```
 
 Open:
 
-```text
-http://localhost:3000/angora.html
+```
+http://localhost:3000/
 ```
 
 Health check:
@@ -466,193 +319,110 @@ Health check:
 curl http://localhost:3000/v1/angora/health
 ```
 
-Run a demo mission in local open mode:
+Run a mission locally:
 
 ```bash
-ANGORA_AUTH_DISABLED=true npm run dashboard
+curl -X POST http://localhost:3000/v1/angora/agent-missions/run \
+  -H "Content-Type: application/json" \
+  -d '{"userGoal": "Check ETH prediction market for mispricing."}'
 ```
 
+Key environment variables:
+
+```text
+ANGORA_LIVE_DATA=true          # enable real Polymarket/Kraken/FNG calls
+ANGORA_DEMO_ARC_TESTNET=true   # enable Arc testnet payment mode
+ANGORA_LLM_ENABLED=true        # enable GPT-4o mini reasoning
+ANGORA_LLM_MODEL=gpt-4o-mini
+OPENAI_API_KEY=...
+CIRCLE_API_KEY=...
+CIRCLE_ENTITY_SECRET=...
+CIRCLE_WALLET_ID=...
+AGENT_WALLET_ADDRESS=...
+```
+
+## Docker
+
+Build and start:
+
 ```bash
-curl -X POST http://localhost:3000/v1/angora/demo/market-mission \
-  -H "Content-Type: application/json" \
-  -d "{\"payload\":{\"asset\":\"BTC\",\"market\":\"BTC prediction market\",\"horizon\":\"intraday\"}}"
+docker compose -f docker-compose.angora.yml up --build
+```
+
+Production (Vultr):
+
+```bash
+docker compose -f docker-compose.vultr.yml up --build -d
+```
+
+Frontend rebuild (local, then copy into container):
+
+```bash
+npm run build:frontend
+docker cp src/dashboard/public/angora-app/ angorapay:/app/src/dashboard/public/angora-app/
 ```
 
 ## SDKs
 
-### TypeScript
-
-Location:
-
-```text
-sdk/typescript
-```
-
-Example:
+TypeScript:
 
 ```ts
 import { AngoraPay } from "@angorapay/sdk";
 
 const angora = new AngoraPay({
   apiKey: process.env.ANGORA_API_KEY!,
-  baseUrl: process.env.ANGORA_GATEWAY_URL!,
+  baseUrl: "http://108.61.173.24",
 });
 
 const result = await angora.runAgentMission({
   userGoal: "Check whether this BTC prediction market is mispriced.",
-  paymentMode: "demo_fallback",
 });
 ```
 
-### Python
+Install: `npm install @angorapay/sdk`
 
-Location:
-
-```text
-sdk/python
-```
-
-Example:
+Python:
 
 ```python
 from angorapay import AngoraPay
 
 client = AngoraPay(
     api_key="ag_live_xxx",
-    gateway_url="https://your-domain.example",
+    gateway_url="http://108.61.173.24",
 )
 
 result = client.run_agent_mission({
     "userGoal": "Check whether this BTC prediction market is mispriced.",
-    "paymentMode": "demo_fallback",
 })
 ```
 
-The SDKs are integrated in this repository and published publicly:
-
-- TypeScript: `npm install @angorapay/sdk`
-- Python: `pip install angorapay`
-
-The hosted Gateway exposes a public OpenAPI contract:
-
-```bash
-curl http://108.61.173.24/v1/angora/openapi.json
-```
-
-Use that contract for enterprise API review, generated clients, Postman collections, or internal gateway governance.
-
-## Production Path
-
-Docker assets:
-
-```text
-Dockerfile.angora
-docker-compose.angora.yml
-```
-
-Environment templates:
-
-```text
-.env.angora.example
-.env.angora.production.example
-```
-
-Recommended production values:
-
-```text
-ANGORA_REQUIRE_AUTH=true
-ANGORA_API_KEY_PREFIX=ag_live
-ANGORA_DEFAULT_WORKSPACE_ID=<workspace>
-ANGORA_DEFAULT_TENANT_ID=<tenant>
-ANGORA_STATE_DIR=/var/lib/angora/state
-ANGORA_STORAGE_DRIVER=postgres
-DATABASE_URL=postgres://...
-REDIS_URL=redis://...
-CIRCLE_API_KEY=...
-CIRCLE_WALLET_ID=...
-CIRCLE_ENTITY_SECRET=...
-WEBHOOK_SIGNING_SECRET=...
-```
+Install: `pip install angorapay`
 
 ## Current Status
 
 | Area | Status |
 | --- | --- |
-| Angora backend | Integrated under `src/angora` |
-| Angora UI | Available at `/angora-app/` on the deployed Gateway and `/angora.html` as legacy static UI |
+| Angora backend | Live under `src/angora` |
+| Angora console | Live at `http://108.61.173.24/` |
 | API routes | Mounted at `/v1/angora/*` |
+| Live data | Polymarket, Kraken (Ticker + OHLC), Alternative.me Fear & Greed |
+| Circle nanopayments | Integrated — real USDC on Arc testnet per provider call |
+| Arc testnet wallet | `0x4991dd462f7672b737571b194b6cd6f271773d9b` (20 USDC funded) |
+| GPT-4o mini reasoning | Live — `ANGORA_LLM_ENABLED=true`, `ANGORA_LLM_MODEL=gpt-4o-mini` |
+| TypeScript SDK | Published — `npm install @angorapay/sdk` |
+| Python SDK | Published — `pip install angorapay` |
+| PostgreSQL schema | Included at `src/angora/db/migrations/001_angora_platform.sql` |
 | Local JSON storage | Implemented |
-| PostgreSQL schema | Included |
-| TypeScript SDK | Published on npm as `@angorapay/sdk@0.1.0` |
-| Python SDK | Published on PyPI as `angorapay==0.1.0` |
-| Full checks | Passing |
-| npm publishing | Completed: https://www.npmjs.com/package/@angorapay/sdk |
-| PyPI publishing | Completed: https://pypi.org/project/angorapay/ |
-| hosted gateway deployment | Live on Vultr at `http://108.61.173.24/angora-app/` |
-| real Circle/x402 production config | Not completed |
+| Real x402 production config | Not completed |
 | PostgreSQL repository adapters | Not completed |
-| merge into `main` | Completed |
 
-## Publishing SDKs
-
-TypeScript package:
-
-```bash
-npm run angora:sdk:typescript:build
-npm run angora:sdk:typescript:pack
-npm login
-npm run angora:sdk:typescript:publish
-```
-
-Python package:
-
-```bash
-npm run angora:sdk:python:build
-python -m twine check sdk/python/dist/*
-python -m twine upload sdk/python/dist/*
-```
-
-The TypeScript package name is `@angorapay/sdk`.
-
-The Python package name is `angorapay`. If PyPI already reserves that name, publish under `angorapay-mesh` and update `sdk/python/pyproject.toml` before uploading.
-
-GitHub Actions also includes a manual `Publish Angora SDKs` workflow. Add repository secrets `NPM_TOKEN` and `PYPI_API_TOKEN`, then run the workflow for `typescript`, `python`, or `both`.
-
-## Validation Commands
+## Validation
 
 ```bash
 npm run build
 npm run angora:typecheck
 npm run angora:self-test
-npm run angora:sdk:python:check
 npm run angora:agentic-smoke
 npm run angora:reconciliation-smoke
 npm run angora:full-check
 ```
-
-## Documentation
-
-Angora-specific documentation lives under:
-
-```text
-docs/ANGORA_*.md
-```
-
-Useful entry points:
-
-- `docs/ANGORA_AGENTIC_MERGE_NOTES.md`
-- `docs/ANGORA_PRODUCTION_HARDENING_NOTES.md`
-- `docs/ANGORA_PRODUCTION_RECONCILIATION_LEDGER.md`
-- `docs/ANGORA_UI_PRODUCT_UPGRADE_V8.md`
-
-## Strategic Summary
-
-AngoraPay Mesh is the paid-intelligence operating layer for market agents.
-
-Specialist agents make the product usable.
-
-Gateway, SDK, policy, payment, proof, and reconciliation infrastructure make it credible.
-
-Workspaces, API keys, budgets, roles, and audit logs make it usable by real teams.
-
-Circle/x402/USDC make the paid-service workflow commercially meaningful.

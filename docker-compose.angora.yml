@@ -29,6 +29,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.angora
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       ANGORA_REQUIRE_AUTH: "false"

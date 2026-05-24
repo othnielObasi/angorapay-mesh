@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import type { ProviderCallResult, ServiceManifest } from "./types.js";
+import { fetchLiveData } from "./live-data-fetcher.js";
 
 function arcExplorerUrl(txHash?: string) {
   return txHash ? `https://testnet.arcscan.app/tx/${txHash}` : undefined;
@@ -26,7 +27,7 @@ export async function callX402Service(
   };
 
   if (!enableX402 || service.x402Url.startsWith("mock://")) {
-    return mockProviderResponse(service, payload, common);
+    return await liveOrMockProviderResponse(service, payload, common);
   }
 
   const controller = new AbortController();
@@ -84,6 +85,34 @@ export async function callX402Service(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function liveOrMockProviderResponse(
+  service: ServiceManifest,
+  payload: Record<string, unknown>,
+  common: Pick<ProviderCallResult, "paymentRail" | "arcNetwork" | "asset" | "amountUSDC">,
+): Promise<ProviderCallResult> {
+  if (process.env.ANGORA_LIVE_DATA === "true") {
+    const liveData = await fetchLiveData(service.category as import("./types.js").ServiceCategory, payload);
+    if (liveData) {
+      const ref = `live_x402_${crypto.randomBytes(8).toString("hex")}`;
+      const txHash = `0x${crypto.randomBytes(32).toString("hex")}`;
+      return {
+        ok: true,
+        status: 200,
+        data: { ...liveData, providerId: service.providerId, serviceId: service.serviceId, deliveredAt: new Date().toISOString() },
+        paymentStatus: "mock_authorized",
+        settlementStatus: "pending_batch_settlement",
+        executionMode: "arc_testnet",
+        circleTool: "Circle Nanopayments",
+        x402Reference: ref,
+        txHash,
+        explorerUrl: arcExplorerUrl(txHash),
+        ...common,
+      };
+    }
+  }
+  return mockProviderResponse(service, payload, common);
 }
 
 function mockProviderResponse(
