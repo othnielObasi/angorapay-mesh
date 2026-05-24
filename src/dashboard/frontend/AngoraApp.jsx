@@ -8,6 +8,7 @@ import {
   Gauge,
   Globe2,
   LineChart,
+  MessageSquare,
   Play,
   Route,
   Search,
@@ -21,6 +22,7 @@ import {
 const APP_NAME = "AngoraPay Mesh";
 
 const tabs = [
+  { id: "chat", label: "Agent Chat", icon: MessageSquare },
   { id: "run", label: "Live Demo", icon: Gauge },
   { id: "market", label: "Marketplace", icon: Store },
   { id: "scorecard", label: "Route Scorecard", icon: ShieldCheck },
@@ -28,6 +30,7 @@ const tabs = [
   { id: "providers", label: "Providers", icon: UploadCloud },
   { id: "history", label: "Execution History", icon: Activity },
   { id: "proof", label: "Proof", icon: FileCheck2 },
+  { id: "reconciliation", label: "Reconciliation", icon: CheckCircle2 },
   { id: "metrics", label: "Submission Metrics", icon: BarChart3 },
   { id: "developers", label: "Developers", icon: Code2 },
 ];
@@ -291,20 +294,56 @@ async function api(path, options = {}) {
 }
 
 async function loadLiveSnapshot() {
-  const [dashboard, services, receipts] = await Promise.all([
+  const [
+    dashboard,
+    services,
+    receipts,
+    workspace,
+    route,
+    execution,
+    payments,
+    deliveries,
+    reconciliation,
+    conversations,
+    traces,
+    checkpoints,
+    reputation,
+  ] = await Promise.all([
     api("/v1/angora/dashboard/summary"),
     api("/v1/angora/services/search?max_price=1&require_verified=false"),
     api("/v1/angora/receipts"),
+    api("/v1/angora/workspaces/current"),
+    api("/v1/angora/route/simulate"),
+    api("/v1/angora/execution-history?limit=12"),
+    api("/v1/angora/payment-intents?limit=12"),
+    api("/v1/angora/provider-deliveries?limit=12"),
+    api("/v1/angora/reconciliation/runs?limit=8"),
+    api("/v1/angora/conversations?limit=8"),
+    api("/v1/angora/agent-traces?limit=12"),
+    api("/v1/angora/agent-checkpoints?limit=12"),
+    api("/v1/angora/reputation"),
   ]);
   return {
     dashboard,
     services: services.services || [],
+    blockedServices: services.blocked || [],
     receipts: receipts.receipts || [],
+    workspace,
+    route: route.simulation,
+    execution: execution.execution?.rows || execution.execution || [],
+    executionSummary: execution.summary,
+    paymentIntents: payments.paymentIntents || [],
+    providerDeliveries: deliveries.providerDeliveries || [],
+    reconciliationRuns: reconciliation.runs || [],
+    conversations: conversations.conversations?.rows || conversations.conversations || [],
+    traces: traces.traces?.rows || traces.traces || [],
+    checkpoints: checkpoints.checkpoints?.rows || checkpoints.checkpoints || [],
+    reputation: reputation.reputation || [],
   };
 }
 
 function runSelfTests() {
-  console.assert(tabs.length === 9, "Angora UI should expose nine workspace tabs");
+  console.assert(tabs.length === 11, "Angora UI should expose eleven workspace tabs");
   console.assert(new Set(tabs.map((tab) => tab.id)).size === tabs.length, "tab IDs should be unique");
   console.assert(approvedServices(marketServices).length === 6, "six market services should be approved");
   console.assert(blockedServices(marketServices).length === 1, "one market service should be blocked");
@@ -659,6 +698,70 @@ function Stat({ label, value, icon: Icon }) {
   );
 }
 
+function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, live }) {
+  const messages = latestResult
+    ? [
+        { role: "user", content: latestResult.context?.userGoal || agentGoal },
+        { role: "assistant", content: latestResult.recommendation?.summary || "Mission completed." },
+      ]
+    : [
+        { role: "assistant", content: "Describe a market question. I will select a specialist agent, route paid services, enforce policy, create receipts, and return a recommendation." },
+      ];
+  const decisions = latestResult?.decisions || [];
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <Glass className="p-5">
+        <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Agent chat</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">Market-intelligence mission workspace</h2>
+          </div>
+          <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>{agentRunning ? "running" : latestResult ? "completed" : "ready"}</Pill>
+        </div>
+        <div className="space-y-3">
+          {messages.map((message, index) => (
+            <div key={`${message.role}-${index}`} className={cx("rounded-2xl p-4 ring-1", message.role === "user" ? "ml-8 bg-slate-950 text-white ring-slate-800" : "mr-8 bg-white/80 text-slate-700 ring-slate-200")}>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-60">{message.role}</p>
+              <p className="mt-2 text-sm leading-6">{message.content}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+          <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-28 resize-none rounded-2xl border border-slate-200 bg-white/90 p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
+          <button type="button" onClick={runAgentMission} disabled={agentRunning || agentGoal.trim().length < 8} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
+            <Play className="h-4 w-4" />Run agent
+          </button>
+        </div>
+      </Glass>
+      <div className="space-y-5">
+        <Glass className="p-5">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Agent output</p>
+          <div className="mt-4 space-y-3">
+            <RouteLine label="Specialist" value={latestResult?.specialistAgent || "auto"} tone="blue" />
+            <RouteLine label="RFP track" value={latestResult?.rfpTrack || "pending"} tone="purple" />
+            <RouteLine label="USDC routed" value={latestResult?.totals?.usdcRouted || "0.000000"} tone="good" />
+            <RouteLine label="Receipts" value={String(latestResult?.totals?.receiptsCreated || live?.receipts?.length || 0)} tone="good" />
+          </div>
+        </Glass>
+        <Glass className="p-5">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Decisions</p>
+          <div className="mt-4 space-y-3">
+            {(decisions.length ? decisions : live?.execution?.slice(0, 4) || []).map((item, index) => (
+              <div key={item.receipt?.receiptId || item.id || index} className="rounded-2xl bg-white/70 p-3 ring-1 ring-slate-200">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-black text-slate-900">{item.serviceName || item.serviceId || item.category}</p>
+                  <Pill compact tone={item.status === "blocked" ? "bad" : "good"}>{item.status}</Pill>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{item.routeReason || item.policyVerdict}</p>
+              </div>
+            ))}
+          </div>
+        </Glass>
+      </div>
+    </div>
+  );
+}
+
 function RunPanel({ runDemo, completed, live }) {
   const metrics = live?.dashboard?.metrics;
   const currentSteps = runSteps.map(([title, detail], index) => ({ title, detail, status: index < completed ? "done" : index === completed ? "running" : "waiting" }));
@@ -733,25 +836,57 @@ function MarketplacePanel({ live }) {
   );
 }
 
-function ScorecardPanel() {
+function ScorecardPanel({ live }) {
+  const routeSteps = live?.route?.steps || [];
+  const rows = routeSteps.length
+    ? routeSteps.map((step) => ({
+        provider: step.bestProvider,
+        service: step.bestService,
+        missionFit: step.routeScore,
+        policy: step.allowed ? 100 : 0,
+        proof: 100,
+        routeScore: step.routeScore,
+        verdict: step.allowed ? "selected" : "blocked",
+        reason: step.reason,
+      }))
+    : routeCandidates;
   return (
     <Glass className="p-5">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Route scorecard</p>
       <h2 className="mt-1 text-2xl font-black text-slate-950">Why providers were selected or blocked</h2>
       <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white">
         <div className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Provider</span><span>Fit</span><span>Policy</span><span>Proof</span><span>Score</span><span>Verdict</span></div>
-        {routeCandidates.map((candidate) => <div key={candidate.provider} className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span><b>{candidate.provider}</b><br /><span className="text-xs text-slate-500">{candidate.service}</span></span><span>{candidate.missionFit}</span><span>{candidate.policy}</span><span>{candidate.proof}</span><span>{candidate.routeScore}</span><Pill compact tone={candidate.verdict === "blocked" ? "bad" : candidate.verdict === "selected" ? "good" : "blue"}>{candidate.verdict}</Pill></div>)}
+        {rows.map((candidate) => <div key={`${candidate.provider}-${candidate.service}`} className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span><b>{candidate.provider}</b><br /><span className="text-xs text-slate-500">{candidate.service}</span></span><span>{candidate.missionFit}</span><span>{candidate.policy}</span><span>{candidate.proof}</span><span>{candidate.routeScore}</span><Pill compact tone={candidate.verdict === "blocked" ? "bad" : candidate.verdict === "selected" ? "good" : "blue"}>{candidate.verdict}</Pill></div>)}
       </div>
     </Glass>
   );
 }
 
-function PolicyPanel() {
-  return <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Policy</p><h2 className="mt-1 text-2xl font-black text-slate-950">Mission controls before payment</h2><div className="mt-6 grid gap-3 md:grid-cols-2">{policyRules.map(([key, value]) => <div key={key} className="flex items-center justify-between rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200"><span className="text-sm text-slate-500">{key}</span><span className="text-sm font-black text-slate-950">{value}</span></div>)}</div></Glass>;
+function PolicyPanel({ live }) {
+  const policy = live?.workspace?.policy;
+  const budget = live?.workspace?.budget;
+  const rows = policy ? [
+    ["Max mission spend", `${policy.maxMissionSpendUSDC} USDC`],
+    ["Daily spend limit", `${budget?.dailyLimitUSDC || policy.dailySpendLimitUSDC} USDC`],
+    ["Minimum provider trust", `${policy.minProviderTrustScore} / 100`],
+    ["Minimum route score", `${policy.minRouteScore} / 100`],
+    ["Proof required", String(policy.proofRequired)],
+    ["Payment modes", (policy.allowedPaymentModes || []).join(", ")],
+    ["Allowed categories", (policy.allowedCategories || []).join(", ")],
+    ["Blocked providers", (policy.blockedProviders || []).join(", ") || "none"],
+  ] : policyRules;
+  return <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Policy</p><h2 className="mt-1 text-2xl font-black text-slate-950">Mission controls before payment</h2><div className="mt-6 grid gap-3 md:grid-cols-2">{rows.map(([key, value]) => <div key={key} className="flex items-center justify-between gap-4 rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200"><span className="text-sm text-slate-500">{key}</span><span className="text-right text-sm font-black text-slate-950">{value}</span></div>)}</div></Glass>;
 }
 
-function ProviderPanel() {
-  return <div className="grid gap-5 lg:grid-cols-2">{providerOnboarding.map(([title, detail], index) => <Glass key={title} className="p-5"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">{index + 1}</div><p className="mt-5 text-xl font-black text-slate-950">{title}</p><p className="mt-3 text-sm leading-6 text-slate-600">{detail}</p></Glass>)}</div>;
+function ProviderPanel({ live }) {
+  const deliveries = live?.providerDeliveries || [];
+  return <div className="grid gap-5 lg:grid-cols-2">
+    {providerOnboarding.map(([title, detail], index) => <Glass key={title} className="p-5"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">{index + 1}</div><p className="mt-5 text-xl font-black text-slate-950">{title}</p><p className="mt-3 text-sm leading-6 text-slate-600">{detail}</p></Glass>)}
+    <Glass className="p-5 lg:col-span-2">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Live provider deliveries</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">{deliveries.slice(0, 6).map((delivery) => <div key={delivery.deliveryId || delivery.receiptId} className="rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200"><div className="flex items-center justify-between"><p className="font-black text-slate-900">{delivery.providerId}</p><Pill compact tone={delivery.status === "delivered" ? "good" : "warn"}>{delivery.status}</Pill></div><p className="mt-1 text-xs text-slate-500">{delivery.serviceId} · {delivery.receiptId}</p></div>)}</div>
+    </Glass>
+  </div>;
 }
 
 function HistoryPanel({ live }) {
@@ -776,11 +911,62 @@ function HistoryPanel({ live }) {
   );
 }
 
-function ProofPanel() {
+function ProofPanel({ live, latestResult }) {
+  const receipt = latestResult?.receipts?.[0] || live?.receipts?.[0];
+  const rows = receipt ? [
+    ["receipt_id", receipt.receiptId],
+    ["agent_id", receipt.agentId],
+    ["mission_id", receipt.missionId],
+    ["service_id", receipt.serviceId],
+    ["provider_id", receipt.providerId],
+    ["policy_status", receipt.policyStatus],
+    ["route_score", String(receipt.scorecard?.routeScore || "")],
+    ["payment_rail", receipt.paymentRail],
+    ["asset", receipt.asset],
+    ["network", receipt.arcNetwork],
+    ["payment_reference", receipt.x402Reference],
+    ["execution_mode", receipt.executionMode],
+    ["settlement_status", receipt.settlementStatus],
+    ["output_hash", receipt.outputHash],
+    ["reconciliation_tag", receipt.reconciliationTag],
+  ] : proofRows;
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
-      <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Receipt packet</p><h2 className="mt-1 text-2xl font-black text-slate-950">Payment-linked market proof</h2><div className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-3xl bg-white/70 ring-1 ring-slate-200">{proofRows.map(([key, value]) => <div key={key} className="grid gap-3 p-4 md:grid-cols-[220px_1fr]"><p className="font-mono text-xs text-slate-400">{key}</p><p className="font-semibold text-slate-700">{value}</p></div>)}</div></Glass>
+      <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Receipt packet</p><h2 className="mt-1 text-2xl font-black text-slate-950">Payment-linked market proof</h2><div className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-3xl bg-white/70 ring-1 ring-slate-200">{rows.map(([key, value]) => <div key={key} className="grid gap-3 p-4 md:grid-cols-[220px_1fr]"><p className="font-mono text-xs text-slate-400">{key}</p><p className="break-all font-semibold text-slate-700">{value || "n/a"}</p></div>)}</div></Glass>
       <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Audit answer</p><h3 className="mt-2 text-2xl font-black text-slate-950">What signal was bought, why, and which mission did it support?</h3><p className="mt-4 text-sm leading-7 text-slate-600">The receipt connects mission intent, provider route, policy verdict, Circle/x402 authorization, Arc settlement state, provider output, output hash, and recommendation.</p></Glass>
+    </div>
+  );
+}
+
+function ReconciliationPanel({ live, runReconciliation, reconciliationRunning }) {
+  const runs = live?.reconciliationRuns || [];
+  const paymentIntents = live?.paymentIntents || [];
+  const deliveries = live?.providerDeliveries || [];
+  return (
+    <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
+      <Glass className="p-5">
+        <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Reconciliation</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">Payment intent, delivery, receipt, and settlement matching</h2>
+          </div>
+          <button type="button" onClick={runReconciliation} disabled={reconciliationRunning} className="inline-flex items-center gap-2 rounded-full bg-cyan-400 px-5 py-3 font-black text-slate-950 disabled:opacity-50">
+            <CheckCircle2 className="h-4 w-4" />{reconciliationRunning ? "Running" : "Run reconciliation"}
+          </button>
+        </div>
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+          <div className="grid grid-cols-[1fr_90px_90px_90px_90px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Run</span><span>Checked</span><span>Matched</span><span>Pending</span><span>Failed</span></div>
+          {(runs.length ? runs : [{ reconciliationRunId: "waiting", checked: 0, matched: 0, pending: live?.receipts?.length || 0, failed: 0 }]).slice(0, 8).map((run) => (
+            <div key={run.reconciliationRunId} className="grid grid-cols-[1fr_90px_90px_90px_90px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0">
+              <span className="truncate font-mono text-xs text-slate-600">{run.reconciliationRunId}</span><span>{run.checked}</span><span>{run.matched}</span><span>{run.pending}</span><span>{run.failed}</span>
+            </div>
+          ))}
+        </div>
+      </Glass>
+      <div className="space-y-5">
+        <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Payment intents</p><div className="mt-4 space-y-3">{paymentIntents.slice(0, 5).map((intent) => <RouteLine key={intent.paymentIntentId} label={intent.paymentIntentId?.slice(0, 18) || "intent"} value={intent.status || "pending"} tone={intent.status === "settled" ? "good" : "warn"} />)}</div></Glass>
+        <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Provider deliveries</p><div className="mt-4 space-y-3">{deliveries.slice(0, 5).map((delivery) => <RouteLine key={delivery.deliveryId || delivery.receiptId} label={delivery.providerId || "provider"} value={delivery.status || "pending"} tone={delivery.status === "delivered" ? "good" : "warn"} />)}</div></Glass>
+      </div>
     </div>
   );
 }
@@ -813,6 +999,10 @@ export default function AngoraUiCanvas() {
   const [tab, setTab] = useState("run");
   const [completed, setCompleted] = useState(0);
   const [live, setLive] = useState(null);
+  const [agentGoal, setAgentGoal] = useState("Evaluate whether this BTC prediction market is mispriced after breaking news and route the paid services needed for a proof-backed recommendation.");
+  const [agentRunning, setAgentRunning] = useState(false);
+  const [latestResult, setLatestResult] = useState(null);
+  const [reconciliationRunning, setReconciliationRunning] = useState(false);
 
   const refreshLive = async () => {
     try {
@@ -829,6 +1019,29 @@ export default function AngoraUiCanvas() {
   const openConsole = (target = "run") => {
     setTab(target);
     setView("console");
+  };
+
+  const runAgentMission = async () => {
+    setAgentRunning(true);
+    try {
+      const response = await api("/v1/angora/agent-missions/run", {
+        method: "POST",
+        body: JSON.stringify({
+          userGoal: agentGoal,
+          paymentMode: "arc_testnet",
+          budgetUSDC: "0.05",
+          maxPricePerCallUSDC: "0.01",
+          proofRequired: true,
+        }),
+      });
+      setLatestResult(response.result);
+      setCompleted(runSteps.length);
+      await refreshLive();
+    } catch (error) {
+      console.warn("Angora agent mission unavailable", error);
+    } finally {
+      setAgentRunning(false);
+    }
   };
 
   const runDemo = async () => {
@@ -850,8 +1063,21 @@ export default function AngoraUiCanvas() {
     }
   };
 
+  const runReconciliation = async () => {
+    setReconciliationRunning(true);
+    try {
+      await api("/v1/angora/reconciliation/run", { method: "POST", body: JSON.stringify({}) });
+      await refreshLive();
+    } catch (error) {
+      console.warn("Angora reconciliation unavailable", error);
+    } finally {
+      setReconciliationRunning(false);
+    }
+  };
+
   const Panel = useMemo(() => {
     const panelMap = {
+      chat: AgentChatPanel,
       run: RunPanel,
       market: MarketplacePanel,
       scorecard: ScorecardPanel,
@@ -859,6 +1085,7 @@ export default function AngoraUiCanvas() {
       providers: ProviderPanel,
       history: HistoryPanel,
       proof: ProofPanel,
+      reconciliation: ReconciliationPanel,
       metrics: MetricsPanel,
       developers: DeveloperPanel,
     };
@@ -871,7 +1098,7 @@ export default function AngoraUiCanvas() {
 
   return (
     <ConsoleShell activeTab={tab} setActiveTab={setTab} goHome={() => setView("landing")}>
-      <Panel runDemo={runDemo} completed={completed} live={live} />
+      <Panel runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} />
     </ConsoleShell>
   );
 }

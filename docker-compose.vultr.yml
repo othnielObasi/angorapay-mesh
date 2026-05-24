@@ -12,6 +12,7 @@ services:
       NODE_ENV: production
       PORT: "3000"
       MODE: simulation
+      ANGORA_AUTH_DISABLED: "true"
       ANGORA_REQUIRE_AUTH: "false"
       ANGORA_STORAGE_DRIVER: json-file
       ANGORA_STATE_DIR: /app/.angora-state
