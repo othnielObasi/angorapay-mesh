@@ -468,13 +468,20 @@ export async function recordProofOnChain(
       { type: "proof", mode: "circle-x402" },
     );
 
-    const anchorTxHash = hasVerifiedTxHash(receipt) ? receipt.txHash : null;
-    const anchorTxId   = receipt.referenceId ?? null;
-    const explorerUrl  = anchorTxHash
+    let anchorTxHash: string | null = hasVerifiedTxHash(receipt) ? receipt.txHash : null;
+    const anchorTxId = receipt.referenceId ?? null;
+
+    // Circle DCW processes tx hashes asynchronously — poll up to 6 s for the
+    // confirmed on-chain hash so the proof shows "confirmed" with a real tx link.
+    // Use the SDK-based resolver (handles auth correctly) before falling back.
+    if (!anchorTxHash && anchorTxId) {
+      await ensureSigner(); // initialise circleClient if not already done
+      anchorTxHash = await resolveCircleTransactionHash(anchorTxId).catch(() => null);
+    }
+
+    const explorerUrl = anchorTxHash
       ? `https://testnet.arcscan.app/tx/${anchorTxHash}`
-      : anchorTxId
-        ? `https://testnet.arcscan.app/address/${BILLING_ADDRESS}`
-        : null;
+      : `https://testnet.arcscan.app/address/${BILLING_ADDRESS}`;
 
     console.log(`[PROOF] Anchored: txId=${anchorTxId ?? "?"} tx=${anchorTxHash ?? "pending"}`);
 
@@ -492,7 +499,7 @@ export async function recordProofOnChain(
       proofHash,
       anchorTxId:   null,
       anchorTxHash: null,
-      explorerUrl:  null,
+      explorerUrl:  `https://testnet.arcscan.app/address/${BILLING_ADDRESS}`,
       anchoredAt:   new Date().toISOString(),
       status:       "failed",
     };
