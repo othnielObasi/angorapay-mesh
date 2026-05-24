@@ -187,6 +187,8 @@ export interface AgentMissionResult {
   usycPosition?: import("../../services/circle-usyc.js").USYCPosition;
   /** CCTP cross-chain settlement record for cross-venue arbitrage missions. */
   cctpSettlement?: ReturnType<typeof import("../../services/circle-cctp.js").buildCctpSettlementRecord>;
+  /** On-chain proof: sha256 of mission bundle anchored to an Arc testnet tx via Circle DCW. */
+  onChainProof?: import("../../services/nanopayments.js").OnChainProof;
   totals: {
     approvedProviders: number;
     blockedProviders: number;

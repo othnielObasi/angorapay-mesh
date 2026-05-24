@@ -16,6 +16,7 @@
 // unaffected by billing outcomes.
 // ───────────────────────────────────────────────────────────────────────────────
 
+import crypto from 'crypto';
 import { createPublicClient, createWalletClient, http, parseUnits, getAddress, type Hash } from 'viem';
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
 import { sendGatewayNanopayment, resolveGatewayTransferHash } from './circle-gateway.js';
@@ -416,6 +417,86 @@ export async function settleCommerceEventAmount(
 /** Return the total number of real (non-pending) nanopayment tx hashes seen. */
 export function getRealTxCount(receipts: NanopaymentReceipt[]): number {
   return receipts.filter(hasVerifiedTxHash).length;
+}
+
+// ── On-chain proof anchoring ──────────────────────────────────────────────────
+
+export interface OnChainProof {
+  proofHash:    string;          // sha256 of mission result bundle
+  anchorTxId:   string | null;   // Circle transaction UUID
+  anchorTxHash: string | null;   // 0x... Arc testnet tx hash (when confirmed)
+  explorerUrl:  string | null;   // ArcScan link
+  anchoredAt:   string;          // ISO timestamp
+  status:       "confirmed" | "pending" | "failed";
+}
+
+/**
+ * Hash the mission result bundle and fire a real Circle DCW USDC micro-payment
+ * whose event name embeds the sha256 proof hash. This anchors the mission output
+ * to a verifiable on-chain transaction on Arc testnet.
+ *
+ * The proof is verifiable: sha256(missionBundle) must match the hash in the
+ * event name of the corresponding ArcScan transaction.
+ */
+export async function recordProofOnChain(
+  missionId: string,
+  proofBundle: {
+    recommendation: unknown;
+    receipts:       unknown[];
+    betIntent?:     unknown;
+    totals:         unknown;
+  },
+): Promise<OnChainProof> {
+  const bundleJson = JSON.stringify({
+    missionId,
+    recommendation: proofBundle.recommendation,
+    receipts:       proofBundle.receipts,
+    betIntent:      proofBundle.betIntent ?? null,
+    totals:         proofBundle.totals,
+  });
+
+  const proofHash = crypto.createHash("sha256").update(bundleJson).digest("hex");
+  const eventName = `mission_proof:${proofHash}`;
+
+  console.log(`[PROOF] Anchoring mission ${missionId} — sha256=${proofHash.slice(0, 16)}...`);
+
+  try {
+    const receipt = await createSettlementReceipt(
+      eventName,
+      BILLING_ADDRESS,
+      NANO_AMOUNT,
+      { type: "proof", mode: "circle-x402" },
+    );
+
+    const anchorTxHash = hasVerifiedTxHash(receipt) ? receipt.txHash : null;
+    const anchorTxId   = receipt.referenceId ?? null;
+    const explorerUrl  = anchorTxHash
+      ? `https://testnet.arcscan.app/tx/${anchorTxHash}`
+      : anchorTxId
+        ? `https://testnet.arcscan.app/address/${BILLING_ADDRESS}`
+        : null;
+
+    console.log(`[PROOF] Anchored: txId=${anchorTxId ?? "?"} tx=${anchorTxHash ?? "pending"}`);
+
+    return {
+      proofHash,
+      anchorTxId,
+      anchorTxHash,
+      explorerUrl,
+      anchoredAt: new Date().toISOString(),
+      status:     anchorTxHash ? "confirmed" : "pending",
+    };
+  } catch (err) {
+    console.warn(`[PROOF] Anchor failed for ${missionId}:`, (err as Error).message?.slice(0, 80));
+    return {
+      proofHash,
+      anchorTxId:   null,
+      anchorTxHash: null,
+      explorerUrl:  null,
+      anchoredAt:   new Date().toISOString(),
+      status:       "failed",
+    };
+  }
 }
 
 // ───────────────────────────────────────────────────────────────────────────────

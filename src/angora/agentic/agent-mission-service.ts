@@ -19,7 +19,7 @@ import { buildLlmMissionPlan, buildLlmRecommendation } from "./llm-reasoning.js"
 import { addTraceEvent, listTraceEvents } from "./trace-store.js";
 import type { AgentContextPacket, AgentMissionInput, AgentMissionResult, AgentProviderDecision, AgentTraceEvent, MissionCheckpoint } from "./types.js";
 import { agentId, decimalSum, nowIso } from "./util.js";
-import { billEvent } from "../../services/nanopayments.js";
+import { billEvent, recordProofOnChain } from "../../services/nanopayments.js";
 import { buildPolymarketBetIntent } from "../../services/polymarket-executor.js";
 import { allocateIdleCapitalToUSYC } from "../../services/circle-usyc.js";
 import { bridgeUSDCViaCircleCCTP, buildCctpSettlementRecord } from "../../services/circle-cctp.js";
@@ -398,8 +398,23 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
         )
       : null;
 
-  trace({ context, eventType: "mission.completed", label: "Agent mission completed", status: "completed", agentId: defaults.agentId, details: { totals: { receipts: receipts.length, decisions: decisions.length }, betIntent: betIntent?.status, usycAllocated: Boolean(usycPosition), cctpSettlement: Boolean(cctpSettlement) } });
-  createCheckpoint({ context, stage: "mission_completed", resumeFrom: "complete", state: { completed: true, betIntent: betIntent?.intentId, usycAllocationId: usycPosition?.allocationId }, status: "terminal" });
+  // ── On-chain proof: anchor mission bundle hash to Arc testnet via Circle DCW ──
+  const missionTotals = {
+    approvedProviders: decisions.filter((d) => d.status === "delivered").length,
+    blockedProviders:  decisions.filter((d) => d.status === "blocked").length,
+    receiptsCreated:   receipts.length,
+    usdcRouted:        decimalSum(receipts.map((r) => r.amountUSDC)),
+  };
+
+  const onChainProof = await recordProofOnChain(mission.missionId, {
+    recommendation,
+    receipts,
+    betIntent: betIntent ?? undefined,
+    totals:    missionTotals,
+  }).catch(() => undefined);
+
+  trace({ context, eventType: "mission.completed", label: "Agent mission completed", status: "completed", agentId: defaults.agentId, details: { totals: { receipts: receipts.length, decisions: decisions.length }, betIntent: betIntent?.status, usycAllocated: Boolean(usycPosition), cctpSettlement: Boolean(cctpSettlement), proofHash: onChainProof?.proofHash?.slice(0, 16) } });
+  createCheckpoint({ context, stage: "mission_completed", resumeFrom: "complete", state: { completed: true, betIntent: betIntent?.intentId, usycAllocationId: usycPosition?.allocationId, proofHash: onChainProof?.proofHash }, status: "terminal" });
 
   const traces = listTraceEvents({ conversationId: conversation.conversationId, missionId: mission.missionId, limit: 500 }).rows;
   const checkpoints = listCheckpoints({ conversationId: conversation.conversationId, missionId: mission.missionId, limit: 500 }).rows;
@@ -431,11 +446,12 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
     betIntent: betIntent ?? undefined,
     usycPosition: usycPosition ?? undefined,
     cctpSettlement: cctpSettlement ?? undefined,
+    onChainProof: onChainProof ?? undefined,
     totals: {
-      approvedProviders: decisions.filter((decision) => decision.status === "delivered").length,
-      blockedProviders: decisions.filter((decision) => decision.status === "blocked").length,
-      receiptsCreated: receipts.length,
-      usdcRouted: totalUSDC,
+      approvedProviders: missionTotals.approvedProviders,
+      blockedProviders:  missionTotals.blockedProviders,
+      receiptsCreated:   missionTotals.receiptsCreated,
+      usdcRouted:        totalUSDC,
     },
   };
 }

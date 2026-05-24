@@ -1747,6 +1747,24 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                     <p className="mt-1 text-xs text-slate-700">Arc → {result.cctpSettlement.destinationChain} · ${result.cctpSettlement.amountUsdc?.toFixed(4)}</p>
                   </div>
                 )}
+                {result.onChainProof && (
+                  <div className="border-t border-slate-100 pt-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">On-chain proof</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ring-1 ${result.onChainProof.status === "confirmed" ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-amber-100"}`}>
+                        {result.onChainProof.status}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-mono text-[10px] text-slate-600 break-all leading-4">
+                      sha256: {result.onChainProof.proofHash.slice(0, 16)}…{result.onChainProof.proofHash.slice(-6)}
+                    </p>
+                    {result.onChainProof.explorerUrl && (
+                      <a href={result.onChainProof.explorerUrl} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-cyan-700 hover:underline">
+                        <ArrowRight className="h-2.5 w-2.5" />ArcScan ↗
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -1810,13 +1828,42 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                 <RouteLine label="Turns" value={String(turnCount)} tone="good" />
                 <RouteLine label="Reasoning" value={latestResult.llmSource === "openai" ? (latestResult.llmModel || "gpt-4o-mini") : "deterministic"} tone={latestResult.llmSource === "openai" ? "good" : "warn"} />
               </div>
-              {receipts.length > 0 && (
+              {(latestResult.onChainProof || receipts.length > 0) && (
                 <div className="mt-4 border-t border-slate-200 pt-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">On-chain proof</p>
-                  <p className="mt-1 font-mono text-[10px] text-slate-400 break-all">{walletAddr.slice(0, 10)}…{walletAddr.slice(-8)}</p>
-                  <a href={walletArcUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-cyan-700 hover:underline">
-                    <ArrowRight className="h-3 w-3 flex-shrink-0" />View wallet on ArcScan
-                  </a>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">On-chain proof</p>
+                    {latestResult.onChainProof && (
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ring-1 ${latestResult.onChainProof.status === "confirmed" ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-amber-100"}`}>
+                        {latestResult.onChainProof.status}
+                      </span>
+                    )}
+                  </div>
+                  {latestResult.onChainProof ? (
+                    <>
+                      <p className="mt-2 text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">sha256 mission bundle</p>
+                      <p className="mt-0.5 font-mono text-[10px] text-slate-700 break-all leading-4">
+                        {latestResult.onChainProof.proofHash.slice(0, 20)}…{latestResult.onChainProof.proofHash.slice(-8)}
+                      </p>
+                      {latestResult.onChainProof.anchorTxId && (
+                        <>
+                          <p className="mt-2 text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Circle tx anchor</p>
+                          <p className="mt-0.5 font-mono text-[10px] text-slate-500 break-all leading-4">
+                            {latestResult.onChainProof.anchorTxId.slice(0, 20)}…
+                          </p>
+                        </>
+                      )}
+                      <a href={latestResult.onChainProof.explorerUrl || walletArcUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-cyan-700 hover:underline">
+                        <ArrowRight className="h-3 w-3 flex-shrink-0" />View on ArcScan
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-1 font-mono text-[10px] text-slate-400 break-all">{walletAddr.slice(0, 10)}…{walletAddr.slice(-8)}</p>
+                      <a href={walletArcUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-cyan-700 hover:underline">
+                        <ArrowRight className="h-3 w-3 flex-shrink-0" />View wallet on ArcScan
+                      </a>
+                    </>
+                  )}
                 </div>
               )}
             </Glass>
