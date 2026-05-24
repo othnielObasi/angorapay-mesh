@@ -13,7 +13,7 @@ import {
 const ENV_PATH = path.resolve(process.cwd(), '.env');
 const RECOVERY_DIR = path.resolve(process.cwd(), '.circle-recovery-file');
 const METADATA_PATH = path.join(RECOVERY_DIR, 'circle-wallet-bootstrap.json');
-const WALLET_SET_NAME = `Kairos Arc Wallet Set ${new Date().toISOString().slice(0, 10)}`;
+const WALLET_SET_NAME = `AngoraPay Mesh Arc Wallet Set ${new Date().toISOString().slice(0, 10)}`;
 const TARGET_BLOCKCHAIN = 'ARC-TESTNET' as const;
 
 function readEnvFile(): string {
@@ -49,7 +49,7 @@ async function main(): Promise<void> {
   }
 
   console.log('');
-  console.log('Kairos Circle Wallet Bootstrap');
+  console.log('AngoraPay Mesh Circle Wallet Bootstrap');
   console.log(`  Env file:      ${ENV_PATH}`);
   console.log(`  Recovery dir:  ${RECOVERY_DIR}`);
   console.log('');

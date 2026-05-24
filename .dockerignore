@@ -1,0 +1,13 @@
+.git
+.github
+.env
+.env.*
+.circle-recovery-file
+.kairos
+.kairos-angora
+node_modules
+dist
+logs
+npm-debug.log*
+sdk/python/dist
+sdk/python/build

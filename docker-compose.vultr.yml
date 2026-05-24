@@ -1,0 +1,24 @@
+version: "3.9"
+services:
+  angorapay:
+    build:
+      context: .
+      dockerfile: Dockerfile.angora
+    container_name: angorapay
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      MODE: simulation
+      ANGORA_REQUIRE_AUTH: "false"
+      ANGORA_STORAGE_DRIVER: json-file
+      ANGORA_STATE_DIR: /app/.angora-state
+    ports:
+      - "80:3000"
+    volumes:
+      - angorapay_state:/app/.angora-state
+
+volumes:
+  angorapay_state:

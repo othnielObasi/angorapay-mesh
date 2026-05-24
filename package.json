@@ -8,6 +8,7 @@
     "dev": "tsx src/agent/index.ts",
     "build": "tsc",
     "start": "node dist/agent/index.js",
+    "start:dashboard": "tsx -e \"import { startDashboard } from './src/dashboard/server.ts'; startDashboard();\"",
     "start:arc": "tsx src/agent/index.ts",
     "register": "tsx scripts/register-agent.ts",
     "circle:bootstrap": "tsx scripts/bootstrap-circle-wallet.ts",

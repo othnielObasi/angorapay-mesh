@@ -9,8 +9,8 @@ export const circleClient = new CircleWalletClient({
   entitySecret: process.env.CIRCLE_ENTITY_SECRET!,
 });
 
-// Run ONCE to create the Kairos agent wallet on Arc testnet
-// Then store the address in .env.arc as AGENT_WALLET_ADDRESS
+// Run once to create the AngoraPay Mesh agent wallet on Arc testnet.
+// Then store the address in .env as AGENT_WALLET_ADDRESS.
 export async function createAgentWallet() {
   const { data } = await circleClient.createWallets({
     blockchains: ['ARC-TESTNET'],
@@ -18,14 +18,14 @@ export async function createAgentWallet() {
     walletSetId: process.env.CIRCLE_WALLET_SET_ID!,
   } as any);
   const wallet = (data as any).wallets[0];
-  console.log('✓ Kairos agent wallet created on Arc testnet');
-  console.log('Add to .env.arc:');
+  console.log('AngoraPay Mesh agent wallet created on Arc testnet');
+  console.log('Add to .env:');
   console.log('AGENT_WALLET_ADDRESS=' + wallet.address);
   return wallet;
 }
 
 // Get a signer compatible with the existing ethers.js setup in sdk.ts
-// Circle Wallets uses EIP-1271 — compatible with src/chain/eip1271.ts
+// Circle Wallets uses EIP-1271-compatible signing flows.
 export async function getCircleSigner(provider: ethers.Provider) {
   const walletId = process.env.CIRCLE_WALLET_ID!;
   // Returns a signer that delegates signing to Circle Wallets API
@@ -44,7 +44,7 @@ function serializeTypedDataForCircle(
   return JSON.stringify(ethers.TypedDataEncoder.getPayload(domain, types, value));
 }
 
-// Minimal signer wrapper — delegates to Circle Wallets API
+// Minimal signer wrapper delegates to the Circle Wallets API.
 class CircleWalletSigner extends ethers.AbstractSigner {
   constructor(
     private address: string,
