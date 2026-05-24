@@ -635,7 +635,7 @@ function Landing({ openConsole }) {
 }
 
 function Home({ setMode, openConsole }) {
-  const heroProofLine = ["provider trust", "route score", "policy gate", "payment receipt", "reconciliation trail"];
+  const heroProofLine = ["provider trust", "route score", "policy gate", "payment receipt", "on-chain proof", "autonomous execution"];
   const problemPoints = [
     "Which provider should the agent trust?",
     "Should this payment be allowed?",
@@ -647,16 +647,16 @@ function Home({ setMode, openConsole }) {
     ["02", "Discovery", "Angora discovers registered, preferred, provisional, and external providers."],
     ["03", "Route score", "Providers are scored for fit, trust, cost, latency, proof support, and delivery quality."],
     ["04", "Policy gate", "Weak routes, low-trust providers, duplicate payment keys, and unsupported proof calls are blocked."],
-    ["05", "Payment + delivery", "Approved calls settle through Circle/x402-style rails while provider delivery is tracked."],
-    ["06", "Receipt + reconcile", "Payment, provider output, receipt, and final output are reconciled into an audit trail."],
+    ["05", "Payment + delivery", "Approved calls settle through Circle DCW nanopayments on Arc testnet while provider delivery is tracked."],
+    ["06", "Proof + execution", "sha256(mission bundle) is anchored on-chain via a dedicated Circle DCW transfer. Kelly-criterion bet intents are submitted to Polymarket with EIP-712 signed orders."],
   ];
   const infrastructureItems = [
     ["Gateway / SDK", "One integration point for agents to request paid intelligence before acting."],
     ["Route Scorecard", "Scores provider trust, proof support, cost, latency, delivery history, and reconciliation success."],
     ["Policy Engine", "Applies trust thresholds, route rules, budget limits, proof requirements, and duplicate-payment blocks."],
-    ["Payment Rail", "Wraps Circle/x402 payment execution with allow, block, review, pending, failed, and proof states."],
-    ["Proof Receipts", "Stores receipt ID, execution ID, provider ID, route score, policy verdict, amount, and output hash."],
-    ["Workspace Controls", "Teams manage policies, budgets, API keys, provider access, receipts, traces, and audit logs."],
+    ["Circle DCW Payments", "Every provider call fires a real USDC micro-transfer on Arc testnet via Circle Developer-Controlled Wallets. Gas-free nanopayments via Circle Gateway batch settlement."],
+    ["On-chain Proof", "sha256(recommendation + receipts + bet intent) is anchored to Arc testnet with every mission. Proof hash and Circle tx anchor returned in the mission result."],
+    ["Autonomous Execution", "GPT-4o mini recommendation feeds a Kelly criterion position sizer. EIP-712 signed GTC limit orders submitted to Polymarket CLOB when edge and confidence thresholds are met."],
   ];
   const tracks = [
     "Prediction-market intelligence",
@@ -668,21 +668,22 @@ function Home({ setMode, openConsole }) {
   ];
   const proofTimeline = [
     ["providers.scanned", "7 services evaluated"],
-    ["route.scored", "4 approved - 1 blocked"],
-    ["payment.authorized", "0.013 USDC routed"],
-    ["provider.delivery", "outputs received"],
-    ["receipt.created", "4 proof receipts"],
-    ["reconciliation.checked", "matched"],
+    ["route.scored", "4 approved · 1 blocked"],
+    ["payment.authorized", "0.005 USDC routed · 4 Arc txs"],
+    ["llm.reasoning", "GPT-4o mini recommendation"],
+    ["receipt.created", "4 Circle DCW receipts"],
+    ["proof.anchored", "sha256 on Arc testnet · Circle tx"],
+    ["autonomous.execution", "Kelly intent → Polymarket CLOB"],
   ];
   const proofSnapshot = [
-    ["Execution", "BTC market mispricing check"],
-    ["Reference app", "Market Intelligence Demo"],
-    ["Providers scanned", "7"],
-    ["Approved", "OddsNode, SignalMesh, RiskLens, ProofSmith"],
-    ["Blocked", "GreyAlpha - trust below threshold"],
-    ["USDC routed", "0.013"],
-    ["Receipts", "4 created"],
-    ["Reconciliation", "payment + delivery matched"],
+    ["Mission", "BTC prediction-market mispricing check"],
+    ["Agent", "Prediction Market Intelligence"],
+    ["Providers approved", "Polymarket odds · Kraken · Fear & Greed"],
+    ["Blocked", "GreyAlpha — trust below threshold"],
+    ["USDC routed", "0.005 USDC · 5 Arc transactions"],
+    ["Bet intent", "YES · Kelly $0.05 · 312 bps edge"],
+    ["On-chain proof", "sha256: a7f3c1… anchored · ArcScan"],
+    ["Reconciliation", "payment + delivery + proof matched"],
   ];
 
   return (
@@ -844,7 +845,7 @@ function Home({ setMode, openConsole }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-700">reconciled</span>
-                  <span className="rounded-full bg-cyan-50 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700">4 receipts</span>
+                  <span className="rounded-full bg-cyan-50 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700">5 receipts + proof</span>
                 </div>
               </div>
               <div className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
@@ -862,8 +863,9 @@ function Home({ setMode, openConsole }) {
                     <p className="mt-1 text-sm font-medium text-slate-900">Monitor - signal strength not yet sufficient for execution.</p>
                   </div>
                   <div className="text-left sm:text-right">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700/75">Output hash</p>
-                    <p className="mt-1 font-mono text-xs text-slate-500">0x7ac4...91ef</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700/75">On-chain proof hash</p>
+                    <p className="mt-1 font-mono text-xs text-slate-500">sha256: a7f3c1d8…4b91ef22</p>
+                    <p className="mt-0.5 text-[10px] text-cyan-600">Anchored · Arc testnet</p>
                   </div>
                 </div>
               </div>

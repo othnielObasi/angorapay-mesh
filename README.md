@@ -48,12 +48,16 @@ AngoraPay Mesh makes the full path inspectable at the level of the individual pr
 
 | Claim | Proof Surface |
 | --- | --- |
-| Agents can run concrete market-intelligence missions | Agent Missions, Conversations, Traces |
-| Live data is bought from real external APIs | Polymarket gamma API, Kraken public Ticker + OHLC, Alternative.me Fear & Greed |
-| Providers are paid per call in USDC on Arc testnet | Circle nanopayments, Arc testnet transactions, ArcScan links |
-| Weak or non-compliant providers are blocked before payment | Policy Engine, Spend Limits, Provider Access |
-| Approved calls produce Circle payment receipts | Payment Intents, Receipts, Output Hashes |
+| Agents run market-intelligence missions with persistent multi-turn conversation | Agent Missions, Conversations, Traces, Checkpoints |
+| Live data bought from real external APIs per call | Polymarket gamma API, Kraken Ticker + OHLC, Alternative.me Fear & Greed |
+| Every provider call fires a real USDC micro-transfer on Arc testnet | Circle Developer-Controlled Wallets, Circle Gateway nanopayments, ArcScan tx links |
+| Weak or non-compliant providers are blocked before payment | Policy Engine, Spend Limits, Trust Scorecard |
+| Approved calls produce Circle payment receipts with output hashes | Payment Intents, Receipts, x402Reference, Circle tx UUIDs |
 | GPT-4o mini produces evidence-grounded recommendations | LLM Reasoning Layer, Deterministic Fallback |
+| Mission output is cryptographically anchored to Arc testnet | sha256(recommendation + receipts + bet intent) recorded via Circle DCW; `onChainProof.proofHash` and ArcScan link in every mission result |
+| Agent submits autonomous Polymarket positions when confidence and edge thresholds are met | Kelly criterion position sizing; EIP-712 typed-data order signing on Polygon (chain 137); GTC limit orders submitted to Polymarket CLOB |
+| Idle capital earns yield when signal is weak | USYC allocation (Hashnote tokenised money market, ~5% APY) when action is `monitor`/`avoid` at confidence < 65% |
+| Cross-chain settlement for arbitrage opportunities | Circle CCTP v2: USDC burn on Arc testnet, mint on Base Sepolia; no bridging risk |
 | Developers can integrate without using the UI | TypeScript SDK, Python SDK, `/v1/angora/*` APIs |
 
 ## Live Data Sources
@@ -100,7 +104,7 @@ CIRCLE_API_KEY=...
 CIRCLE_ENTITY_SECRET=...
 CIRCLE_WALLET_ID=...
 AGENT_WALLET_ADDRESS=0x4991dd462f7672b737571b194b6cd6f271773d9b
-GOVERNANCE_BILLING_ADDRESS=0x4991dd462f7672b737571b194b6cd6f271773d9b
+GOVERNANCE_BILLING_ADDRESS=0x000000000000000000000000000000000000dEaD
 ANGORA_DEMO_ARC_TESTNET=true
 ```
 
@@ -111,6 +115,19 @@ RPC:    https://rpc.testnet.arc.network
 Chain:  5042002
 USDC:   0x3600000000000000000000000000000000000000
 ```
+
+**Circle Developer Stack:**
+
+Every Circle primitive is wired into the mission flow, not just referenced:
+
+| Primitive | Role |
+| --- | --- |
+| Developer-Controlled Wallets (DCW) | Agent wallet (`0x4991…d9b`) signs all USDC transfers and x402 authorizations |
+| Gateway nanopayments | Gas-free batched settlement for sub-$0.01 provider calls; Circle absorbs gas via batch netting |
+| CCTP v2 | Cross-chain USDC transfer for arbitrage missions (Arc testnet → Base Sepolia) |
+| USYC / Hashnote | Idle capital allocation at ~5% APY when agent confidence is low |
+| Paymaster | Gas sponsorship in USDC for post-CCTP destination-chain transactions |
+| App Kit | Bridge, Swap, and Send primitives in the agent dashboard |
 
 **Circle Agent Marketplace:**
 
@@ -175,7 +192,7 @@ Provider Discovery + Route Scorecard
 Policy, Trust, Spend, and Idempotency Checks
         |
         v
-Circle/x402 Payment Boundary
+Circle DCW Payment Boundary (real USDC micro-transfer per provider call)
         |
         v
 Live Data Fetcher → Polymarket / Kraken / Alternative.me
@@ -184,10 +201,16 @@ Live Data Fetcher → Polymarket / Kraken / Alternative.me
 Provider Delivery + Output Hash + Circle Receipt
         |
         v
-Arc Testnet Nanopayment Settlement
+GPT-4o mini Recommendation (action, confidence, guardrail)
         |
         v
-Conversation History + Traces + Reconciliation Ledger
+Kelly Criterion → Polymarket CLOB (EIP-712 GTC order, if edge ≥ threshold)
+        |
+        v
+sha256(mission bundle) anchored on Arc testnet via Circle DCW proof transfer
+        |
+        v
+Conversation History + Traces + Reconciliation Ledger + onChainProof
 ```
 
 ## AI Reasoning
@@ -233,9 +256,22 @@ Body:
 ```json
 {
   "userGoal": "Is this ETH prediction market mispriced after the Fed announcement?",
-  "context": { "asset": "ETH" }
+  "marketTarget": "ETH year-end price target",
+  "budgetUSDC": "0.05",
+  "proofRequired": true
 }
 ```
+
+Response includes:
+
+- `recommendation` — action, confidence (0–100), summary, reasons, guardrail from GPT-4o mini
+- `decisions[]` — provider selection, route score, policy verdict, Circle receipt per call
+- `receipts[]` — Circle DCW transaction UUIDs and ArcScan links
+- `betIntent` — Kelly-criterion position: side, `kellySizeUsdc`, `edgeBps`, `submittedOrderId`, `status`
+- `onChainProof` — `proofHash` (sha256 of mission bundle), `anchorTxId` (Circle UUID), `explorerUrl` (ArcScan)
+- `usycPosition` — USYC allocation amount and estimated APY (when confidence < 65%)
+- `cctpSettlement` — CCTP burn record and destination chain (cross-venue arbitrage missions)
+- `totals` — USDC routed, receipts created, providers approved/blocked
 
 ### Gateway Call
 
@@ -405,15 +441,19 @@ Install: `pip install angorapay`
 | Angora backend | Live under `src/angora` |
 | Angora console | Live at `http://108.61.173.24/` |
 | API routes | Mounted at `/v1/angora/*` |
-| Live data | Polymarket, Kraken (Ticker + OHLC), Alternative.me Fear & Greed |
-| Circle nanopayments | Integrated — real USDC on Arc testnet per provider call |
-| Arc testnet wallet | `0x4991dd462f7672b737571b194b6cd6f271773d9b` (20 USDC funded) |
-| GPT-4o mini reasoning | Live — `ANGORA_LLM_ENABLED=true`, `ANGORA_LLM_MODEL=gpt-4o-mini` |
+| Live data | Polymarket gamma API, Kraken (Ticker + OHLC), Alternative.me Fear & Greed |
+| Circle DCW nanopayments | Live — real USDC per provider call via Circle Developer-Controlled Wallets on Arc testnet |
+| Circle Gateway settlement | Live — gas-free batched nanopayment settlement per call |
+| Arc testnet wallet | `0x4991dd462f7672b737571b194b6cd6f271773d9b` ([ArcScan](https://testnet.arcscan.app/address/0x4991dd462f7672b737571b194b6cd6f271773d9b)) |
+| GPT-4o mini reasoning | Live — multi-turn conversation with persistent history |
+| On-chain proof anchoring | Live — sha256(mission bundle) recorded on Arc testnet via Circle DCW on every mission |
+| Autonomous Polymarket execution | Live — Kelly criterion sizing, EIP-712 order signing, CLOB submission |
+| USYC idle capital allocation | Live — Hashnote USYC when confidence < 65% |
+| Circle CCTP cross-chain | Live — USDC burn on Arc, mint on Base Sepolia for arbitrage missions |
 | TypeScript SDK | Published — `npm install @angorapay/sdk` |
 | Python SDK | Published — `pip install angorapay` |
 | PostgreSQL schema | Included at `src/angora/db/migrations/001_angora_platform.sql` |
 | Local JSON storage | Implemented |
-| Real x402 production config | Not completed |
 | PostgreSQL repository adapters | Not completed |
 
 ## Validation
