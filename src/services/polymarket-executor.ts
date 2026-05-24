@@ -181,7 +181,8 @@ async function findRelevantMarket(marketTarget: string): Promise<PolymarketMarke
     const markets = await res.json() as PolymarketMarket[];
     if (!Array.isArray(markets)) return null;
 
-    const keywords = marketTarget.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+    // Include short tokens like "ETF", "SOL", "BTC" (length > 2) so tickers match.
+    const keywords = marketTarget.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
     const scored = markets
       .filter((m) => m.active && !m.closed && m.question)
       .map((m) => ({
@@ -191,7 +192,8 @@ async function findRelevantMarket(marketTarget: string): Promise<PolymarketMarke
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score || (b.market.volume ?? 0) - (a.market.volume ?? 0));
 
-    return scored[0]?.market ?? markets[0] ?? null;
+    // Return null when nothing matches — never fall back to a random market.
+    return scored[0]?.market ?? null;
   } catch {
     return null;
   }
