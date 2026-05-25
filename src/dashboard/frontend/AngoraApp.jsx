@@ -1175,12 +1175,64 @@ function MissionRoutePreview() {
   );
 }
 
-function Developers({ openConsole }) {
+function Developers({ openConsole, live }) {
   const integrationSteps = [
     ["01", "Submit mission", "Send market question, budget, policy requirements, and provider categories to the Gateway."],
     ["02", "Receive route plan", "Angora returns provider scores, blocked routes, payment context, and required proof fields."],
     ["03", "Store proof", "Persist receipts, output hashes, policy verdicts, and reconciliation status with the final recommendation."],
   ];
+  const [enterpriseForm, setEnterpriseForm] = useState({
+    displayName: "",
+    email: "",
+    organization: "",
+    userCategory: "agent-builder",
+    useCase: "",
+    testedMission: false,
+    rating: 5,
+    feedback: "",
+  });
+  const [enterpriseStatus, setEnterpriseStatus] = useState(null);
+  const traction = live?.traction || live?.dashboard?.traction;
+
+  const updateEnterpriseField = (field, value) => {
+    setEnterpriseForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const submitEnterpriseInterest = async (event) => {
+    event.preventDefault();
+    setEnterpriseStatus({ tone: "blue", message: "Recording enterprise evaluation..." });
+    try {
+      const userResponse = await api("/v1/angora/traction/users", {
+        method: "POST",
+        body: JSON.stringify({
+          displayName: enterpriseForm.displayName,
+          email: enterpriseForm.email || undefined,
+          source: "manual",
+          metadata: {
+            organization: enterpriseForm.organization,
+            userCategory: enterpriseForm.userCategory,
+            useCase: enterpriseForm.useCase,
+            testedMission: enterpriseForm.testedMission,
+            channel: "enterprise-readiness-form",
+          },
+        }),
+      });
+      if (enterpriseForm.feedback.trim()) {
+        await api("/v1/angora/traction/feedback", {
+          method: "POST",
+          body: JSON.stringify({
+            userId: userResponse.user.userId,
+            rating: Number(enterpriseForm.rating),
+            comment: enterpriseForm.feedback,
+          }),
+        });
+      }
+      setEnterpriseStatus({ tone: "good", message: "Enterprise evaluation recorded. Metrics will update on refresh." });
+      setEnterpriseForm((current) => ({ ...current, feedback: "" }));
+    } catch (error) {
+      setEnterpriseStatus({ tone: "bad", message: error.message || "Could not record enterprise evaluation." });
+    }
+  };
 
   return (
     <div className="space-y-0">
@@ -1213,6 +1265,77 @@ function Developers({ openConsole }) {
               <FlowStep key={title} number={number} title={title} body={body} />
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Enterprise evaluation</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Capture the buyer, use case, and proof that a real team tested it.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            Enterprise adoption needs more than a demo click. This form records an evaluator, organization context, intended workflow, mission testing status, and feedback into Angora traction metrics.
+          </p>
+        </div>
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <form onSubmit={submitEnterpriseInterest} className="border-y border-slate-200 bg-white/45 p-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Name">
+                <input value={enterpriseForm.displayName} onChange={(event) => updateEnterpriseField("displayName", event.target.value)} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400" placeholder="Jane Operator" required />
+              </Field>
+              <Field label="Work email">
+                <input type="email" value={enterpriseForm.email} onChange={(event) => updateEnterpriseField("email", event.target.value)} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400" placeholder="jane@company.com" />
+              </Field>
+              <Field label="Organization">
+                <input value={enterpriseForm.organization} onChange={(event) => updateEnterpriseField("organization", event.target.value)} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400" placeholder="Market ops team" />
+              </Field>
+              <Field label="User category">
+                <select value={enterpriseForm.userCategory} onChange={(event) => updateEnterpriseField("userCategory", event.target.value)} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400">
+                  <option value="agent-builder">Agent builder</option>
+                  <option value="prediction-market-team">Prediction-market team</option>
+                  <option value="trading-operator">Trading operator</option>
+                  <option value="paid-intelligence-provider">Paid intelligence provider</option>
+                  <option value="enterprise-admin">Enterprise admin</option>
+                  <option value="auditor">Auditor / reviewer</option>
+                </select>
+              </Field>
+            </div>
+            <Field label="Enterprise use case" className="mt-5">
+              <textarea value={enterpriseForm.useCase} onChange={(event) => updateEnterpriseField("useCase", event.target.value)} className="min-h-24 w-full border border-slate-200 bg-white/45 p-4 text-sm leading-6 text-slate-950 outline-none focus:border-cyan-300" placeholder="Example: route paid odds, sentiment, and risk feeds before a prediction-market recommendation." />
+            </Field>
+            <div className="mt-5 grid gap-4 md:grid-cols-[1fr_160px]">
+              <label className="flex items-center gap-3 border-y border-slate-200 bg-white/35 p-4 text-sm font-semibold text-slate-700">
+                <input type="checkbox" checked={enterpriseForm.testedMission} onChange={(event) => updateEnterpriseField("testedMission", event.target.checked)} className="h-4 w-4 accent-cyan-500" />
+                I tested a market mission in the Run Agent workspace.
+              </label>
+              <Field label="Rating">
+                <select value={enterpriseForm.rating} onChange={(event) => updateEnterpriseField("rating", Number(event.target.value))} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400">
+                  {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} / 5</option>)}
+                </select>
+              </Field>
+            </div>
+            <Field label="Feedback" className="mt-5">
+              <textarea value={enterpriseForm.feedback} onChange={(event) => updateEnterpriseField("feedback", event.target.value)} className="min-h-28 w-full border border-slate-200 bg-white/45 p-4 text-sm leading-6 text-slate-950 outline-none focus:border-cyan-300" placeholder="What would your team need before using this with real spend or real providers?" />
+            </Field>
+            <div className="mt-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              {enterpriseStatus ? <Pill tone={enterpriseStatus.tone}>{enterpriseStatus.message}</Pill> : <p className="text-xs leading-5 text-slate-500">Records to Angora traction metrics and can be used in enterprise evaluation reporting.</p>}
+              <button type="submit" className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-500 px-6 text-sm font-black text-white shadow-[0_20px_55px_rgba(34,211,238,0.22)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
+                Record evaluation
+              </button>
+            </div>
+          </form>
+          <Glass className="border-y border-slate-200 p-5">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Current traction</p>
+            <div className="mt-5 space-y-3">
+              <RouteLine label="Users onboarded" value={String(traction?.usersOnboarded || 0)} tone={(traction?.usersOnboarded || 0) > 0 ? "good" : "warn"} />
+              <RouteLine label="Feedback count" value={String(traction?.feedbackCount || 0)} tone={(traction?.feedbackCount || 0) > 0 ? "good" : "warn"} />
+              <RouteLine label="Average rating" value={traction?.averageFeedbackRating ? `${traction.averageFeedbackRating} / 5` : "pending"} tone={traction?.averageFeedbackRating ? "good" : "neutral"} />
+            </div>
+            <p className="mt-5 border-t border-slate-200 pt-4 text-sm leading-6 text-slate-600">This is the first enterprise-grade feedback loop: every evaluator becomes an auditable product signal instead of an informal chat note.</p>
+          </Glass>
         </div>
       </section>
 
@@ -1340,6 +1463,15 @@ function CodeBlock({ title, code }) {
       </div>
       <pre className="overflow-auto border-l-4 border-cyan-300/70 p-6 font-mono text-xs leading-7 text-slate-700">{code}</pre>
     </div>
+  );
+}
+
+function Field({ label, children, className = "" }) {
+  return (
+    <label className={cx("block", className)}>
+      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</span>
+      <div className="mt-1">{children}</div>
+    </label>
   );
 }
 
