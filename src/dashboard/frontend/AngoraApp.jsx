@@ -363,6 +363,7 @@ const developerEnv = [
 ];
 
 const developerEndpoints = [
+  ["GET", "/v1/angora/openapi.json", "Public Gateway API contract for generated clients and enterprise API review."],
   ["POST", "/v1/angora/agent-missions/run", "Run a specialist market-intelligence mission."],
   ["POST", "/v1/angora/gateway/call", "Route one paid provider call through policy and payment boundaries."],
   ["GET", "/v1/angora/services/search", "Find providers by category, price, trust, and proof support."],

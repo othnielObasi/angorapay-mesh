@@ -183,6 +183,7 @@ Evaluate whether this trader signal is reliable enough to follow with reduced si
 | API root | `/v1/angora` | Canonical Angora API prefix |
 | Health | `/v1/angora/health` | Service health check |
 | Readiness | `/v1/angora/ready` | Storage and runtime readiness |
+| OpenAPI contract | `/v1/angora/openapi.json` | Public Gateway API contract for SDK/client generation |
 | Dashboard summary | `/v1/angora/dashboard/summary` | Product overview data for the UI |
 | Agent missions | `/v1/angora/agent-missions/run` | Run specialist market-intelligence missions |
 | Gateway call | `/v1/angora/gateway/call` | Route one paid provider call through policy and payment boundaries |
@@ -493,6 +494,14 @@ result = client.run_agent_mission({
 
 The SDKs are integrated in this repository and have publish-ready package metadata. Registry publication requires npm/PyPI credentials on the publishing machine.
 
+The hosted Gateway exposes a public OpenAPI contract:
+
+```bash
+curl http://108.61.173.24/v1/angora/openapi.json
+```
+
+Use that contract for enterprise API review, generated clients, Postman collections, or internal gateway governance.
+
 ## Production Path
 
 Docker assets:
@@ -565,6 +574,10 @@ python -m twine upload sdk/python/dist/*
 ```
 
 The TypeScript package name is `@angorapay/sdk`. If the npm organization is not created or the current user does not have access, create/claim the `angorapay` organization first or publish under a temporary unscoped package name.
+
+The Python package name is `angorapay`. If PyPI already reserves that name, publish under `angorapay-mesh` and update `sdk/python/pyproject.toml` before uploading.
+
+GitHub Actions also includes a manual `Publish Angora SDKs` workflow. Add repository secrets `NPM_TOKEN` and `PYPI_API_TOKEN`, then run the workflow for `typescript`, `python`, or `both`.
 
 ## Validation Commands
 

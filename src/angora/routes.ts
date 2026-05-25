@@ -25,6 +25,7 @@ import { addWorkspaceMember, createWorkspace, ensureWorkspace, getWorkspace, get
 import { listAuditLogs, recordAuditLog } from "./audit-log.js";
 import { simulateRoutePlan } from "./route-simulator.js";
 import { recordFeedback, recordUserSession, tractionSummary } from "./traction-store.js";
+import { buildAngoraOpenApiSpec } from "./openapi.js";
 import { apiKeyCreateSchema, apiKeyRotateSchema, executionQuerySchema, feedbackSchema, gatewayCallSchema, missionCreateSchema, parseBody, parseQuery, userSessionSchema } from "./schemas.js";
 import type { AngoraGatewayCallRequest, ExecutionHistoryRecord, ServiceCategory } from "./types.js";
 
@@ -250,6 +251,7 @@ export function registerAngoraRoutes(app: express.Express) {
 
   app.get("/v1/angora/health", (_req, res) => res.json({ ok: true, service: "angora", status: "healthy", timestamp: new Date().toISOString() }));
   app.get("/v1/angora/ready", (_req, res) => res.json({ ok: true, storage: process.env.ANGORA_STORAGE_DRIVER || "json-file", stateDir: process.env.ANGORA_STATE_DIR || process.env.KAIROS_ANGORA_STATE_DIR || ".kairos-angora" }));
+  app.get("/v1/angora/openapi.json", (_req, res) => res.json(buildAngoraOpenApiSpec()));
 
   app.post("/v1/angora/workspaces", (req, res) => {
     if (!requireApiKey(req, res, "workspace:write")) return;
