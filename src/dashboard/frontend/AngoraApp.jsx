@@ -141,28 +141,6 @@ const runSteps = [
   ["Proof + history", "Store receipt, route score, output hash, settlement state, execution mode, and history row."],
 ];
 
-const proofRows = [
-  ["receipt_id", "ang_rcpt_9013"],
-  ["agent_id", "prediction-agent-01"],
-  ["mission_id", "prediction-market-intel-demo"],
-  ["agent_intent", "evaluate +EV BTC election-odds market"],
-  ["service_id", "prediction-market-odds"],
-  ["provider_id", "oddsnode"],
-  ["angora_role", "mission-aware trust, routing, and proof layer"],
-  ["policy_status", "approved"],
-  ["route_score", "96 / 100"],
-  ["blocked_provider", "greyalpha: low trust and proof missing"],
-  ["payment_provider", "Circle"],
-  ["payment_rail", "x402"],
-  ["asset", "USDC"],
-  ["network", "Arc"],
-  ["payment_reference", "x402_arc_ref_77fa"],
-  ["execution_mode", "real_x402"],
-  ["settlement_status", "settled"],
-  ["output_hash", "sha256:8f42..."],
-  ["reconciliation_tag", "prediction_market.intelligence.odds"],
-];
-
 const policyRules = [
   ["Max mission spend", "0.05 USDC"],
   ["Allowed categories", "Odds, Sentiment, Risk, Social, Arbitrage, Proof"],
@@ -179,20 +157,6 @@ const providerOnboarding = [
   ["Validate delivery contract", "Angora checks response schema, timeout behaviour, proof support, and metadata completeness."],
   ["Assign trust profile", "Provider receives a scorecard across policy compliance, cost discipline, proof completeness, and quality."],
   ["Receive routed demand", "Qualified market-agent requests are routed when mission policy, trust, and price constraints match."],
-];
-
-const routeCandidates = [
-  { provider: "OddsNode", service: "Prediction Market Odds API", missionFit: 97, policy: 100, cost: 94, proof: 100, delivery: 93, routeScore: 96, verdict: "selected", reason: "Best trust/proof/cost fit for odds intelligence." },
-  { provider: "SignalMesh", service: "News Sentiment Feed", missionFit: 91, policy: 100, cost: 96, proof: 96, delivery: 88, routeScore: 92, verdict: "approved", reason: "Strong sentiment support and proof-backed output." },
-  { provider: "RiskLens", service: "Execution Risk Check", missionFit: 94, policy: 100, cost: 90, proof: 100, delivery: 91, routeScore: 94, verdict: "approved", reason: "Strong risk discipline before market action." },
-  { provider: "GreyAlpha", service: "Unverified Alpha Feed", missionFit: 62, policy: 20, cost: 96, proof: 0, delivery: 45, routeScore: 41, verdict: "blocked", reason: "Low trust and no proof support." },
-];
-
-const executionHistory = [
-  { time: "12:04:31", agent: "prediction-agent-01", mission: "BTC odds", service: "Odds API", provider: "OddsNode", score: 96, amount: 0.004, status: "settled", mode: "real_x402", receipt: "ang_rcpt_9013" },
-  { time: "12:05:10", agent: "prediction-agent-01", mission: "BTC odds", service: "Sentiment", provider: "SignalMesh", score: 92, amount: 0.003, status: "pending", mode: "arc_testnet", receipt: "ang_rcpt_9014" },
-  { time: "12:05:44", agent: "prediction-agent-01", mission: "BTC odds", service: "Risk Check", provider: "RiskLens", score: 94, amount: 0.005, status: "pending", mode: "arc_testnet", receipt: "ang_rcpt_9015" },
-  { time: "12:06:02", agent: "prediction-agent-01", mission: "BTC odds", service: "Alpha Feed", provider: "GreyAlpha", score: 41, amount: 0, status: "blocked", mode: "blocked", receipt: "policy_block_22" },
 ];
 
 const submissionMetrics = [
@@ -286,7 +250,6 @@ async function loadLiveSnapshot() {
     services,
     receipts,
     workspace,
-    route,
     execution,
     payments,
     deliveries,
@@ -300,7 +263,6 @@ async function loadLiveSnapshot() {
     api("/v1/angora/services/search?max_price=1&require_verified=false"),
     api("/v1/angora/receipts"),
     api("/v1/angora/workspaces/current"),
-    api("/v1/angora/route/simulate"),
     api("/v1/angora/execution-history?limit=12"),
     api("/v1/angora/payment-intents?limit=12"),
     api("/v1/angora/provider-deliveries?limit=12"),
@@ -316,7 +278,6 @@ async function loadLiveSnapshot() {
     blockedServices: services.blocked || [],
     receipts: receipts.receipts || [],
     workspace,
-    route: route.simulation,
     execution: execution.execution?.rows || execution.execution || [],
     executionSummary: execution.summary,
     paymentIntents: payments.paymentIntents || [],
@@ -336,14 +297,8 @@ function runSelfTests() {
   console.assert(blockedServices(marketServices).length === 1, "one market service should be blocked");
   console.assert(Math.abs(calculateTotal(selectedRun) - 0.013) < 0.000001, "selected run cost should equal 0.013 USDC");
   console.assert(runSteps.length === 6, "live run should show six production steps");
-  console.assert(proofRows.some(([key, value]) => key === "network" && value === "Arc"), "proof must include Arc network");
-  console.assert(proofRows.some(([key, value]) => key === "asset" && value === "USDC"), "proof must include USDC asset");
-  console.assert(proofRows.some(([key, value]) => key === "payment_provider" && value === "Circle"), "proof must identify Circle as payment provider");
   console.assert(policyRules.some(([key]) => key === "Minimum route score"), "policy must include route-score gate");
   console.assert(rfpAreas.length === 6, "UI should cover all six AngoraPay Mesh RFP areas");
-  console.assert(routeCandidates.some((candidate) => candidate.verdict === "blocked"), "scorecard should show a blocked provider");
-  console.assert(executionHistory.length >= 4, "execution history should show delivered and blocked calls");
-  console.assert(submissionMetrics.some(([key]) => key === "Total USDC routed"), "submission metrics should include volume");
   console.assert(Object.values(developerExamples).every((value) => typeof value === "string" && value.length > 20), "developer examples should be complete strings");
 }
 
@@ -869,6 +824,15 @@ function Metric({ label, value }) {
   return <div className="p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">{label}</p><p className="mt-1 font-black text-slate-950">{value}</p></div>;
 }
 
+function EmptyState({ title, detail }) {
+  return (
+    <div className="border-y border-slate-200 bg-white/35 px-4 py-8">
+      <p className="text-sm font-black text-slate-950">{title}</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{detail}</p>
+    </div>
+  );
+}
+
 function MarketplacePanel({ live }) {
   const [query, setQuery] = useState("odds");
   const liveServices = (live?.services || []).map((service) => ({
@@ -897,28 +861,27 @@ function MarketplacePanel({ live }) {
   );
 }
 
-function ScorecardPanel({ live }) {
-  const routeSteps = live?.route?.steps || [];
-  const rows = routeSteps.length
-    ? routeSteps.map((step) => ({
-        provider: step.bestProvider,
-        service: step.bestService,
-        missionFit: step.routeScore,
-        policy: step.allowed ? 100 : 0,
-        proof: 100,
-        routeScore: step.routeScore,
-        verdict: step.allowed ? "selected" : "blocked",
-        reason: step.reason,
-      }))
-    : routeCandidates;
+function ScorecardPanel({ latestResult }) {
+  const rows = (latestResult?.decisions || []).map((decision) => ({
+    provider: decision.providerId || "not selected",
+    service: decision.serviceName || decision.serviceId || decision.category,
+    missionFit: decision.scorecard?.policyCompliance ?? "-",
+    policy: decision.status === "blocked" ? 0 : 100,
+    proof: decision.scorecard?.proofCompleteness ?? "-",
+    routeScore: decision.routeScore || "-",
+    verdict: decision.status,
+    reason: decision.routeReason,
+  }));
   return (
     <Glass className="border-y border-slate-200 p-5">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Route scorecard</p>
       <h2 className="mt-1 text-2xl font-black text-slate-950">Why providers were selected or blocked</h2>
-      <div className="mt-6 overflow-x-auto border-y border-slate-200 bg-white/40">
-        <div className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Provider</span><span>Fit</span><span>Policy</span><span>Proof</span><span>Score</span><span>Verdict</span></div>
-        {rows.map((candidate) => <div key={`${candidate.provider}-${candidate.service}`} className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span><b>{candidate.provider}</b><br /><span className="text-xs text-slate-500">{candidate.service}</span></span><span>{candidate.missionFit}</span><span>{candidate.policy}</span><span>{candidate.proof}</span><span>{candidate.routeScore}</span><Pill compact tone={candidate.verdict === "blocked" ? "bad" : candidate.verdict === "selected" ? "good" : "blue"}>{candidate.verdict}</Pill></div>)}
-      </div>
+      {rows.length ? (
+        <div className="mt-6 overflow-x-auto border-y border-slate-200 bg-white/40">
+          <div className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Provider</span><span>Fit</span><span>Policy</span><span>Proof</span><span>Score</span><span>Verdict</span></div>
+          {rows.map((candidate) => <div key={`${candidate.provider}-${candidate.service}`} className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span><b>{candidate.provider}</b><br /><span className="text-xs text-slate-500">{candidate.service}</span></span><span>{candidate.missionFit}</span><span>{candidate.policy}</span><span>{candidate.proof}</span><span>{candidate.routeScore}</span><Pill compact tone={candidate.verdict === "blocked" ? "bad" : candidate.verdict === "delivered" ? "good" : "blue"}>{candidate.verdict}</Pill></div>)}
+        </div>
+      ) : <EmptyState title="No route decisions yet" detail="Run an agent mission from the Agent Workspace to populate provider routing, policy verdicts, and proof status." />}
     </Glass>
   );
 }
@@ -959,15 +922,17 @@ function HistoryPanel({ live }) {
     amount: Number(receipt.amountUSDC || receipt.amount || 0),
     status: receipt.serviceStatus || receipt.settlementStatus || "pending",
   }));
-  const rows = liveRows.length > 0 ? liveRows : executionHistory;
+  const rows = liveRows;
   return (
     <Glass className="border-y border-slate-200 p-5">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Execution history</p>
       <h2 className="mt-1 text-2xl font-black text-slate-950">Paid, pending, and blocked calls</h2>
-      <div className="mt-6 overflow-x-auto border-y border-slate-200 bg-white/40">
-        <div className="grid grid-cols-[90px_1fr_120px_90px_100px_120px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Time</span><span>Provider</span><span>Service</span><span>Score</span><span>Amount</span><span>Status</span></div>
-        {rows.map((row) => <div key={`${row.time}-${row.provider}-${row.service}`} className="grid grid-cols-[90px_1fr_120px_90px_100px_120px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span className="font-mono text-xs text-slate-500">{row.time}</span><span className="font-semibold text-slate-800">{row.provider}</span><span>{row.service}</span><span>{row.score}</span><span>{row.amount.toFixed(3)}</span><Pill compact tone={row.status === "blocked" ? "bad" : row.status === "settled" || row.status === "delivered" ? "good" : "warn"}>{row.status}</Pill></div>)}
-      </div>
+      {rows.length ? (
+        <div className="mt-6 overflow-x-auto border-y border-slate-200 bg-white/40">
+          <div className="grid grid-cols-[90px_1fr_120px_90px_100px_120px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Time</span><span>Provider</span><span>Service</span><span>Score</span><span>Amount</span><span>Status</span></div>
+          {rows.map((row) => <div key={`${row.time}-${row.provider}-${row.service}`} className="grid grid-cols-[90px_1fr_120px_90px_100px_120px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span className="font-mono text-xs text-slate-500">{row.time}</span><span className="font-semibold text-slate-800">{row.provider}</span><span>{row.service}</span><span>{row.score}</span><span>{row.amount.toFixed(3)}</span><Pill compact tone={row.status === "blocked" ? "bad" : row.status === "settled" || row.status === "delivered" ? "good" : "warn"}>{row.status}</Pill></div>)}
+        </div>
+      ) : <EmptyState title="No paid calls recorded" detail="Execution history is empty until a mission routes an approved provider call and creates a receipt." />}
     </Glass>
   );
 }
@@ -990,10 +955,10 @@ function ProofPanel({ live, latestResult }) {
     ["settlement_status", receipt.settlementStatus],
     ["output_hash", receipt.outputHash],
     ["reconciliation_tag", receipt.reconciliationTag],
-  ] : proofRows;
+  ] : [];
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
-      <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Receipt packet</p><h2 className="mt-1 text-2xl font-black text-slate-950">Payment-linked market proof</h2><div className="mt-6 divide-y divide-slate-200 border-y border-slate-200 bg-white/40">{rows.map(([key, value]) => <div key={key} className="grid gap-3 py-3 md:grid-cols-[220px_1fr]"><p className="font-mono text-xs text-slate-400">{key}</p><p className="break-all font-semibold text-slate-700">{value || "n/a"}</p></div>)}</div></Glass>
+      <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Receipt packet</p><h2 className="mt-1 text-2xl font-black text-slate-950">Payment-linked market proof</h2>{rows.length ? <div className="mt-6 divide-y divide-slate-200 border-y border-slate-200 bg-white/40">{rows.map(([key, value]) => <div key={key} className="grid gap-3 py-3 md:grid-cols-[220px_1fr]"><p className="font-mono text-xs text-slate-400">{key}</p><p className="break-all font-semibold text-slate-700">{value || "n/a"}</p></div>)}</div> : <EmptyState title="No receipt selected" detail="Run an agent mission to create payment-linked receipts, output hashes, and reconciliation tags." />}</Glass>
       <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Audit answer</p><h3 className="mt-2 text-2xl font-black text-slate-950">What signal was bought, why, and which mission did it support?</h3><p className="mt-4 text-sm leading-7 text-slate-600">The receipt connects mission intent, provider route, policy verdict, Circle/x402 authorization, Arc settlement state, provider output, output hash, and recommendation.</p></Glass>
     </div>
   );
@@ -1015,18 +980,20 @@ function ReconciliationPanel({ live, runReconciliation, reconciliationRunning })
             <CheckCircle2 className="h-4 w-4" />{reconciliationRunning ? "Running" : "Run reconciliation"}
           </button>
         </div>
-        <div className="overflow-x-auto border-y border-slate-200 bg-white/40">
-          <div className="grid grid-cols-[1fr_90px_90px_90px_90px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Run</span><span>Checked</span><span>Matched</span><span>Pending</span><span>Failed</span></div>
-          {(runs.length ? runs : [{ reconciliationRunId: "waiting", checked: 0, matched: 0, pending: live?.receipts?.length || 0, failed: 0 }]).slice(0, 8).map((run) => (
-            <div key={run.reconciliationRunId} className="grid grid-cols-[1fr_90px_90px_90px_90px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0">
-              <span className="truncate font-mono text-xs text-slate-600">{run.reconciliationRunId}</span><span>{run.checked}</span><span>{run.matched}</span><span>{run.pending}</span><span>{run.failed}</span>
-            </div>
-          ))}
-        </div>
+        {runs.length ? (
+          <div className="overflow-x-auto border-y border-slate-200 bg-white/40">
+            <div className="grid grid-cols-[1fr_90px_90px_90px_90px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Run</span><span>Checked</span><span>Matched</span><span>Pending</span><span>Failed</span></div>
+            {runs.slice(0, 8).map((run) => (
+              <div key={run.reconciliationRunId} className="grid grid-cols-[1fr_90px_90px_90px_90px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0">
+                <span className="truncate font-mono text-xs text-slate-600">{run.reconciliationRunId}</span><span>{run.checked}</span><span>{run.matched}</span><span>{run.pending}</span><span>{run.failed}</span>
+              </div>
+            ))}
+          </div>
+        ) : <EmptyState title="No reconciliation runs" detail="Run reconciliation after a mission creates payment intents, provider deliveries, and receipts." />}
       </Glass>
       <div className="space-y-5">
-        <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Payment intents</p><div className="mt-4 space-y-3">{paymentIntents.slice(0, 5).map((intent) => <RouteLine key={intent.paymentIntentId} label={intent.paymentIntentId?.slice(0, 18) || "intent"} value={intent.status || "pending"} tone={intent.status === "settled" ? "good" : "warn"} />)}</div></Glass>
-        <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Provider deliveries</p><div className="mt-4 space-y-3">{deliveries.slice(0, 5).map((delivery) => <RouteLine key={delivery.deliveryId || delivery.receiptId} label={delivery.providerId || "provider"} value={delivery.status || "pending"} tone={delivery.status === "delivered" ? "good" : "warn"} />)}</div></Glass>
+        <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Payment intents</p>{paymentIntents.length ? <div className="mt-4 space-y-3">{paymentIntents.slice(0, 5).map((intent) => <RouteLine key={intent.paymentIntentId} label={intent.paymentIntentId?.slice(0, 18) || "intent"} value={intent.status || "pending"} tone={intent.status === "settled" ? "good" : "warn"} />)}</div> : <EmptyState title="No payment intents" detail="Approved provider calls create payment intents." />}</Glass>
+        <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Provider deliveries</p>{deliveries.length ? <div className="mt-4 space-y-3">{deliveries.slice(0, 5).map((delivery) => <RouteLine key={delivery.deliveryId || delivery.receiptId} label={delivery.providerId || "provider"} value={delivery.status || "pending"} tone={delivery.status === "delivered" ? "good" : "warn"} />)}</div> : <EmptyState title="No provider deliveries" detail="Provider delivery records appear after paid calls complete." />}</Glass>
       </div>
     </div>
   );
@@ -1055,7 +1022,7 @@ function DeveloperPanel() {
   return <Developers />;
 }
 
-function MarketNetworkWorkspace({ live }) {
+function MarketNetworkWorkspace({ live, latestResult }) {
   const metrics = live?.dashboard?.metrics;
   return (
     <div className="space-y-8">
@@ -1070,7 +1037,7 @@ function MarketNetworkWorkspace({ live }) {
       />
       <MarketplacePanel live={live} />
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-        <ScorecardPanel live={live} />
+        <ScorecardPanel latestResult={latestResult} />
         <PolicyPanel live={live} />
       </div>
       <ProviderPanel live={live} />

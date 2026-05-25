@@ -139,8 +139,6 @@ function makeExecutionRecord(input: {
 }
 
 export function registerAngoraRoutes(app: express.Express) {
-  ensureDefaultMission();
-
   app.use("/v1/angora", (req, _res, next) => {
     incrementMetric("requests");
     const ctx = requestContext(req);
@@ -299,17 +297,17 @@ export function registerAngoraRoutes(app: express.Express) {
   });
 
   app.get("/v1/angora/services/search", (req, res) => {
-    const mission = req.query.mission_id ? getMission(String(req.query.mission_id)) : ensureDefaultMission();
-    if (!mission) return res.status(404).json({ error: "Mission not found" });
+    const mission = req.query.mission_id ? getMission(String(req.query.mission_id)) : undefined;
+    if (req.query.mission_id && !mission) return res.status(404).json({ error: "Mission not found" });
     const services = searchServices({
       category: String(req.query.category || ""),
-      maxPrice: String(req.query.max_price || req.query.maxPrice || mission.budget || "999"),
+      maxPrice: String(req.query.max_price || req.query.maxPrice || mission?.budget || "999"),
       requireVerified: String(req.query.require_verified || "true") !== "false",
-      minTrustScore: Number(req.query.min_trust || mission.minProviderTrustScore || 0),
+      minTrustScore: Number(req.query.min_trust || mission?.minProviderTrustScore || 0),
       rfpTrack: req.query.rfp_track ? String(req.query.rfp_track) : undefined,
     });
     const blocked = searchServices({ category: String(req.query.category || ""), maxPrice: "999", requireVerified: false, minTrustScore: 0 }).filter((service) => !services.some((s) => s.serviceId === service.serviceId));
-    res.json({ mission, services, blocked });
+    res.json({ mission: mission || null, services, blocked });
   });
 
   app.get("/v1/angora/rfps", (_req, res) => {
@@ -317,7 +315,8 @@ export function registerAngoraRoutes(app: express.Express) {
   });
 
   app.get("/v1/angora/route/simulate", (req, res) => {
-    const mission = req.query.mission_id ? getMission(String(req.query.mission_id)) : ensureDefaultMission();
+    if (!req.query.mission_id) return res.status(400).json({ error: "mission_id is required for route simulation." });
+    const mission = getMission(String(req.query.mission_id));
     if (!mission) return res.status(404).json({ error: "Mission not found" });
     res.json({ simulation: simulateRoutePlan(mission, String(req.query.max_price || "0.01")) });
   });
@@ -563,7 +562,8 @@ export function registerAngoraRoutes(app: express.Express) {
   app.get("/v1/angora/runtime/metrics", (_req, res) => res.json({ runtime: getRuntimeMetrics(), submission: getSubmissionMetrics(), execution: executionSummary() }));
   app.get("/v1/angora/submission/metrics", (_req, res) => res.json({ metrics: getSubmissionMetrics() }));
   app.get("/v1/angora/dashboard/summary", (_req, res) => {
-    res.json({ product: "AngoraPay Mesh for Angora market agents", positioning: "Mission-aware trust, routing, and proof layer for market agents using Circle/x402 on Arc", mission: ensureDefaultMission(), summary: summarize(), execution: executionSummary(), metrics: getSubmissionMetrics(), runtime: getRuntimeMetrics(), traction: tractionSummary(), routeSimulation: simulateRoutePlan(ensureDefaultMission()), rfpAreas: RFP_AREAS, reputation: listReputation() });
+    const mission = listMissions()[0] || null;
+    res.json({ product: "AngoraPay Mesh for Angora market agents", positioning: "Mission-aware trust, routing, and proof layer for market agents using Circle/x402 on Arc", mission, summary: summarize(), execution: executionSummary(), metrics: getSubmissionMetrics(), runtime: getRuntimeMetrics(), traction: tractionSummary(), routeSimulation: mission ? simulateRoutePlan(mission) : null, rfpAreas: RFP_AREAS, reputation: listReputation() });
   });
 
   app.post("/v1/angora/agent-missions/run", async (req, res) => {
