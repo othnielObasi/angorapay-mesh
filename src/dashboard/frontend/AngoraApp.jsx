@@ -348,6 +348,12 @@ function calculateTotal(items) {
   return items.reduce((sum, item) => sum + Number(item.price || item.amount || 0), 0);
 }
 
+function formatUSDC(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "0.00";
+  return numeric >= 1 ? numeric.toFixed(2) : numeric.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 function formatConfidence(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return "pending";
@@ -379,6 +385,7 @@ async function loadLiveSnapshot() {
     checkpoints,
     reputation,
     readiness,
+    gatewayBalance,
   ] = await Promise.all([
     api("/v1/angora/dashboard/summary"),
     api("/v1/angora/services/search?max_price=1&require_verified=false"),
@@ -393,6 +400,7 @@ async function loadLiveSnapshot() {
     api("/v1/angora/agent-checkpoints?limit=12"),
     api("/v1/angora/reputation"),
     api("/v1/angora/production/readiness"),
+    api("/api/gateway-balance").catch((error) => ({ balance: "0", formatted: "0.00", kind: "unconfigured", warning: error.message || "Gateway balance unavailable" })),
   ]);
   return {
     dashboard,
@@ -410,6 +418,7 @@ async function loadLiveSnapshot() {
     checkpoints: checkpoints.checkpoints?.rows || checkpoints.checkpoints || [],
     reputation: reputation.reputation || [],
     readiness: readiness.readiness || dashboard.readiness,
+    gatewayBalance,
   };
 }
 
@@ -1267,9 +1276,11 @@ function Stat({ label, value, icon: Icon }) {
   );
 }
 
-function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, selectedMarket, setSelectedMarket }) {
+function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, selectedMarket, setSelectedMarket, live }) {
   const traces = latestResult?.traces || [];
   const receipts = latestResult?.receipts || [];
+  const paymentIntents = live?.paymentIntents || [];
+  const gatewayBalance = live?.gatewayBalance;
   const recommendation = latestResult?.recommendation;
   const reasoningTrace = traces.find((trace) => trace.eventType === "llm.reasoning");
   const decisions = latestResult?.decisions || [];
@@ -1365,9 +1376,42 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
             <RouteLine label="Reasoning" value={reasoningTrace?.details?.source || "pending"} tone={reasoningTrace?.details?.source === "openai" ? "good" : "warn"} />
           </div>
         </Glass>
+        <PaymentReadinessPanel gatewayBalance={gatewayBalance} paymentIntents={paymentIntents} latestResult={latestResult} />
         <MissionProofSummary decisions={decisions} receipts={receipts} traces={traces} />
       </div>
     </div>
+  );
+}
+
+function PaymentReadinessPanel({ gatewayBalance, paymentIntents, latestResult }) {
+  const balanceValue = Number(gatewayBalance?.formatted || gatewayBalance?.balance || 0);
+  const requiredFloat = Number(latestResult?.totals?.usdcRouted || 0.05);
+  const hasWalletBalance = Number.isFinite(balanceValue) && balanceValue > 0;
+  const hasEnoughForMission = hasWalletBalance && balanceValue >= requiredFloat;
+  const latestIntent = latestResult?.receipts?.[0]?.metadata?.paymentIntentId
+    ? paymentIntents.find((intent) => intent.paymentIntentId === latestResult.receipts[0].metadata.paymentIntentId)
+    : paymentIntents[0];
+  const balanceLabel = gatewayBalance?.formatted ? `${formatUSDC(gatewayBalance.formatted)} USDC` : "checking";
+
+  return (
+    <Glass className="border-y border-slate-200 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Payment readiness</p>
+          <p className="mt-2 text-sm font-black text-slate-950">Circle wallet balance before the agent buys signals.</p>
+        </div>
+        <Pill compact tone={hasEnoughForMission ? "good" : "warn"}>{hasEnoughForMission ? "ready" : hasWalletBalance ? "low balance" : "unfunded"}</Pill>
+      </div>
+      <div className="mt-4 space-y-3">
+        <RouteLine label="Wallet balance" value={balanceLabel} tone={hasWalletBalance ? "good" : "warn"} />
+        <RouteLine label="Needed for mission" value={`${formatUSDC(requiredFloat)} USDC`} tone={hasEnoughForMission ? "good" : "warn"} />
+        <RouteLine label="Balance source" value={gatewayBalance?.kind || "unconfigured"} tone={gatewayBalance?.kind === "unconfigured" ? "warn" : "blue"} />
+        <RouteLine label="Mission payment" value="arc_testnet" tone="purple" />
+        <RouteLine label="Latest intent" value={latestIntent?.status || "none"} tone={latestIntent?.status === "settled" ? "good" : latestIntent ? "warn" : "neutral"} />
+        <RouteLine label="Execution mode" value={latestIntent?.executionMode || "pending"} tone={latestIntent?.executionMode === "real_x402" ? "good" : latestIntent ? "warn" : "neutral"} />
+      </div>
+      {gatewayBalance?.warning ? <p className="mt-4 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">{gatewayBalance.warning}</p> : null}
+    </Glass>
   );
 }
 
