@@ -383,15 +383,19 @@ function Glass({ children, className = "" }) {
 }
 
 function Header({ mode, setMode, openConsole }) {
-  const landingItems = [
+  const pageItems = [
     { id: "home", label: "Home" },
     { id: "product", label: "Product" },
     { id: "developers", label: "Developers" },
   ];
+  const goToPage = (pageId) => {
+    setMode(pageId);
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+  };
 
   return (
     <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-7 lg:px-8">
-      <button type="button" onClick={() => setMode("home")} className="flex items-center gap-3 text-left">
+      <button type="button" onClick={() => goToPage("home")} className="flex items-center gap-3 text-left">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-cyan-300 shadow-[0_14px_35px_rgba(15,23,42,0.16)] ring-1 ring-slate-900/5">
           <Network className="h-5 w-5" />
         </div>
@@ -401,11 +405,11 @@ function Header({ mode, setMode, openConsole }) {
         </div>
       </button>
       <div className="hidden items-center gap-1 rounded-full border border-slate-200/45 bg-white/45 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur md:flex">
-        {landingItems.map((item) => (
+        {pageItems.map((item) => (
           <button
             key={item.id}
             type="button"
-            onClick={() => setMode(item.id)}
+            onClick={() => goToPage(item.id)}
             className={cx("rounded-full px-4 py-2 text-xs font-medium transition", mode === item.id ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:text-slate-950")}
           >
             {item.label}
@@ -431,6 +435,12 @@ function Landing({ openConsole }) {
 }
 
 function Home({ setMode, openConsole }) {
+  const storyNav = [
+    ["problem", "Problem"],
+    ["flow", "Flow"],
+    ["infrastructure", "Infrastructure"],
+    ["proof", "Proof"],
+  ];
   const proofLine = ["provider trust", "route score", "policy gate", "payment receipt", "reconciliation trail"];
   const problemPoints = [
     "Which provider should the agent trust?",
@@ -504,6 +514,29 @@ function Home({ setMode, openConsole }) {
         <MeshHeroVisual />
       </section>
 
+      <section aria-label="AngoraPay Mesh landing story" className="border-y border-slate-200/55 py-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-700/80">Landing flow</p>
+            <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-slate-500">
+              A quick path through why Angora exists, how a mission moves, what infrastructure supports it, and how proof is kept.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 rounded-full border border-slate-200/45 bg-white/45 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur">
+            {storyNav.map(([sectionId, label]) => (
+              <button
+                key={sectionId}
+                type="button"
+                onClick={() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                className="rounded-full px-4 py-2 text-xs font-medium text-slate-500 transition hover:bg-white/75 hover:text-slate-950"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section id="problem" className="border-t border-slate-200/55 py-24">
         <div className="grid gap-14 lg:grid-cols-[0.82fr_1.18fr]">
           <div>
@@ -549,7 +582,7 @@ function Home({ setMode, openConsole }) {
         </div>
       </section>
 
-      <section id="developers" className="border-t border-slate-200/55 py-24">
+      <section id="infrastructure" className="border-t border-slate-200/55 py-24">
         <div className="grid gap-14 lg:grid-cols-[0.78fr_1.22fr]">
           <div>
             <Badge>Developer infrastructure</Badge>
@@ -587,7 +620,7 @@ function Home({ setMode, openConsole }) {
         </div>
       </section>
 
-      <section id="proof-surface" className="pb-12">
+      <section id="proof" className="pb-12">
         <div className="relative overflow-hidden rounded-[2rem] border border-slate-200/55 bg-white/50 p-8 shadow-[0_24px_80px_rgba(15,42,61,0.055)] backdrop-blur-xl md:p-10">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_24%,rgba(34,211,238,0.10),transparent_30%),linear-gradient(145deg,rgba(255,255,255,0.78),transparent_42%)]" />
           <div className="relative grid items-start gap-12 lg:grid-cols-[0.74fr_1.26fr]">
