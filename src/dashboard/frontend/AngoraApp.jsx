@@ -436,10 +436,10 @@ function Landing({ openConsole }) {
 
 function Home({ setMode, openConsole }) {
   const storyNav = [
-    ["problem", "Problem"],
-    ["flow", "Flow"],
-    ["infrastructure", "Infrastructure"],
-    ["proof", "Proof"],
+    ["01", "problem", "Problem"],
+    ["02", "flow", "Flow"],
+    ["03", "infrastructure", "Infrastructure"],
+    ["04", "proof", "Proof"],
   ];
   const proofLine = ["provider trust", "route score", "policy gate", "payment receipt", "reconciliation trail"];
   const problemPoints = [
@@ -480,6 +480,19 @@ function Home({ setMode, openConsole }) {
       <section className="grid items-center gap-16 pb-20 pt-8 lg:grid-cols-[0.92fr_1.08fr]">
         <div>
           <Badge>Paid-intelligence routing and proof for market agents</Badge>
+          <div className="mt-7 flex max-w-2xl flex-wrap gap-x-7 gap-y-3 border-y border-slate-200/55 py-4">
+            {storyNav.map(([number, sectionId, label]) => (
+              <button
+                key={sectionId}
+                type="button"
+                onClick={() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                className="group inline-flex items-center gap-2 text-left text-xs font-semibold text-slate-500 transition hover:text-slate-950"
+              >
+                <span className="font-mono text-[10px] text-cyan-700/80">{number}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
           <h1 className="mt-8 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl lg:text-[5rem]">
             Buy trusted market intelligence before agents act.
           </h1>
@@ -512,29 +525,6 @@ function Home({ setMode, openConsole }) {
           </div>
         </div>
         <MeshHeroVisual />
-      </section>
-
-      <section aria-label="AngoraPay Mesh landing story" className="border-y border-slate-200/55 py-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-700/80">Landing flow</p>
-            <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-slate-500">
-              A quick path through why Angora exists, how a mission moves, what infrastructure supports it, and how proof is kept.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 rounded-full border border-slate-200/45 bg-white/45 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur">
-            {storyNav.map(([sectionId, label]) => (
-              <button
-                key={sectionId}
-                type="button"
-                onClick={() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                className="rounded-full px-4 py-2 text-xs font-medium text-slate-500 transition hover:bg-white/75 hover:text-slate-950"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
       </section>
 
       <section id="problem" className="border-t border-slate-200/55 py-24">
