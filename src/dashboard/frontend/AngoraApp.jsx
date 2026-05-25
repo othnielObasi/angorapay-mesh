@@ -31,6 +31,45 @@ const rfpAreas = [
   "Social Trading Intelligence",
 ];
 
+const userWorkflows = [
+  {
+    user: "Market-agent builders",
+    job: "Connect an agent to paid market services without hand-building provider discovery, spend policy, receipts, and proof storage.",
+    support: "Agent Workspace runs missions, classifies intent, routes providers, records traces, and exposes Gateway/SDK examples.",
+    console: "Agent Workspace",
+  },
+  {
+    user: "Prediction-market teams",
+    job: "Turn noisy odds, news, sentiment, and risk inputs into a proof-backed recommendation before acting.",
+    support: "Specialist missions cover prediction-market intelligence, vertical questions, route scorecards, and receipt-backed recommendations.",
+    console: "Agent Workspace",
+  },
+  {
+    user: "Arbitrage and trading operators",
+    job: "Check cross-venue prices, risk, and liquidity through trusted services while staying inside a USDC budget.",
+    support: "Market Network shows provider trust, price, proof support, blocked routes, and mission policy before payment.",
+    console: "Market Network",
+  },
+  {
+    user: "Paid intelligence providers",
+    job: "List a market-data, odds, sentiment, risk, social, arbitrage, or proof service and receive qualified demand.",
+    support: "Provider onboarding captures service category, price, proof fields, delivery status, and reputation signals.",
+    console: "Market Network",
+  },
+  {
+    user: "Enterprise admins",
+    job: "Control which agents can spend, which providers are allowed, and whether every paid call can be audited.",
+    support: "Proof & Ops surfaces policy, receipts, payment intents, provider deliveries, reconciliation, and runtime metrics.",
+    console: "Proof & Ops",
+  },
+  {
+    user: "Auditors and reviewers",
+    job: "Verify what signal was bought, why it was selected, what it cost, and which market decision it supported.",
+    support: "Receipt packets connect mission intent, provider route, policy verdict, payment rail, output hash, and reconciliation tag.",
+    console: "Proof & Ops",
+  },
+];
+
 const marketServices = [
   {
     id: "svc-odds",
@@ -377,7 +416,7 @@ function Header({ mode, setMode, openConsole }) {
 
 function Landing({ openConsole }) {
   const [mode, setMode] = useState("home");
-  const content = mode === "product" ? <Product openConsole={openConsole} setMode={setMode} /> : mode === "developers" ? <Developers /> : <Home openConsole={openConsole} setMode={setMode} />;
+  const content = mode === "product" ? <Product setMode={setMode} /> : mode === "developers" ? <Developers /> : <Home setMode={setMode} />;
   return (
     <Background>
       <Header mode={mode} setMode={setMode} openConsole={openConsole} />
@@ -386,7 +425,7 @@ function Landing({ openConsole }) {
   );
 }
 
-function Home({ openConsole, setMode }) {
+function Home({ setMode }) {
   const proofPoints = [
     ["Choose trusted services", "Find the right provider before the agent acts."],
     ["Pay through Circle/x402", "Use the payment rail without hiding the route logic."],
@@ -412,11 +451,11 @@ function Home({ openConsole, setMode }) {
           </div>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">AngoraPay Mesh helps market agents route trusted paid services and prove every call.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-cyan-400 px-6 py-3 text-sm font-black text-slate-950 shadow-xl shadow-cyan-200">Sign in</button>
-            <button type="button" onClick={() => setMode("product")} className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 ring-1 ring-slate-200">View product</button>
+            <button type="button" onClick={() => setMode("product")} className="rounded-full bg-cyan-400 px-6 py-3 text-sm font-black text-slate-950 shadow-xl shadow-cyan-200">Explore user workflows</button>
+            <button type="button" onClick={() => setMode("developers")} className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 ring-1 ring-slate-200">Developer docs</button>
           </div>
         </div>
-        <MeshHeroVisual openConsole={openConsole} />
+        <MeshHeroVisual />
       </section>
 
       <section className="grid gap-5 md:grid-cols-3">
@@ -444,11 +483,24 @@ function Home({ openConsole, setMode }) {
           </div>
         </div>
       </section>
+
+      <section className="grid gap-6 border-y border-slate-200 py-8 lg:grid-cols-[360px_1fr]">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Who it serves</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Purpose-built paths, not a generic dashboard.</h2>
+          <p className="mt-4 text-sm leading-7 text-slate-600">Each role gets a concrete job: run an agent mission, evaluate providers, onboard a service, control spend, or audit proof.</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {userWorkflows.slice(0, 4).map((workflow) => (
+            <WorkflowCard key={workflow.user} workflow={workflow} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
 
-function MeshHeroVisual({ openConsole }) {
+function MeshHeroVisual() {
   const routeMetrics = [
     ["route", "OddsNode"],
     ["cost", "0.004"],
@@ -494,10 +546,23 @@ function MeshHeroVisual({ openConsole }) {
               </div>
             ))}
           </div>
-          <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-cyan-400 px-3.5 py-2 text-xs font-black text-slate-950">Sign in</button>
+          <Pill tone="good" compact>policy-ready</Pill>
         </div>
       </div>
     </Glass>
+  );
+}
+
+function WorkflowCard({ workflow }) {
+  return (
+    <div className="border-t border-slate-200 py-4">
+      <div className="flex items-start justify-between gap-4">
+        <p className="font-black text-slate-950">{workflow.user}</p>
+        <Pill tone="blue" compact>{workflow.console}</Pill>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-600">{workflow.job}</p>
+      <p className="mt-3 border-l border-cyan-200 pl-3 text-xs font-semibold leading-5 text-slate-500">{workflow.support}</p>
+    </div>
   );
 }
 
@@ -516,14 +581,7 @@ function HeroNode({ className, label, value, badge, tone }) {
   );
 }
 
-function Product({ openConsole, setMode }) {
-  const audiences = [
-    ["Market-agent builders", "Use one Gateway/SDK to buy odds, sentiment, risk, social, arbitrage, and proof services."],
-    ["x402 providers", "Become discoverable to policy-qualified market-agent demand on Arc."],
-    ["Trading and prediction teams", "Let agents use paid intelligence with budget, trust, proof, and execution history."],
-    ["Finance and judges", "Inspect users, calls, receipts, USDC volume, real/testnet/fallback split, and blocked routes."],
-  ];
-
+function Product({ setMode }) {
   return (
     <div className="space-y-14">
       <section className="mx-auto max-w-4xl text-center">
@@ -553,9 +611,14 @@ function Product({ openConsole, setMode }) {
           <p className="mt-4 text-sm leading-7 text-slate-600">Circle/x402 handles payment authorization and service unlock. Angora sits around that payment path to decide whether a market agent should use a provider, whether the mission policy allows it, and what proof must be stored after delivery.</p>
         </Glass>
         <Glass className="p-6">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Adoption</p>
-          <div className="mt-5 space-y-5">
-            {audiences.map(([title, detail]) => (
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Production use</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Useful when money-moving agents need a control layer.</h2>
+          <div className="mt-5 space-y-4">
+            {[
+              ["Before payment", "Classify intent, select the specialist path, rank providers, and enforce budget/trust/proof policy."],
+              ["During service use", "Create payment intent context, call approved services, collect delivery evidence, and capture output hashes."],
+              ["After delivery", "Show receipts, route scorecards, reconciliation status, provider deliveries, and audit-ready trace history."],
+            ].map(([title, detail]) => (
               <div key={title} className="border-l border-slate-200 pl-5">
                 <p className="font-black text-slate-950">{title}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
@@ -563,10 +626,21 @@ function Product({ openConsole, setMode }) {
             ))}
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950">Sign in</button>
-            <button type="button" onClick={() => setMode("developers")} className="rounded-full bg-white px-5 py-3 text-sm font-black text-slate-950 ring-1 ring-slate-200">Developer docs</button>
+            <button type="button" onClick={() => setMode("developers")} className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950">Developer docs</button>
           </div>
         </Glass>
+      </section>
+      <section className="border-y border-slate-200 py-8">
+        <div className="mb-6 max-w-2xl">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">User categories</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">What each user can do today</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">The console is organized around the same operating loop: mission, network, proof. These user paths explain where each role fits.</p>
+        </div>
+        <div className="grid gap-x-8 gap-y-3 md:grid-cols-2">
+          {userWorkflows.map((workflow) => (
+            <WorkflowCard key={workflow.user} workflow={workflow} />
+          ))}
+        </div>
       </section>
     </div>
   );
@@ -1093,7 +1167,7 @@ function ActionBand({ eyebrow, title, metrics }) {
 }
 
 export default function AngoraUiCanvas() {
-  const [view, setView] = useState("console");
+  const [view, setView] = useState("landing");
   const [tab, setTab] = useState("workspace");
   const [completed, setCompleted] = useState(0);
   const [live, setLive] = useState(null);
