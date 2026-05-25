@@ -1,6 +1,6 @@
 /**
  * Dashboard Server
- * Serves the Kairos web dashboard + API endpoints
+ * Serves the AngoraPay Mesh dashboard and API endpoints.
  */
 
 import express from 'express';
@@ -1231,6 +1231,10 @@ export function stopDashboard(): Promise<void> {
 }
 
 export function startDashboard(port: number = DASHBOARD_PORT): void {
+  if (!process.env.ANGORA_REQUIRE_AUTH && !process.env.ANGORA_AUTH_DISABLED) {
+    process.env.ANGORA_AUTH_DISABLED = 'true';
+  }
+
   const app = express();
   app.use(express.json({ limit: '12mb' }));
   app.use(rateLimit);

@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  ArrowRight,
   CheckCircle2,
+  Code2,
   FileCheck2,
-  Globe2,
   LineChart,
   MessageSquare,
+  Network,
   Play,
   Route,
   Search,
@@ -388,29 +390,29 @@ function Header({ mode, setMode, openConsole }) {
   ];
 
   return (
-    <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
+    <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-7 lg:px-8">
       <button type="button" onClick={() => setMode("home")} className="flex items-center gap-3 text-left">
-        <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700 ring-1 ring-cyan-200">
-          <Globe2 className="h-5 w-5" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-cyan-300 shadow-[0_14px_35px_rgba(15,23,42,0.16)] ring-1 ring-slate-900/5">
+          <Network className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-sm font-black tracking-tight text-slate-950">{APP_NAME}</p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Market-agent routing and proof</p>
+          <p className="text-sm font-semibold tracking-tight text-slate-950">{APP_NAME}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Market-agent routing and proof</p>
         </div>
       </button>
-      <div className="hidden items-center gap-2 md:flex">
+      <div className="hidden items-center gap-1 rounded-full border border-slate-200/45 bg-white/45 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur md:flex">
         {landingItems.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setMode(item.id)}
-            className={cx("rounded-full px-4 py-2 text-xs font-black transition", mode === item.id ? "bg-slate-950 text-white" : "text-slate-500 hover:bg-white hover:text-slate-950")}
+            className={cx("rounded-full px-4 py-2 text-xs font-medium transition", mode === item.id ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:text-slate-950")}
           >
             {item.label}
           </button>
         ))}
       </div>
-      <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-slate-200">
+      <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-slate-950 px-5 py-2.5 text-xs font-medium text-white shadow-[0_18px_45px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5">
         Sign in
       </button>
     </nav>
@@ -419,7 +421,7 @@ function Header({ mode, setMode, openConsole }) {
 
 function Landing({ openConsole }) {
   const [mode, setMode] = useState("home");
-  const content = mode === "product" ? <Product setMode={setMode} /> : mode === "developers" ? <Developers /> : <Home setMode={setMode} />;
+  const content = mode === "product" ? <Product setMode={setMode} openConsole={openConsole} /> : mode === "developers" ? <Developers openConsole={openConsole} /> : <Home setMode={setMode} openConsole={openConsole} />;
   return (
     <Background>
       <Header mode={mode} setMode={setMode} openConsole={openConsole} />
@@ -428,180 +430,346 @@ function Landing({ openConsole }) {
   );
 }
 
-function Home({ setMode }) {
-  const proofPoints = [
-    ["Route trusted providers", "Find the right paid signal before an agent acts."],
-    ["Control spend", "Apply budget, trust, proof, and category policy."],
-    ["Keep proof", "Attach receipts and traces to the market answer."],
+function Home({ setMode, openConsole }) {
+  const proofLine = ["provider trust", "route score", "policy gate", "payment receipt", "reconciliation trail"];
+  const problemPoints = [
+    "Which provider should the agent trust?",
+    "Should this payment be allowed?",
+    "Did the provider actually deliver?",
+    "Can the final recommendation be audited later?",
   ];
-  const missionPreview = [
-    ["Ask", "Enter a market question or trading hypothesis."],
-    ["Route", "Angora selects paid intelligence services that match the mission."],
-    ["Prove", "The console returns an answer with receipts and trace history."],
+  const flowSteps = [
+    ["01", "Mission", "A market agent submits a question with budget, trust, and proof requirements."],
+    ["02", "Discovery", "Angora discovers registered, preferred, provisional, and external providers."],
+    ["03", "Route score", "Providers are scored for mission fit, trust, cost, latency, proof support, and delivery quality."],
+    ["04", "Policy gate", "Weak routes, low-trust providers, repeated payment keys, and unsupported proof calls are blocked."],
+    ["05", "Payment + delivery", "Approved calls settle through Circle/x402-style rails and provider delivery is tracked."],
+    ["06", "Receipt + reconcile", "Payment, provider output, receipt, and recommendation are reconciled into an audit trail."],
+  ];
+  const infrastructureItems = [
+    ["Gateway / SDK", "One integration point for agents to request paid intelligence before acting."],
+    ["Route Scorecard", "Scores mission fit, provider trust, proof support, cost, latency, delivery history, and reconciliation success."],
+    ["Policy Engine", "Trust thresholds, route score rules, budget limits, proof requirements, and duplicate-payment blocks."],
+    ["Payment Rail", "Labels calls as real_x402, arc_testnet, fallback, blocked, pending, failed, or local_proof."],
+    ["Proof Receipts", "Receipt ID, mission ID, provider ID, route score, policy verdict, amount, output hash, and linked recommendation."],
+    ["Workspace Controls", "Teams manage policies, budgets, API keys, provider access, receipts, traces, and audit logs."],
+  ];
+  const proofSnapshot = [
+    ["Mission", "BTC market mispricing check"],
+    ["Agent", "Prediction Market Intelligence"],
+    ["Providers scanned", "7"],
+    ["Approved", "OddsNode, SignalMesh, RiskLens, ProofSmith"],
+    ["Blocked", "GreyAlpha - trust below threshold"],
+    ["USDC routed", "0.013"],
+    ["Receipts", "4 created"],
+    ["Reconciliation", "payment + delivery matched"],
   ];
 
   return (
-    <div className="space-y-12">
-      <section className="grid gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+    <div className="space-y-0">
+      <section className="grid items-center gap-16 pb-20 pt-8 lg:grid-cols-[0.92fr_1.08fr]">
         <div>
-          <Pill tone="blue">Market-agent payments and proof on Arc</Pill>
-          <div className="mt-7 max-w-4xl">
-            <div className="mb-5 inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-700">
-              <span className="h-2 w-2 rounded-full bg-cyan-500 shadow-[0_0_18px_rgba(6,182,212,0.55)]" />
-              Paid intelligence for autonomous market decisions
-            </div>
-            <h1 className="max-w-3xl text-5xl font-black leading-[0.95] tracking-[-0.045em] text-slate-950 md:text-7xl">Paid market intelligence, routed before agents act.</h1>
+          <Badge>Paid-intelligence routing and proof for market agents</Badge>
+          <h1 className="mt-8 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl lg:text-[5rem]">
+            Buy trusted market intelligence before agents act.
+          </h1>
+          <p className="mt-8 max-w-xl text-lg font-medium leading-8 text-slate-600 md:text-xl">
+            AngoraPay Mesh lets market agents discover paid providers, score routes, block weak services, pay approved calls through Circle/x402, and prove which intelligence supported the final recommendation.
+          </p>
+          <p className="mt-4 max-w-xl text-sm font-medium leading-6 text-slate-500">
+            Circle enables payment. Angora decides, routes, blocks, proves, and reconciles.
+          </p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <button type="button" onClick={() => openConsole("workspace")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-7 py-4 text-sm font-medium text-white shadow-[0_20px_55px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-900">
+              Run market mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            </button>
+            <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/40 bg-white/40 px-6 py-4 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-200/70 hover:text-cyan-800">
+              View Gateway <Code2 className="h-4 w-4" />
+            </button>
           </div>
-          <p className="mt-7 max-w-2xl text-xl font-semibold leading-9 text-slate-700">AngoraPay Mesh lets AI market agents buy trusted signals through Circle/x402, enforce spend policy, and keep proof for every service call.</p>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">It is the control surface between a market question and the paid data, risk, sentiment, odds, or proof services needed to answer it.</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button type="button" onClick={() => setMode("product")} className="rounded-full bg-cyan-400 px-6 py-3 text-sm font-black text-slate-950 shadow-xl shadow-cyan-200">View product</button>
-            <button type="button" onClick={() => setMode("developers")} className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 ring-1 ring-slate-200">Developer docs</button>
+          <div className="mt-12 border-t border-slate-200/30 pt-6">
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400">
+              {proofLine.map((item, index) => (
+                <React.Fragment key={item}>
+                  <span>{item}</span>
+                  {index < proofLine.length - 1 ? <span className="text-cyan-500/50">/</span> : null}
+                </React.Fragment>
+              ))}
+            </div>
+            <p className="mt-4 text-xs font-medium leading-6 text-slate-500">
+              Example mission: 7 providers scanned - 4 approved - 1 blocked - 0.013 USDC routed - reconciliation matched
+            </p>
           </div>
         </div>
         <MeshHeroVisual />
       </section>
 
-      <section className="grid gap-5 md:grid-cols-3">
-        {proofPoints.map(([title, detail]) => (
-          <div key={title} className="border-l border-cyan-200 pl-5">
-            <p className="font-black text-slate-950">{title}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="grid gap-6 border-y border-slate-200 py-8 lg:grid-cols-[360px_1fr]">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">First mission</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">From market question to proof-backed answer.</h2>
-          <p className="mt-4 text-sm leading-7 text-slate-600">A mission starts with intent, routes paid services through policy, then returns an answer that can be inspected later.</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {missionPreview.map(([title, detail]) => (
-            <div key={title} className="border-t border-slate-200 py-4">
-              <p className="font-black text-slate-950">{title}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="pt-2">
-        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+      <section id="problem" className="border-t border-slate-200/55 py-24">
+        <div className="grid gap-14 lg:grid-cols-[0.82fr_1.18fr]">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Built for market-agent tracks</p>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">Prediction markets, arbitrage, social trading, portfolio management, perps, and proof workflows.</p>
+            <Badge>Problem</Badge>
+            <h2 className="mt-6 max-w-xl text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              The problem is not payment. The problem is trusted paid intelligence.
+            </h2>
+            <p className="mt-6 max-w-xl text-base font-medium leading-8 text-slate-600">
+              Market agents can call APIs and pay providers, but they still need to know who to trust, what to block, whether delivery happened, and what evidence supports the recommendation.
+            </p>
+            <p className="mt-4 max-w-xl text-sm font-medium leading-6 text-cyan-800/75">
+              Angora answers those questions before money leaves the agent workflow.
+            </p>
           </div>
-          <div className="flex max-w-3xl flex-wrap gap-x-6 gap-y-3 text-sm font-black text-slate-700">
-            {rfpAreas.map((area) => (
-              <span key={area} className="inline-flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                {area}
+          <div className="space-y-5 border-l border-cyan-200/60 pl-7">
+            {problemPoints.map((point) => (
+              <div key={point} className="relative">
+                <span className="absolute -left-[31px] top-2 h-2 w-2 rounded-full bg-cyan-500/70 shadow-[0_0_14px_rgba(6,182,212,0.28)]" />
+                <p className="text-base font-medium leading-7 text-slate-700">{point}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="flow" className="border-t border-slate-200/55 py-24">
+        <div className="grid gap-14 lg:grid-cols-[0.78fr_1.22fr]">
+          <div>
+            <Badge>The Angora flow</Badge>
+            <h2 className="mt-6 max-w-xl text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Mission to recommendation, with proof in the middle.
+            </h2>
+            <p className="mt-6 max-w-xl text-base font-medium leading-8 text-slate-600">
+              Angora turns a market mission into a scored, policy-gated, paid, delivered, receipted, and reconciled intelligence trail.
+            </p>
+          </div>
+          <div className="relative grid gap-x-8 gap-y-10 md:grid-cols-3">
+            <div className="absolute left-0 right-0 top-5 hidden h-px bg-gradient-to-r from-cyan-100/70 via-slate-200/70 to-cyan-100/40 md:block" />
+            {flowSteps.map(([number, title, body]) => (
+              <FlowStep key={title} number={number} title={title} body={body} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="developers" className="border-t border-slate-200/55 py-24">
+        <div className="grid gap-14 lg:grid-cols-[0.78fr_1.22fr]">
+          <div>
+            <Badge>Developer infrastructure</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Circle enables payment. Angora governs the paid-intelligence workflow.
+            </h2>
+          </div>
+          <div className="grid gap-8 md:grid-cols-2">
+            {infrastructureItems.map(([title, body]) => (
+              <Feature key={title} title={title} body={body} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-24">
+        <div className="grid gap-14 lg:grid-cols-[0.75fr_1.25fr]">
+          <div>
+            <Badge>Built for market-agent tracks</Badge>
+            <h2 className="mt-6 max-w-lg text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Built for agents that need paid signals before action.
+            </h2>
+            <p className="mt-6 text-base font-medium leading-8 text-slate-600">
+              Prediction markets, arbitrage, perpetual futures, social trading, portfolio management, paid signal providers, and proof workflows.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-x-10 gap-y-5 text-sm font-medium text-slate-700 lg:pt-10">
+            {rfpAreas.map((item) => (
+              <span key={item} className="inline-flex items-center gap-2 transition hover:text-cyan-800">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-500/80 shadow-[0_0_14px_rgba(6,182,212,0.38)]" />
+                {item}
               </span>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="grid gap-6 border-y border-slate-200 py-8 lg:grid-cols-[360px_1fr]">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Next step</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Choose the path that matches your role.</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {[
-            ["Product", "See user categories, default console areas, provider routing, policy, receipts, and reconciliation."],
-            ["Developers", "Use the Gateway and SDK examples to connect an agent or register a provider service."],
-          ].map(([title, detail]) => (
-            <button key={title} type="button" onClick={() => setMode(title === "Product" ? "product" : "developers")} className="border-t border-slate-200 py-4 text-left transition hover:border-cyan-300">
-              <p className="font-black text-slate-950">{title}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
-            </button>
-          ))}
+      <section id="proof-surface" className="pb-12">
+        <div className="relative overflow-hidden rounded-[2rem] border border-slate-200/55 bg-white/50 p-8 shadow-[0_24px_80px_rgba(15,42,61,0.055)] backdrop-blur-xl md:p-10">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_24%,rgba(34,211,238,0.10),transparent_30%),linear-gradient(145deg,rgba(255,255,255,0.78),transparent_42%)]" />
+          <div className="relative grid items-start gap-12 lg:grid-cols-[0.74fr_1.26fr]">
+            <div>
+              <Badge>Concrete proof surface</Badge>
+              <h2 className="mt-6 max-w-lg text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+                Every paid signal should leave an inspectable trail.
+              </h2>
+              <p className="mt-5 max-w-xl text-base font-medium leading-8 text-slate-600">
+                The proof surface makes the operational truth visible: what was bought, who was paid, why they were selected, what was blocked, whether delivery matched, and which proof receipt supports the recommendation.
+              </p>
+            </div>
+            <div className="rounded-[1.65rem] border border-slate-200/70 bg-white/74 p-5 shadow-[0_20px_60px_rgba(15,42,61,0.065)] backdrop-blur-md">
+              <div className="flex flex-col gap-4 border-b border-slate-200/60 pb-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100">
+                    <ShieldCheck className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-950">BTC prediction-market mission</p>
+                    <p className="text-xs font-medium text-slate-400">mission_7f32 - recommendation.monitor.created</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-700">reconciled</span>
+                  <span className="rounded-full bg-cyan-50 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700">4 receipts</span>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                {proofSnapshot.map(([label, value]) => (
+                  <div key={label} className="border-b border-slate-200/55 pb-3 sm:[&:nth-last-child(-n+2)]:border-b-0">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400">{label}</p>
+                    <p className="mt-1 text-sm font-medium leading-6 text-slate-800">{value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 border-t border-cyan-200/55 pt-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700/75">Recommendation</p>
+                    <p className="mt-1 text-sm font-medium text-slate-900">Monitor - signal strength not yet sufficient for execution.</p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700/75">Output hash</p>
+                    <p className="mt-1 font-mono text-xs text-slate-500">0x7ac4...91ef</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
   );
 }
 
-function MeshHeroVisual() {
-  const meshPoints = [
-    { label: "Mission", detail: "market intent", tone: "blue", icon: MessageSquare, className: "left-1/2 top-[86px] -translate-x-1/2" },
-    { label: "Providers", detail: "paid signals", tone: "good", icon: Store, className: "right-[42px] top-[238px]" },
-    { label: "Policy", detail: "trust gate", tone: "purple", icon: ShieldCheck, className: "right-[132px] top-[388px]" },
-    { label: "Payment", detail: "Circle/x402", tone: "blue", icon: WalletCards, className: "left-[132px] top-[388px]" },
-    { label: "Proof", detail: "receipt hash", tone: "good", icon: FileCheck2, className: "left-[42px] top-[238px]" },
-  ];
-
+function Badge({ children }) {
   return (
-    <Glass className="relative min-h-[640px] overflow-hidden bg-white/60 p-8">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12),transparent_54%)]" />
-      <div className="absolute left-8 top-8 rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">mission-aware route</div>
-      <div className="absolute right-8 top-8 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">Arc USDC</div>
-
-      <svg className="absolute inset-x-6 top-[68px] h-[500px] w-[calc(100%-3rem)]" viewBox="0 0 680 500" fill="none" aria-hidden="true">
-        <defs>
-          <filter id="meshGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="8" result="blur" />
-            <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.04 0 0 0 0 0.72 0 0 0 0 0.84 0 0 0 0.28 0" />
-            <feBlend in="SourceGraphic" />
-          </filter>
-        </defs>
-        <circle cx="340" cy="255" r="178" stroke="rgb(203 213 225)" strokeWidth="1" opacity="0.72" />
-        <circle cx="340" cy="255" r="118" stroke="rgb(103 232 249)" strokeWidth="1.2" opacity="0.82" />
-        <circle cx="340" cy="255" r="82" fill="rgb(236 254 255)" opacity="0.5" />
-        <path d="M340 75L585 222L492 430H188L95 222L340 75Z" stroke="rgb(148 163 184)" strokeWidth="1.2" opacity="0.62" />
-        <path d="M340 255L340 75M340 255L585 222M340 255L492 430M340 255L188 430M340 255L95 222" stroke="rgb(103 232 249)" strokeWidth="1.3" opacity="0.58" />
-        <path filter="url(#meshGlow)" d="M340 75L585 222L492 430L188 430L95 222L340 75" stroke="rgb(6 182 212)" strokeWidth="3" strokeLinecap="round" strokeDasharray="16 14" opacity="0.5">
-          <animate attributeName="stroke-dashoffset" values="80;0" dur="10s" repeatCount="indefinite" />
-        </path>
-        <path d="M95 222L585 222M188 430L492 430M340 75L188 430M340 75L492 430" stroke="rgb(203 213 225)" strokeWidth="1" opacity="0.35" />
-      </svg>
-
-      <div className="absolute left-1/2 top-[323px] z-10 flex h-44 w-44 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-cyan-300/60 bg-slate-950 text-center text-white shadow-2xl shadow-cyan-200/70 ring-8 ring-cyan-100/80">
-        <div className="absolute inset-4 rounded-full border border-white/10" />
-        <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-400/30">
-          <span className="absolute inset-0 rounded-full bg-cyan-200/40 animate-ping" />
-          <Route className="h-6 w-6" />
-        </div>
-        <p className="relative mt-3 text-base font-black">Angora Mesh</p>
-        <p className="relative mt-1 max-w-[116px] text-xs leading-5 text-cyan-50/70">decision layer for paid intelligence</p>
-      </div>
-
-      {meshPoints.map((point) => (
-        <MeshPoint key={point.label} {...point} />
-      ))}
-
-      <div className="absolute bottom-8 left-8 right-8 z-30 grid gap-3 rounded-[22px] border border-slate-200 bg-white/82 p-3 shadow-xl shadow-slate-200/50 backdrop-blur-xl md:grid-cols-4">
-        {[
-          ["Ask", "market mission"],
-          ["Route", "trusted services"],
-          ["Pay", "approved calls"],
-          ["Prove", "audit trail"],
-        ].map(([label, value]) => (
-          <div key={label} className="border-l border-cyan-200 pl-3">
-            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-700">{label}</p>
-            <p className="mt-0.5 text-xs font-black text-slate-700">{value}</p>
-          </div>
-        ))}
-      </div>
-    </Glass>
+    <span className="inline-flex w-fit items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-700/80">
+      <span className="h-1.5 w-1.5 rounded-full bg-cyan-500/80 shadow-[0_0_12px_rgba(6,182,212,0.45)]" />
+      {children}
+    </span>
   );
 }
 
-function MeshPoint({ className, label, detail, tone, icon: Icon }) {
+function MeshNode({ cx, cy, r, fill, opacity = 1 }) {
   return (
-    <div className={cx("absolute z-20 flex w-36 flex-col items-center text-center", className)}>
-      <div className={cx("flex h-[86px] w-[86px] items-center justify-center rounded-full border bg-white/95 shadow-2xl shadow-slate-200/70 backdrop-blur-xl", tone === "good" ? "border-emerald-200 text-emerald-700" : tone === "purple" ? "border-violet-200 text-violet-700" : "border-cyan-200 text-cyan-700")}>
-        <div className={cx("flex h-12 w-12 items-center justify-center rounded-full", tone === "good" ? "bg-emerald-50" : tone === "purple" ? "bg-violet-50" : "bg-cyan-50")}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-      <div className="mt-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 shadow-sm">
-        <p className="text-xs font-black text-slate-950">{label}</p>
-        <p className="mt-0.5 text-[10px] leading-4 text-slate-500">{detail}</p>
-      </div>
+    <g opacity={opacity}>
+      {r > 5 ? <circle cx={cx} cy={cy} r={r + 7} fill={fill} opacity="0.035" filter="url(#softNodeGlow)" /> : null}
+      <circle cx={cx} cy={cy} r={r} fill={fill} filter={r > 5 ? "url(#softNodeGlow)" : undefined} />
+      {r > 5 ? <circle cx={cx} cy={cy} r={r + 3.5} stroke={fill} strokeOpacity="0.075" /> : null}
+    </g>
+  );
+}
+
+function MeshLabel({ x, y, align = "middle", eyebrow, label, eyebrowClass = "fill-slate-400", labelClass = "fill-slate-800" }) {
+  return (
+    <>
+      <text x={x} y={y} textAnchor={align} className={`${eyebrowClass} text-[9px] font-semibold uppercase tracking-[0.22em]`} style={{ fontFamily: "Inter, ui-sans-serif, system-ui" }}>{eyebrow}</text>
+      <text x={x} y={y + 22} textAnchor={align} className={`${labelClass} text-[13px] font-semibold`} style={{ fontFamily: "Inter, ui-sans-serif, system-ui" }}>{label}</text>
+    </>
+  );
+}
+
+function MeshHeroVisual() {
+  const approvedJourneyPath = "M360 112 C360 168 360 216 360 282 C440 240 502 214 594 178 C590 264 548 337 505 394 C454 444 410 466 360 486 C282 484 206 470 132 410";
+  const proofReturnPath = "M132 410 C170 292 246 244 360 282 C360 168 360 132 360 112";
+
+  return (
+    <div className="relative isolate min-h-[590px] overflow-hidden rounded-[2rem] bg-white/46 shadow-[0_24px_76px_rgba(15,42,61,0.06)] ring-1 ring-cyan-900/[0.028] backdrop-blur-xl">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(34,211,238,0.105),transparent_36%),radial-gradient(circle_at_12%_20%,rgba(14,165,233,0.045),transparent_31%),radial-gradient(circle_at_84%_82%,rgba(45,212,191,0.065),transparent_34%),linear-gradient(145deg,rgba(255,255,255,0.95),rgba(235,248,252,0.66)_54%,rgba(246,251,253,0.96)_100%)]" />
+      <div className="absolute inset-0 opacity-[0.04] [background-image:radial-gradient(rgba(15,118,110,.5)_1px,transparent_1px)] [background-size:32px_32px]" />
+      <div className="absolute left-7 top-7 z-10 text-[9px] font-semibold uppercase tracking-[0.22em] text-slate-300">Live intelligence route</div>
+
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 720 610" fill="none" aria-hidden="true">
+        <defs>
+          <filter id="softNodeGlow" x="-90%" y="-90%" width="280%" height="280%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <linearGradient id="quietPath" x1="360" y1="92" x2="132" y2="470" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#0284c7" />
+            <stop offset="0.48" stopColor="#06b6d4" />
+            <stop offset="1" stopColor="#10b981" />
+          </linearGradient>
+          <radialGradient id="coreSoft" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(360 282) rotate(90) scale(68)">
+            <stop stopColor="#ffffff" />
+            <stop offset="0.45" stopColor="#e0f7ff" />
+            <stop offset="1" stopColor="#67e8f9" stopOpacity="0.12" />
+          </radialGradient>
+          <radialGradient id="signalDot" cx="0" cy="0" r="1">
+            <stop stopColor="#ffffff" />
+            <stop offset="0.5" stopColor="#67e8f9" stopOpacity="0.86" />
+            <stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        <ellipse cx="360" cy="292" rx="236" ry="188" stroke="#0e7490" strokeOpacity="0.022" />
+        <ellipse cx="360" cy="292" rx="164" ry="130" stroke="#0e7490" strokeOpacity="0.03" />
+        <ellipse cx="360" cy="292" rx="96" ry="76" stroke="#0e7490" strokeOpacity="0.035" />
+        <path id="approvedJourney" d={approvedJourneyPath} stroke="url(#quietPath)" strokeWidth="0.45" strokeOpacity="0.035" strokeLinecap="round" />
+        <path id="proofReturn" d={proofReturnPath} stroke="url(#quietPath)" strokeWidth="0.4" strokeOpacity="0.025" strokeLinecap="round" />
+        <path d="M360 282 C446 300 520 310 632 308" stroke="#64748b" strokeOpacity="0.032" strokeWidth="0.5" strokeDasharray="3 11" />
+        <path d="M360 282 C280 218 205 180 112 176" stroke="#ef4444" strokeOpacity="0.032" strokeWidth="0.5" strokeDasharray="2 11" />
+
+        <g opacity="0.82">
+          <circle r="4.8" fill="url(#signalDot)" filter="url(#softNodeGlow)">
+            <animateMotion dur="10.8s" repeatCount="indefinite" path={approvedJourneyPath} />
+            <animate attributeName="opacity" values="0;0.8;0.8;0" keyTimes="0;0.08;0.9;1" dur="10.8s" repeatCount="indefinite" />
+          </circle>
+          <circle r="3" fill="url(#signalDot)" filter="url(#softNodeGlow)">
+            <animateMotion dur="10.8s" begin="3.6s" repeatCount="indefinite" path={approvedJourneyPath} />
+            <animate attributeName="opacity" values="0;0.48;0.48;0" keyTimes="0;0.08;0.86;1" dur="10.8s" begin="3.6s" repeatCount="indefinite" />
+          </circle>
+          <circle r="2.2" fill="#ffffff" opacity="0.32">
+            <animateMotion dur="10.8s" begin="6.8s" repeatCount="indefinite" path={proofReturnPath} />
+            <animate attributeName="opacity" values="0;0.38;0.38;0" keyTimes="0;0.15;0.75;1" dur="10.8s" begin="6.8s" repeatCount="indefinite" />
+          </circle>
+        </g>
+
+        <circle cx="360" cy="282" r="63" fill="url(#coreSoft)" filter="url(#softNodeGlow)" />
+        <circle cx="360" cy="282" r="43" fill="rgba(255,255,255,0.9)" stroke="#67e8f9" strokeOpacity="0.22" />
+        <circle cx="360" cy="282" r="28" fill="rgba(224,247,255,0.55)" stroke="#06b6d4" strokeOpacity="0.12" />
+        <circle cx="360" cy="282" r="4.8" fill="#0891b2" filter="url(#softNodeGlow)" />
+
+        <MeshNode cx={360} cy={112} r={7} fill="#0ea5e9" opacity={0.78} />
+        <MeshNode cx={594} cy={178} r={8} fill="#10b981" opacity={0.82} />
+        <MeshNode cx={505} cy={394} r={8} fill="#22c55e" opacity={0.82} />
+        <MeshNode cx={360} cy={486} r={8} fill="#06b6d4" opacity={0.82} />
+        <MeshNode cx={132} cy={410} r={8} fill="#14b8a6" opacity={0.82} />
+        <MeshNode cx={632} cy={308} r={4.5} fill="#64748b" opacity={0.18} />
+        <MeshNode cx={112} cy={176} r={4.5} fill="#ef4444" opacity={0.16} />
+
+        <MeshLabel x={360} y={72} eyebrow="Agent asks" label="Market question" />
+        <MeshLabel x={632} y={142} align="end" eyebrow="Mesh selects" label="Trusted provider" eyebrowClass="fill-emerald-700/65" />
+        <MeshLabel x={545} y={418} align="start" eyebrow="Policy approves" label="Payment gate" eyebrowClass="fill-emerald-700/65" />
+        <MeshLabel x={360} y={526} eyebrow="Call settles" label="Arc / x402" eyebrowClass="fill-cyan-700/65" />
+        <MeshLabel x={96} y={438} align="start" eyebrow="Proof returns" label="Proof-backed answer" eyebrowClass="fill-teal-700/65" />
+
+        <text x="360" y="274" textAnchor="middle" className="fill-slate-950 text-[16px] font-semibold" style={{ fontFamily: "Inter, ui-sans-serif, system-ui" }}>Angora Mesh</text>
+        <text x="360" y="300" textAnchor="middle" className="fill-cyan-700/72 text-[9px] font-semibold uppercase tracking-[0.22em]" style={{ fontFamily: "Inter, ui-sans-serif, system-ui" }}>discover - score - block - pay - prove</text>
+      </svg>
+    </div>
+  );
+}
+
+function Feature({ title, body }) {
+  return (
+    <div className="group relative py-2">
+      <div className="absolute -left-4 top-3 h-1.5 w-1.5 rounded-full bg-cyan-400/60 transition group-hover:bg-cyan-400" />
+      <p className="text-sm font-medium text-slate-950">{title}</p>
+      <p className="mt-2 text-sm font-medium leading-6 text-slate-500/80">{body}</p>
+    </div>
+  );
+}
+
+function FlowStep({ number, title, body }) {
+  return (
+    <div className="relative py-2">
+      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-cyan-700">{number}</p>
+      <p className="mt-3 text-base font-medium text-slate-950">{title}</p>
+      <p className="mt-2 text-sm font-medium leading-6 text-slate-500/90">{body}</p>
     </div>
   );
 }
@@ -619,70 +787,95 @@ function WorkflowCard({ workflow }) {
   );
 }
 
-function Product({ setMode }) {
+function Product({ setMode, openConsole }) {
+  const productPillars = [
+    ["Discover", "Market agents find paid intelligence services across odds, sentiment, risk, social trading, arbitrage, and proof."],
+    ["Route", "Angora ranks providers by trust, mission fit, proof support, cost, latency, and delivery quality."],
+    ["Pay", "Only approved calls move to Circle/x402-style payment rails for USDC authorization and settlement tracking."],
+    ["Prove", "Every market-supporting call returns a receipt, output hash, policy verdict, route score, and reconciliation tag."],
+  ];
+  const operatingLoop = [
+    ["Before payment", "Classify intent, rank providers, and enforce budget, trust, proof, and category policy."],
+    ["During service use", "Create payment context, call approved services, collect delivery evidence, and capture output hashes."],
+    ["After delivery", "Show receipts, route scorecards, reconciliation status, provider deliveries, and audit-ready trace history."],
+  ];
+
   return (
-    <div className="space-y-14">
-      <section className="mx-auto max-w-4xl text-center">
-        <Pill tone="purple">Product</Pill>
-        <h1 className="mt-5 text-5xl font-black leading-[0.92] tracking-[-0.06em] text-slate-950 md:text-7xl">The market-agent routing layer above Circle/x402 payments.</h1>
-        <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600">Circle/x402 enables payment. AngoraPay Mesh helps market agents decide which service to buy, which provider to trust, how to route the call, and how to prove the service supported a market decision.</p>
-        <p className="mx-auto mt-4 max-w-2xl text-sm font-black uppercase tracking-[0.18em] text-cyan-700">Circle enables payment. Angora decides, routes, and proves.</p>
+    <div className="space-y-0">
+      <section className="grid gap-14 pb-20 pt-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
+        <div>
+          <Badge>Product</Badge>
+          <h1 className="mt-7 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl">
+            The control layer between market agents and paid intelligence.
+          </h1>
+        </div>
+        <div className="max-w-2xl lg:pb-2">
+          <p className="text-lg font-medium leading-8 text-slate-600">
+            Circle/x402 enables payment. AngoraPay Mesh decides which service to buy, who to trust, which route policy allows, and what proof must be attached before a recommendation is accepted.
+          </p>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <button type="button" onClick={() => openConsole("workspace")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3.5 text-sm font-medium text-white shadow-[0_20px_55px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5">
+              Sign in to run a mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            </button>
+            <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/45 bg-white/45 px-6 py-3.5 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:text-cyan-800">
+              Developer docs <Code2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </section>
-      <section className="grid gap-5 md:grid-cols-4">
-        {[
-          ["Discover", "Market agents find paid intelligence services across odds, sentiment, risk, social trading, arbitrage, and proof."],
-          ["Route", "Angora ranks providers with a trust scorecard instead of choosing the cheapest endpoint blindly."],
-          ["Pay", "Only approved calls move to Circle/x402 for USDC authorization and Arc settlement tracking."],
-          ["Prove", "Every market-supporting call returns a receipt, output hash, policy verdict, route score, and reconciliation tag."],
-        ].map(([title, detail], index) => (
-          <Glass key={title} className="p-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">{index + 1}</div>
-            <p className="mt-5 text-xl font-black text-slate-950">{title}</p>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{detail}</p>
-          </Glass>
-        ))}
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="grid gap-10 md:grid-cols-4">
+          {productPillars.map(([title, body]) => (
+            <Feature key={title} title={title} body={body} />
+          ))}
+        </div>
       </section>
-      <section className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-        <Glass className="p-6">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">How Angora complements Circle</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Circle moves value. Angora governs the market-service route.</h2>
-          <p className="mt-4 text-sm leading-7 text-slate-600">Circle/x402 handles payment authorization and service unlock. Angora sits around that payment path to decide whether a market agent should use a provider, whether the mission policy allows it, and what proof must be stored after delivery.</p>
-        </Glass>
-        <Glass className="p-6">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Production use</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Useful when money-moving agents need a control layer.</h2>
-          <div className="mt-5 space-y-4">
-            {[
-              ["Before payment", "Classify intent, select the specialist path, rank providers, and enforce budget/trust/proof policy."],
-              ["During service use", "Create payment intent context, call approved services, collect delivery evidence, and capture output hashes."],
-              ["After delivery", "Show receipts, route scorecards, reconciliation status, provider deliveries, and audit-ready trace history."],
-            ].map(([title, detail]) => (
-              <div key={title} className="border-l border-slate-200 pl-5">
-                <p className="font-black text-slate-950">{title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
-              </div>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="grid gap-14 lg:grid-cols-[0.75fr_1.25fr]">
+          <div>
+            <Badge>Where Angora fits</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Circle moves value. Angora governs the market-service route.
+            </h2>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3">
+            {operatingLoop.map(([title, body], index) => (
+              <FlowStep key={title} number={`0${index + 1}`} title={title} body={body} />
             ))}
           </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" onClick={() => setMode("developers")} className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950">Developer docs</button>
-          </div>
-        </Glass>
+        </div>
       </section>
-      <section className="border-y border-slate-200 py-8">
-        <div className="mb-6 max-w-2xl">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">How Angora routes a mission</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">From market question to approved paid-service route.</h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">This is the operational view behind the landing-page mesh: Angora turns an agent mission into provider selection, policy approval, payment routing, proof capture, and a recommendation trail.</p>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>How Angora routes a mission</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              From market question to approved paid-service route.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            This is the operational view behind the landing-page mesh: Angora turns an agent mission into provider selection, policy approval, payment routing, proof capture, and a recommendation trail.
+          </p>
         </div>
         <MissionRoutePreview />
       </section>
-      <section className="border-y border-slate-200 py-8">
-        <div className="mb-6 max-w-2xl">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">User categories</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">What each user can do today</h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">The console is organized around the same operating loop: mission, network, proof. These user paths explain where each role fits.</p>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>User categories</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              What each user can do today.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            The console is organized around the same operating loop: mission, network, proof. These user paths explain where each role fits after Sign in.
+          </p>
         </div>
-        <div className="grid gap-x-8 gap-y-3 md:grid-cols-2">
+        <div className="grid gap-x-10 gap-y-4 md:grid-cols-2">
           {userWorkflows.map((workflow) => (
             <WorkflowCard key={workflow.user} workflow={workflow} />
           ))}
@@ -701,81 +894,139 @@ function MissionRoutePreview() {
   ];
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-      <div className="space-y-5">
-        <section className="border-y border-slate-200 bg-slate-950 p-5 text-white">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">Market mission</p>
-          <h3 className="mt-3 text-2xl font-black leading-tight">Is this BTC prediction market mispriced?</h3>
-          <p className="mt-4 text-sm leading-6 text-slate-300">The agent needs paid odds, sentiment, risk, and proof services before it can recommend an action.</p>
-        </section>
+    <div className="relative overflow-hidden rounded-[2rem] border border-slate-200/55 bg-white/50 p-6 shadow-[0_24px_80px_rgba(15,42,61,0.055)] backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_12%,rgba(34,211,238,0.10),transparent_28%),linear-gradient(145deg,rgba(255,255,255,0.78),transparent_42%)]" />
+      <div className="relative grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="space-y-5">
+          <section className="rounded-[1.5rem] bg-slate-950 p-6 text-white shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-300">Market mission</p>
+            <h3 className="mt-4 text-3xl font-semibold leading-tight tracking-[-0.025em]">Is this BTC prediction market mispriced?</h3>
+            <p className="mt-5 text-sm font-medium leading-7 text-slate-300">The agent needs paid odds, sentiment, risk, and proof services before it can recommend an action.</p>
+          </section>
 
-        <section className="border-y border-slate-200 bg-white/70 p-5">
+          <section className="rounded-[1.5rem] border border-slate-200/70 bg-white/70 p-6">
+            <div className="flex items-center justify-between gap-3">
+              <Badge>Policy gate</Badge>
+              <ShieldCheck className="h-5 w-5 text-cyan-700" />
+            </div>
+            <div className="mt-5 grid grid-cols-3 divide-x divide-slate-200/70 border-y border-slate-200/70 text-center">
+              <Metric label="Trust" value=">= 85" />
+              <Metric label="Spend" value="0.05" />
+              <Metric label="Proof" value="required" />
+            </div>
+          </section>
+        </div>
+
+        <section className="rounded-[1.5rem] border border-slate-200/70 bg-white/74 p-6">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Policy gate</p>
-            <ShieldCheck className="h-5 w-5 text-cyan-700" />
+            <div>
+              <Badge>Provider route</Badge>
+              <p className="mt-3 text-lg font-semibold text-slate-950">Score, select, or block before payment</p>
+            </div>
+            <Route className="h-5 w-5 text-cyan-700" />
           </div>
-          <div className="mt-4 grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200 text-center">
-            <Metric label="Trust" value=">= 85" />
-            <Metric label="Spend" value="0.05" />
-            <Metric label="Proof" value="required" />
+
+          <div className="mt-6 divide-y divide-slate-200/70 border-y border-slate-200/70">
+            {providerRows.map(([provider, category, trust, price, status]) => (
+              <div key={provider} className="grid grid-cols-[1fr_70px_72px_86px] items-center gap-3 py-3 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-slate-950">{provider}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{category}</p>
+                </div>
+                <p className="font-mono text-xs font-semibold text-slate-700">{trust}</p>
+                <p className="font-mono text-xs text-slate-500">{price}</p>
+                <Pill compact tone={status === "blocked" ? "bad" : "good"}>{status}</Pill>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 grid gap-5 md:grid-cols-2">
+            <div className="border-l border-cyan-200/70 pl-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Payment</p>
+              <p className="mt-1 font-semibold text-slate-950">0.016 USDC routed</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Circle/x402 boundary on Arc testnet</p>
+            </div>
+            <div className="border-l border-cyan-200/70 pl-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Proof</p>
+              <p className="mt-1 font-semibold text-slate-950">4 receipts created</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Trace, output hash, reconciliation tag</p>
+            </div>
           </div>
         </section>
       </div>
-
-      <section className="border-y border-slate-200 bg-white/70 p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Provider route</p>
-            <p className="mt-1 text-sm font-black text-slate-950">Score, select, or block before payment</p>
-          </div>
-          <Route className="h-5 w-5 text-cyan-700" />
-        </div>
-
-        <div className="mt-5 divide-y divide-slate-200 border-y border-slate-200">
-          {providerRows.map(([provider, category, trust, price, status]) => (
-            <div key={provider} className="grid grid-cols-[1fr_70px_72px_82px] items-center gap-3 py-3 text-sm">
-              <div className="min-w-0">
-                <p className="truncate font-black text-slate-950">{provider}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{category}</p>
-              </div>
-              <p className="font-mono text-xs font-black text-slate-700">{trust}</p>
-              <p className="font-mono text-xs text-slate-500">{price}</p>
-              <Pill compact tone={status === "blocked" ? "bad" : "good"}>{status}</Pill>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          <div className="border-l border-cyan-200 pl-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Payment</p>
-            <p className="mt-1 font-black text-slate-950">0.016 USDC routed</p>
-            <p className="mt-1 text-xs text-slate-500">Circle/x402 boundary on Arc testnet</p>
-          </div>
-          <div className="border-l border-cyan-200 pl-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Proof</p>
-            <p className="mt-1 font-black text-slate-950">4 receipts created</p>
-            <p className="mt-1 text-xs text-slate-500">Trace, output hash, reconciliation tag</p>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
 
-function Developers() {
+function Developers({ openConsole }) {
+  const integrationSteps = [
+    ["01", "Submit mission", "Send market question, budget, policy requirements, and provider categories to the Gateway."],
+    ["02", "Receive route plan", "Angora returns provider scores, blocked routes, payment context, and required proof fields."],
+    ["03", "Store proof", "Persist receipts, output hashes, policy verdicts, and reconciliation status with the final recommendation."],
+  ];
+
   return (
-    <div className="space-y-12">
-      <section className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+    <div className="space-y-0">
+      <section className="grid gap-14 pb-20 pt-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
         <div>
-          <Pill tone="blue">Developers</Pill>
-          <h1 className="mt-5 text-5xl font-black leading-[0.95] tracking-[-0.06em] text-slate-950">Gateway and SDKs for paid market-agent services.</h1>
-          <p className="mt-5 text-base leading-8 text-slate-600">Use AngoraPay Mesh as the policy-aware wrapper around Circle/x402 on Arc. Developers call one Gateway or SDK while Angora handles discovery, provider routing, receipts, execution history, and traction metrics.</p>
+          <Badge>Developers</Badge>
+          <h1 className="mt-7 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl">
+            Gateway and SDKs for paid market-agent services.
+          </h1>
+          <p className="mt-7 max-w-2xl text-lg font-medium leading-8 text-slate-600">
+            Use AngoraPay Mesh as the policy-aware wrapper around Circle/x402 on Arc. Developers call one Gateway or SDK while Angora handles discovery, provider routing, receipts, execution history, and traction metrics.
+          </p>
+          <button type="button" onClick={() => openConsole("workspace")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3.5 text-sm font-medium text-white shadow-[0_20px_55px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5">
+            Sign in to test Gateway <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
         <CodeBlock title="TypeScript SDK" code={developerExamples.sdk} />
       </section>
-      <section className="grid gap-8 lg:grid-cols-2">
-        <div><p className="mb-4 text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Gateway API</p><CodeBlock title="market mission call" code={developerExamples.gateway} /></div>
-        <div><p className="mb-4 text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Provider onboarding</p><CodeBlock title="provider registration" code={developerExamples.provider} /></div>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="grid gap-14 lg:grid-cols-[0.75fr_1.25fr]">
+          <div>
+            <Badge>Integration path</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              One route request, three things returned: decision, payment context, proof.
+            </h2>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3">
+            {integrationSteps.map(([number, title, body]) => (
+              <FlowStep key={title} number={number} title={title} body={body} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Gateway API</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Request a policy-aware route before the agent pays.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            The Gateway is the boundary between agent intent and paid provider calls. It returns enough structure for teams to inspect, reconcile, and replay the decision path.
+          </p>
+        </div>
+        <CodeBlock title="market mission call" code={developerExamples.gateway} />
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Provider onboarding</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Register paid intelligence services with trust and proof metadata.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            Providers expose category, price, latency, proof support, and delivery behavior so Angora can score the route before a market agent spends.
+          </p>
+        </div>
+        <CodeBlock title="provider registration" code={developerExamples.provider} />
       </section>
     </div>
   );
@@ -801,22 +1052,22 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
       <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
         <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex items-center gap-3 text-left">
-            <div className="flex h-10 w-10 items-center justify-center bg-slate-950 text-cyan-300"><Globe2 className="h-5 w-5" /></div>
-            <div><p className="text-sm font-black text-slate-950">{APP_NAME}</p><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Market agent console</p></div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-cyan-300 shadow-[0_14px_35px_rgba(15,23,42,0.16)] ring-1 ring-slate-900/5"><Network className="h-5 w-5" /></div>
+            <div><p className="text-sm font-semibold text-slate-950">{APP_NAME}</p><p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Market-agent workspace</p></div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <nav className="grid gap-1 border border-slate-200 bg-white/70 p-1 sm:grid-cols-3" aria-label="Console sections">
+            <nav className="grid gap-1 rounded-full border border-slate-200/45 bg-white/55 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur sm:grid-cols-3" aria-label="Console sections">
               {tabs.map((tabItem) => {
                 const Icon = tabItem.icon;
                 const active = activeTab === tabItem.id;
                 return (
-                  <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-10 items-center justify-center gap-2 px-4 py-2 text-xs font-black transition", active ? "bg-slate-950 text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-950")}>
+                  <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-10 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-medium transition", active ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:text-slate-950")}>
                     <Icon className="h-4 w-4" />{tabItem.label}
                   </button>
                 );
               })}
             </nav>
-            <button type="button" onClick={goHome} className="min-h-10 border border-slate-200 bg-white px-4 text-xs font-black text-slate-600 transition hover:border-slate-950 hover:text-slate-950">
+            <button type="button" onClick={goHome} className="min-h-10 rounded-full border border-slate-200/55 bg-white/55 px-4 text-xs font-medium text-slate-600 shadow-[0_14px_35px_rgba(15,42,61,0.04)] backdrop-blur transition hover:text-slate-950">
               Sign out
             </button>
           </div>
@@ -1337,8 +1588,10 @@ export default function AngoraUiCanvas() {
   };
 
   useEffect(() => {
-    refreshLive();
-  }, []);
+    if (view === "console") {
+      refreshLive();
+    }
+  }, [view]);
 
   const openConsole = (target = "workspace") => {
     const legacyTargets = {
