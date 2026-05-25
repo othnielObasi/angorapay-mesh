@@ -374,7 +374,7 @@ function Pill({ children, tone = "neutral", compact = false }) {
 
 function Background({ children }) {
   return (
-    <div className="min-h-screen overflow-hidden bg-[#F8FAFC] text-slate-950">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-950">
       <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF6F8_48%,#F8FAFC_100%)]" />
       <div className="relative z-10">{children}</div>
     </div>
@@ -413,10 +413,10 @@ function Header({ mode, setMode, openConsole }) {
   };
 
   return (
-    <header className="mx-auto max-w-7xl px-6 py-7 lg:px-8">
-      <nav className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200/25 bg-[#F8FAFC]/82 backdrop-blur-xl">
+      <nav className="mx-auto grid max-w-7xl items-center gap-4 px-6 py-5 md:grid-cols-[1fr_auto_1fr] lg:px-8">
         <button type="button" onClick={() => goToPage("home")} className="flex items-center gap-3 text-left">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-cyan-300 shadow-[0_14px_35px_rgba(15,23,42,0.16)] ring-1 ring-slate-900/5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200/70">
             <Network className="h-5 w-5" />
           </div>
           <div>
@@ -424,32 +424,32 @@ function Header({ mode, setMode, openConsole }) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Market-agent routing and proof</p>
           </div>
         </button>
-        <div className="hidden items-center gap-1 rounded-full border border-slate-200/45 bg-white/45 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur md:flex">
+        <div className="hidden items-center gap-8 md:flex">
           {pageItems.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => goToPage(item.id)}
-              className={cx("rounded-full px-4 py-2 text-xs font-medium transition", mode === item.id ? "bg-cyan-50 text-cyan-800 shadow-sm ring-1 ring-cyan-100" : "text-slate-500 hover:bg-white/70 hover:text-slate-950")}
+              className={cx("text-xs font-semibold transition", mode === item.id ? "text-slate-950" : "text-slate-500 hover:text-slate-950")}
             >
               {item.label}
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => openConsole("workspace")} className="rounded-full border border-slate-200/70 bg-white/65 px-5 py-2.5 text-xs font-medium text-slate-700 shadow-[0_18px_45px_rgba(15,42,61,0.08)] backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800">
+        <button type="button" onClick={() => openConsole("workspace")} className="justify-self-start rounded-full bg-slate-950 px-5 py-2.5 text-xs font-semibold text-white shadow-[0_14px_32px_rgba(15,23,42,0.12)] transition hover:-translate-y-0.5 hover:bg-cyan-700 md:justify-self-end">
           Sign in
         </button>
       </nav>
       {mode === "home" ? (
-        <div className="mt-5 grid items-center md:grid-cols-[1fr_auto_1fr]">
+        <div className="mx-auto grid max-w-7xl items-center px-6 pb-4 md:grid-cols-[1fr_auto_1fr] lg:px-8">
           <div />
-          <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-7 gap-y-2 border-y border-slate-200/55 px-3 py-3" aria-label="Home sections">
+          <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-8 gap-y-2" aria-label="Home sections">
             {homeSections.map(([sectionId, label]) => (
               <button
                 key={sectionId}
                 type="button"
                 onClick={() => goToHomeSection(sectionId)}
-                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-slate-950"
+                className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 transition hover:text-cyan-700"
               >
                 <span>{label}</span>
               </button>
@@ -468,7 +468,7 @@ function Landing({ openConsole }) {
   return (
     <Background>
       <Header mode={mode} setMode={setMode} openConsole={openConsole} />
-      <main className="mx-auto max-w-7xl px-6 pb-20 pt-8 lg:px-8">{content}</main>
+      <main className={cx("mx-auto max-w-7xl px-6 pb-20 lg:px-8", mode === "home" ? "pt-36" : "pt-28")}>{content}</main>
     </Background>
   );
 }
@@ -707,7 +707,7 @@ function Band({ id, tone = "white", children }) {
   }[tone] || "bg-white/42";
 
   return (
-    <section id={id} className={cx("relative left-1/2 -ml-[50vw] w-screen border-t border-slate-200/45 py-24", toneClass)}>
+    <section id={id} className={cx("relative left-1/2 -ml-[50vw] w-screen scroll-mt-28 border-t border-slate-200/45 py-24", toneClass)}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">{children}</div>
     </section>
   );
