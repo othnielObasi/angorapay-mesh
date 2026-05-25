@@ -407,7 +407,7 @@ function Header({ mode, setMode, openConsole }) {
 
   return (
     <header className="mx-auto max-w-7xl px-6 py-7 lg:px-8">
-      <nav className="flex items-center justify-between">
+      <nav className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
         <button type="button" onClick={() => goToPage("home")} className="flex items-center gap-3 text-left">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-cyan-300 shadow-[0_14px_35px_rgba(15,23,42,0.16)] ring-1 ring-slate-900/5">
             <Network className="h-5 w-5" />
@@ -434,7 +434,8 @@ function Header({ mode, setMode, openConsole }) {
         </button>
       </nav>
       {mode === "home" ? (
-        <div className="mt-5 flex justify-center">
+        <div className="mt-5 grid items-center md:grid-cols-[1fr_auto_1fr]">
+          <div />
           <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-7 gap-y-2 border-y border-slate-200/55 px-3 py-3" aria-label="Home sections">
             {homeSections.map(([sectionId, label]) => (
               <button
@@ -447,6 +448,7 @@ function Header({ mode, setMode, openConsole }) {
               </button>
             ))}
           </nav>
+          <div />
         </div>
       ) : null}
     </header>
