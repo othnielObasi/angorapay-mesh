@@ -13,6 +13,7 @@ export type TraceEventType =
   | "policy.evaluated"
   | "payment.attempted"
   | "receipt.created"
+  | "llm.reasoning"
   | "recommendation.generated"
   | "mission.completed"
   | "mission.failed";

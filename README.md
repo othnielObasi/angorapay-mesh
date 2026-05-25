@@ -154,7 +154,8 @@ Evaluate whether this trader signal is reliable enough to follow with reduced si
 
 | Surface | Route or Path | Purpose |
 | --- | --- | --- |
-| Angora workspace | `/angora.html` | Primary product UI for missions, providers, proof, traces, metrics, and settings |
+| Angora console | `/angora` | Primary product UI for agent missions, market network, proof, traces, metrics, and operations |
+| Legacy static workspace | `/angora.html` | Older static UI retained for compatibility |
 | API root | `/v1/angora` | Canonical Angora API prefix |
 | Health | `/v1/angora/health` | Service health check |
 | Readiness | `/v1/angora/ready` | Storage and runtime readiness |
@@ -179,6 +180,9 @@ Mission Orchestrator
         |
         v
 Mission Classifier + Specialist Agent Runtime
+        |
+        v
+LLM Reasoning Layer + Deterministic Fallback
         |
         v
 Context Builder + Adaptive Memory + Checkpoints
@@ -216,6 +220,7 @@ docs/ANGORA_*.md
 | Capability | Description |
 | --- | --- |
 | Mission orchestration | Classifies user goals and selects specialist agents |
+| LLM reasoning | Uses OpenAI, when configured, to interpret practical mission intent and write production recommendation summaries |
 | Context engineering | Builds mission packets from goal, provider history, policy, memory, and receipts |
 | Adaptive retrieval | Uses mission, provider, receipt, and policy memory to improve routing |
 | Long coordination | Stores checkpoints so long-running missions can be inspected and resumed |
@@ -227,6 +232,38 @@ docs/ANGORA_*.md
 | Reconciliation | Detects pending payment, missing delivery, mismatches, duplicates, and missing receipts |
 | Workspace controls | Scopes API keys, roles, policies, budgets, provider access, and audit records |
 | SDK access | Lets external apps run missions, call the gateway, and inspect receipts/traces |
+
+## Production AI Reasoning
+
+AngoraPay Mesh now supports a production LLM reasoning layer for practical market-agent workflows.
+
+When `OPENAI_API_KEY` is set, agent missions use OpenAI for:
+
+- mission interpretation and specialist selection,
+- practical market target and asset extraction,
+- evidence-based recommendation summaries,
+- human-readable risk flags and guardrails.
+
+The LLM does not control money movement. These systems remain deterministic and enforced by code:
+
+- provider discovery and route scoring,
+- trust and policy gates,
+- spend limits,
+- Circle/x402 payment boundary,
+- receipt creation,
+- output hashes,
+- reconciliation.
+
+Recommended configuration:
+
+```text
+ANGORA_LLM_ENABLED=true
+ANGORA_LLM_MODEL=gpt-5.4-mini
+ANGORA_LLM_TIMEOUT_MS=12000
+OPENAI_API_KEY=...
+```
+
+If no key is configured, Angora continues with deterministic fallback reasoning and records that fallback in the mission trace. OpenAI's current model guidance recommends GPT-5.5 for complex reasoning and coding, with smaller variants such as `gpt-5.4-mini` for lower latency and cost. Angora defaults to `gpt-5.4-mini` so real product usage remains responsive, while allowing `ANGORA_LLM_MODEL` to be upgraded for higher-stakes deployments.
 
 ## API Highlights
 

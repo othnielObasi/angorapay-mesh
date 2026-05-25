@@ -15,6 +15,7 @@ import { saveCheckpoint, listCheckpoints } from "./checkpoint-store.js";
 import { retrieveAdaptiveMemory } from "./adaptive-memory.js";
 import { agentIdForModule, categoriesForModule, classifyAgentMission, intentsForModule, rfpTrackForModule } from "./mission-classifier.js";
 import { buildRecommendation } from "./recommendation-engine.js";
+import { buildLlmMissionPlan, buildLlmRecommendation } from "./llm-reasoning.js";
 import { addTraceEvent, listTraceEvents } from "./trace-store.js";
 import type { AgentContextPacket, AgentMissionInput, AgentMissionResult, AgentProviderDecision, AgentTraceEvent, MissionCheckpoint } from "./types.js";
 import { agentId, decimalSum, nowIso } from "./util.js";
@@ -247,10 +248,17 @@ async function runProviderCall(input: {
 }
 
 export async function runAgentMission(input: AgentMissionInput): Promise<AgentMissionResult> {
-  const module = classifyAgentMission(input.userGoal, input.module);
+  const deterministicModule = classifyAgentMission(input.userGoal, input.module);
+  let missionPlan: Awaited<ReturnType<typeof buildLlmMissionPlan>> = null;
+  try {
+    missionPlan = await buildLlmMissionPlan({ mission: input, deterministicModule, allowedCategories: categoriesForModule(deterministicModule) });
+  } catch (error) {
+    missionPlan = null;
+  }
+  const module = missionPlan?.specialistAgent || deterministicModule;
   const defaults = missionDefaults(module, input);
   const conversation = createOrGetConversation({ conversationId: input.conversationId, workspaceId: input.workspaceId, tenantId: input.tenantId, userId: input.userId, userGoal: input.userGoal });
-  addConversationMessage({ conversationId: conversation.conversationId, role: "user", content: input.userGoal, metadata: { module, marketTarget: input.marketTarget || defaults.marketContext } });
+  addConversationMessage({ conversationId: conversation.conversationId, role: "user", content: input.userGoal, metadata: { module, marketTarget: input.marketTarget || missionPlan?.marketTarget || defaults.marketContext, missionPlan } });
 
   const mission = createMission({
     workspaceId: input.workspaceId,
@@ -260,8 +268,8 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
     consumerId: input.userId || "agentic-market-builder",
     objective: input.userGoal,
     rfpTrack: defaults.rfpTrack,
-    asset: defaults.asset,
-    marketContext: defaults.marketContext,
+    asset: input.asset || missionPlan?.asset || defaults.asset,
+    marketContext: input.marketTarget || missionPlan?.marketTarget || defaults.marketContext,
     budget: input.budgetUSDC || "0.05",
     allowedCategories: categoriesForModule(module),
     blockedProviders: input.blockedProviders || ["greyalpha", "unknown-alpha"],
@@ -281,6 +289,21 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
   const context = buildContext(input, mission, conversation.conversationId, module);
   createCheckpoint({ context, stage: "mission_created", resumeFrom: "agent_selected", state: { mission }, status: "recoverable" });
   trace({ context, eventType: "mission.created", label: "Mission created", status: "completed", agentId: defaults.agentId, details: { mission } });
+  trace({
+    context,
+    eventType: "llm.reasoning",
+    label: missionPlan ? `LLM mission plan selected ${module}` : `Deterministic mission plan selected ${module}`,
+    status: "completed",
+    agentId: defaults.agentId,
+    details: {
+      source: missionPlan?.source || "deterministic_fallback",
+      model: missionPlan?.model,
+      rationale: missionPlan?.rationale,
+      riskFlags: missionPlan?.riskFlags || [],
+      deterministicModule,
+      selectedModule: module,
+    },
+  });
   createCheckpoint({ context, stage: "agent_selected", resumeFrom: "context_prepared", state: { specialistAgent: module, agentId: defaults.agentId } });
   trace({ context, eventType: "agent.selected", label: `${defaults.agentId} selected`, status: "completed", agentId: defaults.agentId, details: { module } });
   createCheckpoint({ context, stage: "context_prepared", resumeFrom: "providers_discovered", state: { context } });
@@ -297,8 +320,22 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
   createCheckpoint({ context, stage: "payment_attempted", resumeFrom: "receipt_created", state: { paid: decisions.filter((decision) => decision.status === "delivered").length, blocked: decisions.filter((decision) => decision.status === "blocked").length } });
 
   const receipts = decisions.map((decision) => decision.receipt).filter((receipt): receipt is NonNullable<typeof receipt> => Boolean(receipt));
-  const recommendation = buildRecommendation(module, decisions);
-  trace({ context, eventType: "recommendation.generated", label: recommendation.summary, status: "completed", agentId: defaults.agentId, details: { recommendation } });
+  const fallbackRecommendation = buildRecommendation(module, decisions);
+  const recommendationResult = await buildLlmRecommendation({ context, decisions, fallback: fallbackRecommendation });
+  const recommendation = recommendationResult.recommendation;
+  trace({
+    context,
+    eventType: "llm.reasoning",
+    label: recommendationResult.source === "openai" ? "LLM generated production recommendation" : "Deterministic recommendation fallback used",
+    status: recommendationResult.error ? "failed" : "completed",
+    agentId: defaults.agentId,
+    details: {
+      source: recommendationResult.source,
+      model: recommendationResult.model,
+      error: recommendationResult.error,
+    },
+  });
+  trace({ context, eventType: "recommendation.generated", label: recommendation.summary, status: "completed", agentId: defaults.agentId, details: { recommendation, source: recommendationResult.source, model: recommendationResult.model } });
   createCheckpoint({ context, stage: "recommendation_generated", resumeFrom: "mission_completed", state: { recommendation, receiptIds: receipts.map((receipt) => receipt.receiptId) } });
   trace({ context, eventType: "mission.completed", label: "Agent mission completed", status: "completed", agentId: defaults.agentId, details: { totals: { receipts: receipts.length, decisions: decisions.length } } });
   createCheckpoint({ context, stage: "mission_completed", resumeFrom: "complete", state: { completed: true }, status: "terminal" });
