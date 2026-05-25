@@ -15,15 +15,39 @@
 
 ---
 
-AngoraPay Mesh is a market-intelligence agent platform for paid provider routing, policy enforcement, Circle/x402 payment boundaries, receipts, traces, and reconciliation.
+AngoraPay Mesh is the infrastructure platform for paid-intelligence routing, policy enforcement, Circle/x402 payment boundaries, receipts, traces, and reconciliation.
 
-It is built for real market-facing agents that need to buy trusted intelligence before making or recommending action. The inherited runtime foundation supplies Arc, USDC, x402, proof, and long-running agent infrastructure. The product is AngoraPay Mesh.
+Market Intelligence Agents are the reference application built on top of that infrastructure. They show how a developer can use the mesh to build a practical agent product that buys trusted signals, validates provider quality, and returns a proof-backed recommendation.
 
 The core question is simple:
 
 > Which intelligence should the agent buy, which provider should it trust, what should be blocked, how should payment happen, and how can the paid signal be proven later?
 
-AngoraPay Mesh is not a generic trading bot. The specialist agents are the product surface. The gateway, SDK, payment, proof, policy, and reconciliation layers are the infrastructure that makes those agents trustworthy.
+AngoraPay Mesh is not a generic trading bot. The specialist agents are a demo and reference product. The gateway, SDK, payment, proof, policy, and reconciliation layers are the platform moat that other developers can build on.
+
+## Platform Layers
+
+Angora combines two layers on one platform:
+
+| Layer | Role | Answers |
+| --- | --- | --- |
+| AngoraPay Mesh | Core infrastructure for provider discovery, trust scoring, route scorecards, policy, spend control, Circle/x402 payment context, receipts, reconciliation, workspace controls, and SDK/API access | Should this agent pay this provider, and can we prove what happened? |
+| Market Intelligence Agents | Reference app built on the mesh, including Prediction Market Intelligence, Cross-Venue Arbitrage, and Social Trading Intelligence agents | What should I do with this market question after buying and validating trusted intelligence? |
+
+The combined flow is:
+
+```text
+Discoverable Markets
+        |
+        v
+Market Intelligence Agents
+        |
+        v
+AngoraPay Mesh
+        |
+        v
+Circle/x402 + Providers + Receipts + Reconciliation
+```
 
 ## Core Thesis
 
@@ -154,7 +178,7 @@ Evaluate whether this trader signal is reliable enough to follow with reduced si
 
 | Surface | Route or Path | Purpose |
 | --- | --- | --- |
-| Angora console | `/angora` | Primary product UI for agent missions, market network, proof, traces, metrics, and operations |
+| Angora console | `/angora` | Primary UI for markets, reference agent missions, mesh/gateway health, providers, trust policy, payments, proof, and developer access |
 | Legacy static workspace | `/angora.html` | Older static UI retained for compatibility |
 | API root | `/v1/angora` | Canonical Angora API prefix |
 | Health | `/v1/angora/health` | Service health check |

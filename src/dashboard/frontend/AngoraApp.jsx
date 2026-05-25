@@ -19,9 +19,13 @@ import {
 const APP_NAME = "AngoraPay Mesh";
 
 const tabs = [
-  { id: "workspace", label: "Agent Workspace", icon: MessageSquare, intent: "Run a market mission and watch the agent decide." },
-  { id: "network", label: "Market Network", icon: Store, intent: "Inspect providers, trust, pricing, and routing policy." },
-  { id: "ops", label: "Proof & Ops", icon: FileCheck2, intent: "Verify receipts, payments, reconciliation, and submission metrics." },
+  { id: "markets", label: "Markets", icon: LineChart, intent: "Pick a discoverable market opportunity for agents to evaluate." },
+  { id: "missions", label: "Agent Missions", icon: MessageSquare, intent: "Run the reference market-intelligence agent on a selected market." },
+  { id: "mesh", label: "Mesh / Gateway", icon: Network, intent: "See the infrastructure layer that routes, pays, proves, and reconciles." },
+  { id: "providers", label: "Providers", icon: Store, intent: "Inspect paid intelligence services the mesh can select or block." },
+  { id: "trust", label: "Trust & Policy", icon: ShieldCheck, intent: "Understand why providers are selected, limited, or blocked." },
+  { id: "proof", label: "Payments & Proof", icon: FileCheck2, intent: "Verify payment, delivery, receipts, and reconciliation." },
+  { id: "developers", label: "Developers", icon: Code2, intent: "Embed AngoraPay Mesh through Gateway APIs and SDK examples." },
 ];
 
 const rfpAreas = [
@@ -31,6 +35,74 @@ const rfpAreas = [
   "Adaptive Portfolio Manager",
   "Cross-Platform Arbitrage Agent",
   "Social Trading Intelligence",
+];
+
+const discoverableMarkets = [
+  {
+    id: "btc-election-odds",
+    name: "BTC election odds market",
+    category: "Prediction market",
+    source: "Circle discoverable markets",
+    liquidity: "high",
+    status: "active",
+    agent: "Prediction Market Intelligence Agent",
+    module: "prediction_market",
+    asset: "BTC",
+    lastChecked: "live",
+    mission: "Check whether this BTC prediction market is mispriced after the latest news shift.",
+  },
+  {
+    id: "eth-price-target",
+    name: "ETH year-end price target",
+    category: "Prediction market",
+    source: "Circle discoverable markets",
+    liquidity: "medium",
+    status: "active",
+    agent: "Prediction Market Intelligence Agent",
+    module: "prediction_market",
+    asset: "ETH",
+    lastChecked: "12m ago",
+    mission: "Evaluate whether the ETH year-end price target market has positive expected value after recent volatility.",
+  },
+  {
+    id: "sol-etf-approval",
+    name: "SOL ETF approval market",
+    category: "Prediction vertical",
+    source: "Circle discoverable markets",
+    liquidity: "medium",
+    status: "watching",
+    agent: "Prediction Market Intelligence Agent",
+    module: "prediction_market",
+    asset: "SOL",
+    lastChecked: "24m ago",
+    mission: "Assess whether the SOL ETF approval market is mispriced using odds, news, sentiment, risk, and proof services.",
+  },
+  {
+    id: "fed-rate-decision",
+    name: "Fed rate decision market",
+    category: "Macro market",
+    source: "Circle discoverable markets",
+    liquidity: "high",
+    status: "active",
+    agent: "Prediction Market Intelligence Agent",
+    module: "prediction_market",
+    asset: "USD",
+    lastChecked: "live",
+    mission: "Check whether the Fed rate decision market is mispriced after the latest macro data release.",
+  },
+  {
+    id: "btc-cross-venue-gap",
+    name: "BTC cross-venue spread",
+    category: "Arbitrage opportunity",
+    source: "Circle discoverable markets",
+    liquidity: "high",
+    status: "active",
+    agent: "Cross-Venue Arbitrage Agent",
+    module: "cross_venue_arbitrage",
+    asset: "BTC/USDC",
+    lastChecked: "live",
+    mission: "Evaluate whether the BTC cross-venue spread survives fees, slippage, latency, and liquidity constraints.",
+  },
 ];
 
 const userWorkflows = [
@@ -342,8 +414,9 @@ async function loadLiveSnapshot() {
 }
 
 function runSelfTests() {
-  console.assert(tabs.length === 3, "Angora UI should expose three product-level console sections");
+  console.assert(tabs.length === 7, "Angora UI should expose seven journey-level console sections");
   console.assert(new Set(tabs.map((tab) => tab.id)).size === tabs.length, "tab IDs should be unique");
+  console.assert(discoverableMarkets.length >= 4, "market catalogue should provide a usable opportunity universe");
   console.assert(approvedServices(marketServices).length === 6, "six market services should be approved");
   console.assert(blockedServices(marketServices).length === 1, "one market service should be blocked");
   console.assert(Math.abs(calculateTotal(selectedRun) - 0.013) < 0.000001, "selected run cost should equal 0.013 USDC");
@@ -436,7 +509,7 @@ function Header({ mode, setMode, openConsole }) {
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => openConsole("workspace")} className="justify-self-start rounded-full bg-slate-950 px-5 py-2.5 text-xs font-semibold text-white shadow-[0_14px_32px_rgba(15,23,42,0.12)] transition hover:-translate-y-0.5 hover:bg-cyan-700 md:justify-self-end">
+        <button type="button" onClick={() => openConsole("markets")} className="justify-self-start rounded-full bg-slate-950 px-5 py-2.5 text-xs font-semibold text-white shadow-[0_14px_32px_rgba(15,23,42,0.12)] transition hover:-translate-y-0.5 hover:bg-cyan-700 md:justify-self-end">
           Sign in
         </button>
       </nav>
@@ -523,7 +596,7 @@ function Home({ setMode, openConsole }) {
             Circle enables payment. Angora decides, routes, blocks, proves, and reconciles.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => openConsole("workspace")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-7 py-4 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
+            <button type="button" onClick={() => openConsole("markets")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-7 py-4 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
               Run market mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </button>
             <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/40 bg-white/40 px-6 py-4 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-200/70 hover:text-cyan-800">
@@ -873,8 +946,11 @@ function Product({ setMode, openConsole }) {
           <p className="text-lg font-medium leading-8 text-slate-600">
             Circle/x402 enables payment. AngoraPay Mesh decides which service to buy, who to trust, which route policy allows, and what proof must be attached before a recommendation is accepted.
           </p>
+          <p className="mt-4 text-sm font-medium leading-7 text-slate-500">
+            The included Market Intelligence Agents are the reference application on top of the mesh, showing how other developers can build agent products that buy trusted intelligence and prove every decision trail.
+          </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => openConsole("workspace")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
+            <button type="button" onClick={() => openConsole("markets")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
               Sign in to run a mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </button>
             <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/45 bg-white/45 px-6 py-3.5 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:text-cyan-800">
@@ -1036,7 +1112,7 @@ function Developers({ openConsole }) {
           <p className="mt-7 max-w-2xl text-lg font-medium leading-8 text-slate-600">
             Use AngoraPay Mesh as the policy-aware wrapper around Circle/x402 on Arc. Developers call one Gateway or SDK while Angora handles discovery, provider routing, receipts, execution history, and traction metrics.
           </p>
-          <button type="button" onClick={() => openConsole("workspace")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
+          <button type="button" onClick={() => openConsole("markets")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
             Sign in to test Gateway <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -1113,15 +1189,15 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
         <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex items-center gap-3 text-left">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-cyan-300 shadow-[0_14px_35px_rgba(15,23,42,0.16)] ring-1 ring-slate-900/5"><Network className="h-5 w-5" /></div>
-            <div><p className="text-sm font-semibold text-slate-950">{APP_NAME}</p><p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Market-agent workspace</p></div>
+            <div><p className="text-sm font-semibold text-slate-950">{APP_NAME}</p><p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Platform console</p></div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <nav className="grid gap-1 rounded-full border border-slate-200/45 bg-white/55 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur sm:grid-cols-3" aria-label="Console sections">
+            <nav className="flex max-w-5xl flex-wrap items-center justify-end gap-x-4 gap-y-2" aria-label="Console sections">
               {tabs.map((tabItem) => {
                 const Icon = tabItem.icon;
                 const active = activeTab === tabItem.id;
                 return (
-                  <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-10 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-medium transition", active ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:text-slate-950")}>
+                  <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-9 items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition", active ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:bg-white/55 hover:text-slate-950")}>
                     <Icon className="h-4 w-4" />{tabItem.label}
                   </button>
                 );
@@ -1161,7 +1237,7 @@ function Stat({ label, value, icon: Icon }) {
   );
 }
 
-function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, live }) {
+function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, selectedMarket, setSelectedMarket }) {
   const traces = latestResult?.traces || [];
   const checkpoints = latestResult?.checkpoints || [];
   const receipts = latestResult?.receipts || [];
@@ -1179,25 +1255,48 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
         { role: "assistant", content: latestResult.recommendation?.summary || "Mission completed." },
       ]
     : [
-        { role: "assistant", content: "Describe a market question. I will select a specialist agent, route paid services, enforce policy, create receipts, and return a recommendation." },
+        { role: "assistant", content: "Select a market or ask a market question. I will use the AngoraPay Mesh underneath to discover providers, enforce policy, route payment, create receipts, and return a proof-backed recommendation." },
       ];
   const decisions = latestResult?.decisions || [];
+  const selectMarket = (market) => {
+    setSelectedMarket(market);
+    setAgentGoal(market.mission);
+  };
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_390px]">
       <Glass className="flex min-h-[680px] flex-col border-y border-slate-200 bg-white/45">
         <div className="border-b border-slate-200 p-5">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Agent workspace</p>
-              <h2 className="mt-1 text-2xl font-black text-slate-950">Ask, route, pay, prove</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">The agent classifies the mission, selects a specialist module, buys trusted market services, records receipts, and returns a proof-backed recommendation.</p>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Reference app on the mesh</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">Market Intelligence Agent</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">This chat is the reference application built on AngoraPay Mesh. It starts from a market, runs a specialist agent, buys trusted intelligence through the mesh, and returns a proof-backed answer.</p>
             </div>
             <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>{agentRunning ? "running mission" : latestResult ? "mission complete" : "ready"}</Pill>
           </div>
         </div>
+        <div className="border-b border-slate-200 bg-white/45 p-5">
+          <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Step 1</p>
+              <p className="mt-1 text-sm font-black text-slate-950">Select market</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {discoverableMarkets.slice(0, 4).map((market) => (
+                <button key={market.id} type="button" onClick={() => selectMarket(market)} className={cx("border-y px-4 py-3 text-left transition", selectedMarket?.id === market.id ? "border-cyan-300 bg-cyan-50/70" : "border-slate-200 bg-white/40 hover:border-cyan-200")}>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-black text-slate-950">{market.name}</p>
+                    <Pill compact tone={market.status === "active" ? "good" : "warn"}>{market.status}</Pill>
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{market.category} - {market.agent}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
         <div className="grid gap-0 border-b border-slate-200 bg-slate-950 text-white md:grid-cols-4">
-          <StageCell label="1. Intent" value={latestResult?.specialistAgent || "classify"} />
-          <StageCell label="2. Providers" value={latestResult ? `${latestResult.decisions?.length || 0} routed` : "pending"} />
+          <StageCell label="1. Market" value={selectedMarket?.name || "select"} />
+          <StageCell label="2. Agent" value={selectedMarket?.agent || latestResult?.specialistAgent || "choose"} />
           <StageCell label="3. Payment" value={latestResult?.totals?.usdcRouted || "0.00 USDC"} />
           <StageCell label="4. Proof" value={latestResult ? `${receipts.length} receipts` : "waiting"} />
         </div>
@@ -1241,6 +1340,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
           <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Mission control</p>
           <div className="mt-4 space-y-3">
             <RouteLine label="Specialist" value={latestResult?.specialistAgent || "auto"} tone="blue" />
+            <RouteLine label="Selected market" value={selectedMarket?.name || "not selected"} tone={selectedMarket ? "good" : "warn"} />
             <RouteLine label="RFP track" value={latestResult?.rfpTrack || "pending"} tone="purple" />
             <RouteLine label="USDC routed" value={latestResult?.totals?.usdcRouted || "0.000000"} tone="good" />
             <RouteLine label="Receipts" value={String(latestResult?.totals?.receiptsCreated || receipts.length || 0)} tone="good" />
@@ -1390,7 +1490,7 @@ function ScorecardPanel({ latestResult }) {
           <div className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Provider</span><span>Fit</span><span>Policy</span><span>Proof</span><span>Score</span><span>Verdict</span></div>
           {rows.map((candidate) => <div key={`${candidate.provider}-${candidate.service}`} className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span><b>{candidate.provider}</b><br /><span className="text-xs text-slate-500">{candidate.service}</span></span><span>{candidate.missionFit}</span><span>{candidate.policy}</span><span>{candidate.proof}</span><span>{candidate.routeScore}</span><Pill compact tone={candidate.verdict === "blocked" ? "bad" : candidate.verdict === "delivered" ? "good" : "blue"}>{candidate.verdict}</Pill></div>)}
         </div>
-      ) : <EmptyState title="No route decisions yet" detail="Run an agent mission from the Agent Workspace to populate provider routing, policy verdicts, and proof status." />}
+      ) : <EmptyState title="No route decisions yet" detail="Run an agent mission to populate provider routing, policy verdicts, and proof status." />}
     </Glass>
   );
 }
@@ -1566,35 +1666,145 @@ function DeveloperPanel() {
   return <Developers />;
 }
 
-function MarketNetworkWorkspace({ live, latestResult }) {
+function MarketsWorkspace({ selectedMarket, selectMarketAndMission }) {
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Discoverable markets"
+        title="Start from a market opportunity, then run a reference agent on top of AngoraPay Mesh."
+        metrics={[
+          ["Markets", discoverableMarkets.length],
+          ["Active", discoverableMarkets.filter((market) => market.status === "active").length],
+          ["Selected", selectedMarket?.name || "none"],
+        ]}
+      />
+      <Glass className="border-y border-slate-200 p-5">
+        <div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Market catalogue</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">Opportunity universe for Market Intelligence Agents</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">This page makes the reference app start from a market catalogue instead of a blank prompt. Today these are seeded discoverable markets; the interface is ready for a live Circle market feed.</p>
+          </div>
+          <div className="border-y border-slate-200 bg-white/45 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Platform split</p>
+            <p className="mt-2 text-sm font-black text-slate-950">Market Intelligence Agents are the demo app. AngoraPay Mesh is the infrastructure underneath.</p>
+          </div>
+        </div>
+        <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white/40">
+          {discoverableMarkets.map((market) => (
+            <div key={market.id} className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_150px_190px_150px] lg:items-center">
+              <div>
+                <p className="font-black text-slate-950">{market.name}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">{market.category} - {market.source}</p>
+              </div>
+              <RouteLine label="Liquidity" value={market.liquidity} tone={market.liquidity === "high" ? "good" : "blue"} />
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Recommended agent</p>
+                <p className="mt-1 text-sm font-black text-slate-800">{market.agent}</p>
+              </div>
+              <button type="button" onClick={() => selectMarketAndMission(market)} className="inline-flex min-h-10 items-center justify-center rounded-full bg-cyan-400 px-4 text-xs font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-300">
+                Run mission
+              </button>
+            </div>
+          ))}
+        </div>
+      </Glass>
+    </div>
+  );
+}
+
+function MeshGatewayWorkspace({ live, latestResult }) {
   const metrics = live?.dashboard?.metrics;
   return (
     <div className="space-y-8">
       <ActionBand
-        eyebrow="Market Network"
-        title="Provider marketplace, trust policy, and route selection in one place."
+        eyebrow="AngoraPay Mesh"
+        title="The infrastructure layer that routes, pays, proves, and reconciles beneath the reference agents."
         metrics={[
-          ["Providers used", metrics?.providersUsed || live?.services?.length || 0],
-          ["Min trust", live?.workspace?.policy?.minProviderTrustScore || 85],
-          ["Route score", live?.workspace?.policy?.minRouteScore || 80],
+          ["Gateway calls", metrics?.gatewayCalls || 0],
+          ["Providers", metrics?.providersUsed || live?.services?.length || 0],
+          ["Receipts", metrics?.receiptsCreated || live?.receipts?.length || 0],
+        ]}
+      />
+      <MeshFlowPanel live={live} />
+      <MarketplacePanel live={live} />
+      <ProofPanel live={live} latestResult={latestResult} />
+    </div>
+  );
+}
+
+function MeshFlowPanel({ live }) {
+  const metrics = live?.dashboard?.metrics;
+  const meshSteps = [
+    ["Market catalogue", "A selected market or external agent mission enters the Angora API."],
+    ["Specialist agent", "The reference agent interprets the market question and requests paid intelligence."],
+    ["Mesh route", "Angora discovers providers, scores trust, applies spend policy, and blocks weak routes."],
+    ["Circle/x402 boundary", "Approved calls receive payment context without letting the agent bypass policy."],
+    ["Proof ledger", "Receipts, provider delivery, output hashes, traces, and reconciliation records are stored."],
+  ];
+  return (
+    <Glass className="border-y border-slate-200 p-5">
+      <div className="mb-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Infrastructure path</p>
+          <h2 className="mt-1 text-2xl font-black text-slate-950">Reference agents are built on the mesh, not beside it.</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">This is the platform layer developers reuse when they build their own agent, market app, or paid intelligence workflow.</p>
+        </div>
+        <div className="grid grid-cols-2 divide-x divide-slate-200 border-y border-slate-200 bg-white/45">
+          <Metric label="Gateway calls" value={metrics?.gatewayCalls || 0} />
+          <Metric label="Receipts" value={metrics?.receiptsCreated || 0} />
+        </div>
+      </div>
+      <div className="space-y-3">{meshSteps.map((step, index) => <StepRow key={step[0]} step={{ title: step[0], detail: step[1], status: "done" }} index={index} />)}</div>
+    </Glass>
+  );
+}
+
+function ProvidersWorkspace({ live }) {
+  const metrics = live?.dashboard?.metrics;
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Providers"
+        title="Paid intelligence supply the mesh can select, limit, or block."
+        metrics={[
+          ["Services", live?.services?.length || marketServices.length],
+          ["Used", metrics?.providersUsed || 0],
+          ["Blocked", live?.blockedServices?.length || blockedServices(marketServices).length],
         ]}
       />
       <MarketplacePanel live={live} />
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-        <ScorecardPanel latestResult={latestResult} />
-        <PolicyPanel live={live} />
-      </div>
       <ProviderPanel live={live} />
     </div>
   );
 }
 
-function ProofOpsWorkspace({ live, latestResult, runReconciliation, reconciliationRunning }) {
+function TrustPolicyWorkspace({ live, latestResult }) {
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Trust & Policy"
+        title="Why AngoraPay Mesh selects, limits, or blocks paid providers before payment."
+        metrics={[
+          ["Min trust", live?.workspace?.policy?.minProviderTrustScore || 85],
+          ["Route score", live?.workspace?.policy?.minRouteScore || 80],
+          ["Proof", live?.workspace?.policy?.proofRequired === false ? "optional" : "required"],
+        ]}
+      />
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+        <ScorecardPanel latestResult={latestResult} />
+        <PolicyPanel live={live} />
+      </div>
+    </div>
+  );
+}
+
+function PaymentsProofWorkspace({ live, latestResult, runReconciliation, reconciliationRunning }) {
   const metrics = live?.dashboard?.metrics;
   return (
     <div className="space-y-8">
       <ActionBand
-        eyebrow="Proof & Operations"
+        eyebrow="Payments & Proof"
         title="Audit the chain of intent, payment, delivery, receipt, and reconciliation."
         metrics={[
           ["Receipts", metrics?.receiptsCreated || live?.receipts?.length || 0],
@@ -1607,7 +1817,6 @@ function ProofOpsWorkspace({ live, latestResult, runReconciliation, reconciliati
       <ReconciliationPanel live={live} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} />
       <ProductionReadinessPanel live={live} />
       <MetricsPanel live={live} />
-      <DeveloperPanel />
     </div>
   );
 }
@@ -1633,10 +1842,11 @@ function ActionBand({ eyebrow, title, metrics }) {
 
 export default function AngoraUiCanvas() {
   const [view, setView] = useState("landing");
-  const [tab, setTab] = useState("workspace");
+  const [tab, setTab] = useState("markets");
   const [completed, setCompleted] = useState(0);
   const [live, setLive] = useState(null);
-  const [agentGoal, setAgentGoal] = useState("Evaluate whether this BTC prediction market is mispriced after breaking news and route the paid services needed for a proof-backed recommendation.");
+  const [selectedMarket, setSelectedMarket] = useState(discoverableMarkets[0]);
+  const [agentGoal, setAgentGoal] = useState(discoverableMarkets[0].mission);
   const [agentRunning, setAgentRunning] = useState(false);
   const [latestResult, setLatestResult] = useState(null);
   const [reconciliationRunning, setReconciliationRunning] = useState(false);
@@ -1657,21 +1867,30 @@ export default function AngoraUiCanvas() {
 
   const openConsole = (target = "workspace") => {
     const legacyTargets = {
-      chat: "workspace",
-      run: "workspace",
-      marketplace: "network",
-      market: "network",
-      scorecard: "network",
-      routing: "network",
-      policy: "network",
-      providers: "network",
-      proof: "ops",
-      reconciliation: "ops",
-      history: "ops",
-      metrics: "ops",
-      developers: "ops",
+      chat: "missions",
+      run: "missions",
+      workspace: "missions",
+      marketplace: "providers",
+      market: "markets",
+      scorecard: "trust",
+      routing: "mesh",
+      policy: "trust",
+      providers: "providers",
+      proof: "proof",
+      ops: "proof",
+      reconciliation: "proof",
+      history: "proof",
+      metrics: "proof",
+      developers: "developers",
     };
     setTab(legacyTargets[target] || target);
+    setView("console");
+  };
+
+  const selectMarketAndMission = (market) => {
+    setSelectedMarket(market);
+    setAgentGoal(market.mission);
+    setTab("missions");
     setView("console");
   };
 
@@ -1682,6 +1901,9 @@ export default function AngoraUiCanvas() {
         method: "POST",
         body: JSON.stringify({
           userGoal: agentGoal,
+          marketTarget: selectedMarket?.name,
+          module: selectedMarket?.module,
+          asset: selectedMarket?.asset,
           paymentMode: "arc_testnet",
           budgetUSDC: "0.05",
           maxPricePerCallUSDC: "0.01",
@@ -1731,11 +1953,15 @@ export default function AngoraUiCanvas() {
 
   const Panel = useMemo(() => {
     const panelMap = {
-      workspace: AgentChatPanel,
-      network: MarketNetworkWorkspace,
-      ops: ProofOpsWorkspace,
+      markets: MarketsWorkspace,
+      missions: AgentChatPanel,
+      mesh: MeshGatewayWorkspace,
+      providers: ProvidersWorkspace,
+      trust: TrustPolicyWorkspace,
+      proof: PaymentsProofWorkspace,
+      developers: DeveloperPanel,
     };
-    return panelMap[tab] || AgentChatPanel;
+    return panelMap[tab] || MarketsWorkspace;
   }, [tab]);
 
   if (view === "landing") {
@@ -1744,7 +1970,7 @@ export default function AngoraUiCanvas() {
 
   return (
     <ConsoleShell activeTab={tab} setActiveTab={setTab} goHome={() => setView("landing")} live={live} latestResult={latestResult}>
-      <Panel runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} />
+      <Panel runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} selectedMarket={selectedMarket} setSelectedMarket={setSelectedMarket} selectMarketAndMission={selectMarketAndMission} />
     </ConsoleShell>
   );
 }
