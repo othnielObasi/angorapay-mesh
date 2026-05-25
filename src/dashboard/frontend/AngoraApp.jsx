@@ -526,52 +526,84 @@ function Home({ setMode }) {
 }
 
 function MeshHeroVisual() {
-  const routeMetrics = [
-    ["route", "OddsNode"],
-    ["cost", "0.004"],
-    ["score", "96"],
-    ["asset", "USDC"],
+  const providerRows = [
+    ["OddsNode", "odds", "94", "0.004", "selected"],
+    ["SentimentMesh", "sentiment", "91", "0.005", "selected"],
+    ["VolGuard", "risk", "92", "0.006", "selected"],
+    ["Unknown Alpha", "research", "41", "0.002", "blocked"],
   ];
 
   return (
-    <Glass className="relative min-h-[620px] overflow-hidden p-8">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12),transparent_48%)]" />
-      <div className="absolute left-8 top-8 rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">mission-aware route</div>
-      <div className="absolute right-8 top-8 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">Arc USDC</div>
-      <div className="absolute left-1/2 top-1/2 h-[330px] w-[330px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200" />
-      <div className="absolute left-1/2 top-1/2 h-[220px] w-[220px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200" />
-      <div className="absolute left-[120px] right-[120px] top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent" />
-      <div className="absolute left-1/2 top-[112px] h-[410px] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-slate-200 to-transparent" />
-
-      <div className="absolute left-1/2 top-1/2 z-10 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-[2rem] border border-cyan-200 bg-white/95 text-center shadow-2xl shadow-slate-200/70 backdrop-blur-xl">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 ring-1 ring-cyan-200">
-          <Route className="h-6 w-6 text-cyan-700" />
-        </div>
-        <p className="mt-3 text-sm font-black text-slate-950">Route mesh</p>
-        <p className="mt-1 text-xs text-slate-500">select - pay - prove</p>
+    <Glass className="relative min-h-[600px] overflow-hidden border-y border-slate-200 bg-white/45 p-6">
+      <div className="absolute inset-x-6 top-6 flex items-center justify-between">
+        <span className="border border-slate-200 bg-white/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Mission-aware route</span>
+        <span className="border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Arc USDC</span>
       </div>
 
-      <HeroNode className="left-1/2 top-14 -translate-x-1/2" label="Market mission" value="+EV odds" badge="intent" tone="blue" />
-      <HeroNode className="right-12 top-[33%]" label="Route policy" value="trust >= 85" badge="score" tone="purple" />
-      <HeroNode className="right-[20%] bottom-36" label="OddsNode" value="0.004 USDC" badge="selected" tone="good" />
-      <HeroNode className="left-[20%] bottom-36" label="Circle/x402" value="Arc USDC" badge="pay" tone="blue" />
-      <HeroNode className="left-12 top-[33%]" label="Proof" value="receipt + hash" badge="stored" tone="good" />
+      <div className="relative z-10 mt-16 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="space-y-5">
+          <section className="border-y border-slate-200 bg-slate-950 p-5 text-white">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">Market mission</p>
+            <h3 className="mt-3 text-2xl font-black leading-tight">Is this BTC prediction market mispriced?</h3>
+            <p className="mt-4 text-sm leading-6 text-slate-300">The agent needs paid odds, sentiment, risk, and proof services before it can recommend an action.</p>
+          </section>
 
-      <div className="absolute bottom-6 left-8 right-8 z-30 rounded-[24px] border border-slate-200 bg-white/85 p-3.5 backdrop-blur-xl">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-cyan-700">Live route trace</p>
-            <p className="mt-1 text-xs text-slate-500">mission - marketplace - scorecard - Circle/x402 - receipt</p>
+          <section className="border-y border-slate-200 bg-white/70 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Policy gate</p>
+              <ShieldCheck className="h-5 w-5 text-cyan-700" />
+            </div>
+            <div className="mt-4 grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200 text-center">
+              <Metric label="Trust" value=">= 85" />
+              <Metric label="Spend" value="0.05" />
+              <Metric label="Proof" value="required" />
+            </div>
+          </section>
+        </div>
+
+        <section className="border-y border-slate-200 bg-white/70 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Provider route</p>
+              <p className="mt-1 text-sm font-black text-slate-950">Score, select, or block before payment</p>
+            </div>
+            <Route className="h-5 w-5 text-cyan-700" />
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {routeMetrics.map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-slate-50 px-2.5 py-1.5 text-center ring-1 ring-slate-200">
-                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">{label}</p>
-                <p className="mt-0.5 text-[11px] font-black text-slate-700">{value}</p>
+
+          <div className="mt-5 divide-y divide-slate-200 border-y border-slate-200">
+            {providerRows.map(([provider, category, trust, price, status]) => (
+              <div key={provider} className="grid grid-cols-[1fr_70px_72px_82px] items-center gap-3 py-3 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate font-black text-slate-950">{provider}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{category}</p>
+                </div>
+                <p className="font-mono text-xs font-black text-slate-700">{trust}</p>
+                <p className="font-mono text-xs text-slate-500">{price}</p>
+                <Pill compact tone={status === "blocked" ? "bad" : "good"}>{status}</Pill>
               </div>
             ))}
           </div>
-          <Pill tone="good" compact>policy-ready</Pill>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <div className="border-l border-cyan-200 pl-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Payment</p>
+              <p className="mt-1 font-black text-slate-950">0.016 USDC routed</p>
+              <p className="mt-1 text-xs text-slate-500">Circle/x402 boundary on Arc testnet</p>
+            </div>
+            <div className="border-l border-cyan-200 pl-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Proof</p>
+              <p className="mt-1 font-black text-slate-950">4 receipts created</p>
+              <p className="mt-1 text-xs text-slate-500">Trace, output hash, reconciliation tag</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="relative z-10 mt-5 border-y border-slate-200 bg-white/70 p-4">
+        <div className="grid gap-4 md:grid-cols-[160px_1fr_auto] md:items-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Recommendation</p>
+          <p className="text-sm font-semibold leading-6 text-slate-700">Monitor or enter small: approved providers met trust, spend, and proof policy; weak route was blocked before payment.</p>
+          <Pill tone="warn">decision support</Pill>
         </div>
       </div>
     </Glass>
