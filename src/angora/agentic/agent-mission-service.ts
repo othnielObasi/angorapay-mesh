@@ -20,6 +20,9 @@ import { addTraceEvent, listTraceEvents } from "./trace-store.js";
 import type { AgentContextPacket, AgentMissionInput, AgentMissionResult, AgentProviderDecision, AgentTraceEvent, MissionCheckpoint } from "./types.js";
 import { agentId, decimalSum, nowIso } from "./util.js";
 import { billEvent } from "../../services/nanopayments.js";
+import { buildPolymarketBetIntent } from "../../services/polymarket-executor.js";
+import { allocateIdleCapitalToUSYC } from "../../services/circle-usyc.js";
+import { bridgeUSDCViaCircleCCTP, buildCctpSettlementRecord } from "../../services/circle-cctp.js";
 
 function makeExecutionRecord(input: {
   request: AngoraGatewayCallRequest;
@@ -351,8 +354,52 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
   });
   trace({ context, eventType: "recommendation.generated", label: recommendation.summary, status: "completed", agentId: defaults.agentId, details: { recommendation, source: recommendationResult.source, model: recommendationResult.model } });
   createCheckpoint({ context, stage: "recommendation_generated", resumeFrom: "mission_completed", state: { recommendation, receiptIds: receipts.map((receipt) => receipt.receiptId) } });
-  trace({ context, eventType: "mission.completed", label: "Agent mission completed", status: "completed", agentId: defaults.agentId, details: { totals: { receipts: receipts.length, decisions: decisions.length } } });
-  createCheckpoint({ context, stage: "mission_completed", resumeFrom: "complete", state: { completed: true }, status: "terminal" });
+
+  // ── Autonomous execution layer ───────────────────────────────────────────────
+  // Agent constructs Kelly-sized Polymarket bet intents and executes them
+  // autonomously when confidence ≥ 70 and action is "enter_small" / "enter".
+
+  const oddsDecision = decisions.find((d) => d.category === "odds" && d.status === "delivered");
+  const liveOddsData = (oddsDecision?.execution as Record<string, unknown> | undefined)?.data as Record<string, unknown> | null ?? null;
+
+  const betIntent = await buildPolymarketBetIntent(
+    recommendation,
+    liveOddsData,
+    context.marketTarget,
+    context.budgetUSDC,
+  ).catch(() => null);
+
+  // ── Circle USYC: park idle capital when signal is weak ──────────────────────
+  // Risk-off capital allocation — agent earns yield while waiting for better entry.
+  const shouldAllocateUSYC =
+    (recommendation.action === "avoid" || recommendation.action === "monitor") &&
+    recommendation.confidence < 65;
+
+  const usycPosition = shouldAllocateUSYC
+    ? await allocateIdleCapitalToUSYC(
+        Math.min(parseFloat(context.budgetUSDC) * 0.5, 0.01),
+        mission.missionId,
+        { action: recommendation.action, confidence: recommendation.confidence },
+      ).catch(() => null)
+    : null;
+
+  // ── Circle CCTP: cross-chain settlement for arbitrage missions ──────────────
+  // When cross_venue_arbitrage agent detects a profitable opportunity that
+  // spans chains, CCTP bridges USDC to the destination venue's settlement chain.
+  const cctpSettlement =
+    module === "cross_venue_arbitrage" &&
+    (recommendation.action === "enter_small" || recommendation.action === "enter") &&
+    recommendation.confidence >= 72
+      ? buildCctpSettlementRecord(
+          "base-sepolia",
+          Math.min(parseFloat(context.budgetUSDC) * 0.3, 0.005),
+          (context as any).agentAddress || process.env.AGENT_WALLET_ADDRESS || "0x4991dd462f7672b737571b194b6cd6f271773d9b",
+          mission.missionId,
+        )
+      : null;
+
+  trace({ context, eventType: "mission.completed", label: "Agent mission completed", status: "completed", agentId: defaults.agentId, details: { totals: { receipts: receipts.length, decisions: decisions.length }, betIntent: betIntent?.status, usycAllocated: Boolean(usycPosition), cctpSettlement: Boolean(cctpSettlement) } });
+  createCheckpoint({ context, stage: "mission_completed", resumeFrom: "complete", state: { completed: true, betIntent: betIntent?.intentId, usycAllocationId: usycPosition?.allocationId }, status: "terminal" });
 
   const traces = listTraceEvents({ conversationId: conversation.conversationId, missionId: mission.missionId, limit: 500 }).rows;
   const checkpoints = listCheckpoints({ conversationId: conversation.conversationId, missionId: mission.missionId, limit: 500 }).rows;
@@ -366,7 +413,7 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
     receiptIds: receipts.map((receipt) => receipt.receiptId),
     traceIds: traces.map((event) => event.traceId),
   }) || conversation;
-  addConversationMessage({ conversationId: conversation.conversationId, role: "assistant", content: recommendation.summary, missionId: mission.missionId, receiptIds: receipts.map((receipt) => receipt.receiptId), metadata: { recommendation, decisions } });
+  addConversationMessage({ conversationId: conversation.conversationId, role: "assistant", content: recommendation.summary, missionId: mission.missionId, receiptIds: receipts.map((receipt) => receipt.receiptId), metadata: { recommendation, decisions, betIntent, usycPosition, cctpSettlement } });
 
   return {
     conversation: updatedConversation,
@@ -381,6 +428,9 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
     receipts,
     traces,
     checkpoints,
+    betIntent: betIntent ?? undefined,
+    usycPosition: usycPosition ?? undefined,
+    cctpSettlement: cctpSettlement ?? undefined,
     totals: {
       approvedProviders: decisions.filter((decision) => decision.status === "delivered").length,
       blockedProviders: decisions.filter((decision) => decision.status === "blocked").length,

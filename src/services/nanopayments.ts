@@ -1,20 +1,24 @@
 // src/services/nanopayments.ts
 // ───────────────────────────────────────────────────────────────────────────────
-// Circle Nanopayments — real USDC micro-transfers on Arc via Circle
-// Developer-Controlled Wallets.  Every governance stage and compute event
-// sends a $0.001 USDC ERC-20 transfer on Arc testnet, producing a genuine
-// on-chain transaction hash.
+// Circle Nanopayments via Gateway — real USDC micro-transfers on Arc testnet.
 //
-// When Circle credentials are not configured, the module falls through to
-// a lightweight viem-based EOA signer (OWS_MNEMONIC) so the demo can
-// produce real Arc transactions without the full Circle Wallets stack.
+// Payment path priority (first available wins):
+//   1. Circle Gateway Transfer API — batched nanopayment settlement, gas-free
+//      for sub-$0.01 amounts. Uses /v1/w3s/developer/transactions/transfer.
+//   2. Circle DCW contract execution — direct ERC-20 transfer via Circle
+//      Developer-Controlled Wallets (fallback when Gateway API unavailable).
+//   3. viem EOA mnemonic — raw Arc wallet transfer (final fallback).
 //
-// NEVER throws — billing is fire-and-forget.  Governance logic is always
+// Every governance stage and compute event sends a real USDC micro-transfer
+// on Arc testnet, producing a genuine on-chain transaction visible on ArcScan.
+//
+// NEVER throws — billing is fire-and-forget. Governance logic is always
 // unaffected by billing outcomes.
 // ───────────────────────────────────────────────────────────────────────────────
 
 import { createPublicClient, createWalletClient, http, parseUnits, getAddress, type Hash } from 'viem';
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
+import { sendGatewayNanopayment, resolveGatewayTransferHash } from './circle-gateway.js';
 
 // ── Arc Testnet chain definition ─────────────────────────────────────────────
 const ARC_RPC   = process.env.OWS_RPC_URL || 'https://rpc.testnet.arc.network';
@@ -244,6 +248,39 @@ async function createSettlementReceipt(
   } = {},
   waitForVerifiedHash = false,
 ): Promise<NanopaymentReceipt> {
+  // ── Path 1: Circle Gateway Transfer API (nanopayment batch settlement) ──────
+  // Gas-free for sub-$0.01 amounts; routed through Circle Gateway infrastructure
+  if (process.env.CIRCLE_API_KEY && process.env.CIRCLE_WALLET_ID) {
+    const gwResult = await sendGatewayNanopayment(to, amountUsdc, {
+      eventName,
+      type: (meta.type || 'governance') as 'governance' | 'data' | 'inference' | 'settlement',
+    });
+
+    if (gwResult.mode === 'gateway') {
+      const receipt: NanopaymentReceipt = {
+        eventName,
+        ...meta,
+        mode: 'circle-gateway',
+        txHash: gwResult.txHash ?? `gw_pending_${gwResult.transferId ?? Date.now()}`,
+        referenceId: gwResult.transferId ?? undefined,
+        verificationState: gwResult.txHash ? 'confirmed' : 'pending',
+        amount: amountUsdc,
+        confirmedAt: Date.now(),
+      };
+      // Hydrate txHash async if pending
+      if (!gwResult.txHash && gwResult.transferId) {
+        void resolveGatewayTransferHash(gwResult.transferId).then((hash) => {
+          if (hash) {
+            receipt.txHash = hash;
+            receipt.verificationState = 'confirmed';
+          }
+        });
+      }
+      return receipt;
+    }
+  }
+
+  // ── Path 2: Circle DCW contract execution (direct ERC-20 transfer) ──────────
   const ready = await ensureSigner();
   if (!ready) throw new Error('no signer');
 

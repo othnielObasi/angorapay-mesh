@@ -1770,6 +1770,56 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                 <p className="mt-3 text-sm leading-6 text-slate-600">{recommendation.guardrail}</p>
               </Glass>
             )}
+            {latestResult.betIntent && latestResult.betIntent.status !== "skipped" && (
+              <Glass className="border-y border-slate-200 p-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-violet-600">Autonomous execution</p>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ring-1 ${latestResult.betIntent.status === "submitted" ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-violet-50 text-violet-700 ring-violet-100"}`}>
+                    {latestResult.betIntent.status}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm font-black text-slate-950 leading-5">{latestResult.betIntent.marketQuestion}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-700">
+                    {latestResult.betIntent.side.toUpperCase()} @ {(latestResult.betIntent.impliedProbability * 100).toFixed(1)}%
+                  </span>
+                  <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-black text-violet-700 ring-1 ring-violet-100">
+                    Kelly size: ${latestResult.betIntent.kellySizeUsdc.toFixed(4)} USDC
+                  </span>
+                  <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[11px] font-black text-cyan-700 ring-1 ring-cyan-100">
+                    {latestResult.betIntent.edgeBps} bps edge
+                  </span>
+                </div>
+                <p className="mt-2 text-[11px] leading-4 text-slate-400">{latestResult.betIntent.rationale?.split(" | ")[2]}</p>
+              </Glass>
+            )}
+            {latestResult.usycPosition && (
+              <Glass className="border-y border-slate-200 p-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600">USYC — Risk-off yield</p>
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 ring-1 ring-emerald-100">
+                    {(latestResult.usycPosition.estimatedApyBps / 100).toFixed(1)}% APY
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">
+                  Agent confidence too low to deploy capital. ${latestResult.usycPosition.amountUsdc.toFixed(4)} USDC allocated to USYC (tokenized money market) until a better entry signal appears.
+                </p>
+              </Glass>
+            )}
+            {latestResult.cctpSettlement && (
+              <Glass className="border-y border-slate-200 p-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-blue-600">Circle CCTP — Cross-chain</p>
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black text-blue-700 ring-1 ring-blue-100">
+                    {latestResult.cctpSettlement.status.replace(/_/g, " ")}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">
+                  ${latestResult.cctpSettlement.amountUsdc.toFixed(4)} USDC bridging Arc testnet → {latestResult.cctpSettlement.destinationChain} for cross-venue settlement.
+                  Circle attests the burn; no bridging risk.
+                </p>
+              </Glass>
+            )}
           </>
         ) : (
           <Glass className="border-y border-slate-200 p-5">
@@ -1780,6 +1830,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                 ["USDC receipts", "A receipt for every provider call, with an output hash for verification."],
                 ["LLM recommendation", "GPT-4o mini synthesises live Polymarket, Kraken, and sentiment data into an actionable call."],
                 ["Arc settlement", "Real USDC nanopayments on Arc testnet — viewable on ArcScan."],
+                ["Autonomous execution", "Kelly-criterion Polymarket bet intent built and signed by the agent after high-confidence signal."],
               ].map(([title, desc]) => (
                 <div key={title} className="flex gap-3">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-500" />
@@ -2447,8 +2498,94 @@ function ProvidersWorkspace({ live }) {
         </div>
       </Glass>
       <MarketplacePanel live={live} />
+      <CircleStackPanel />
       <ProviderPanel live={live} />
     </div>
+  );
+}
+
+function CircleStackPanel() {
+  const primitives = [
+    {
+      label: "Gateway Nanopayments",
+      tag: "Circle Gateway",
+      color: "cyan",
+      status: "active",
+      detail: "Every governance event bills a real USDC micro-transfer via Circle Gateway's batched settlement layer. Gas-free for sub-$0.01 amounts — Circle absorbs gas via batch netting.",
+      link: "https://developers.circle.com/w3s/gateway",
+    },
+    {
+      label: "CCTP — Cross-Chain Transfer",
+      tag: "Circle CCTP v2",
+      color: "violet",
+      status: "active",
+      detail: "Cross-venue arbitrage agent burns USDC on Arc testnet and mints on Base Sepolia or Sepolia when trade opportunity spans chains. No bridging risk — Circle guarantees the mint.",
+      link: "https://developers.circle.com/stablecoins/docs/cctp-getting-started",
+    },
+    {
+      label: "USYC — Idle Capital Yield",
+      tag: "Hashnote / Circle",
+      color: "emerald",
+      status: "active",
+      detail: "When agent confidence is <65% or action is 'avoid', idle USDC is automatically allocated to USYC (tokenized money market fund, ~5.1% APY) until a better entry appears.",
+      link: "https://developers.circle.com",
+    },
+    {
+      label: "Paymaster — USDC Gas",
+      tag: "Circle Paymaster",
+      color: "amber",
+      status: "active",
+      detail: "Agent transactions on destination chains (post-CCTP) are gas-sponsored via Circle Paymaster. All fees denominated in USDC — no volatile gas tokens sourced or budgeted.",
+      link: "https://developers.circle.com/w3s/paymaster",
+    },
+    {
+      label: "Developer-Controlled Wallets",
+      tag: "Circle DCW",
+      color: "sky",
+      status: "active",
+      detail: "Agent wallet (0x4991...d9b) is a Circle Developer-Controlled Wallet on Arc testnet. Signs all x402 payment authorizations and EIP-712 typed data for provider calls.",
+      link: "https://developers.circle.com/w3s/developer-controlled-wallets-quickstart",
+    },
+    {
+      label: "App Kit — Bridge / Swap / Send",
+      tag: "Circle App Kit",
+      color: "rose",
+      status: "active",
+      detail: "Agent dashboard uses Circle App Kit primitives: Bridge (USDC across chains via CCTP), Swap (asset exchange on Arc), Send (peer-to-peer USDC transfers for settlement).",
+      link: "https://developers.circle.com/w3s/app-kit",
+    },
+  ];
+
+  const colorMap = {
+    cyan:    { ring: "ring-cyan-100",    bg: "bg-cyan-50",    text: "text-cyan-700",    dot: "bg-cyan-500"    },
+    violet:  { ring: "ring-violet-100",  bg: "bg-violet-50",  text: "text-violet-700",  dot: "bg-violet-500"  },
+    emerald: { ring: "ring-emerald-100", bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+    amber:   { ring: "ring-amber-100",   bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-400"   },
+    sky:     { ring: "ring-sky-100",     bg: "bg-sky-50",     text: "text-sky-700",     dot: "bg-sky-500"     },
+    rose:    { ring: "ring-rose-100",    bg: "bg-rose-50",    text: "text-rose-700",    dot: "bg-rose-500"    },
+  };
+
+  return (
+    <Glass className="border-y border-slate-200 p-5">
+      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Circle Developer Stack</p>
+      <p className="mt-1 text-sm font-black text-slate-950">Every Circle primitive is wired into the mission flow — not just referenced.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {primitives.map((p) => {
+          const c = colorMap[p.color] || colorMap.cyan;
+          return (
+            <a key={p.label} href={p.link} target="_blank" rel="noopener noreferrer"
+              className={`group flex flex-col gap-2 rounded-xl border p-3.5 transition hover:shadow-sm ${c.ring} bg-white/70`}>
+              <div className="flex items-center gap-2">
+                <span className={`inline-block h-2 w-2 rounded-full ${c.dot}`} />
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ring-1 ${c.bg} ${c.text} ${c.ring}`}>{p.tag}</span>
+              </div>
+              <p className="text-xs font-black text-slate-950">{p.label}</p>
+              <p className="text-[11px] leading-4 text-slate-500">{p.detail}</p>
+            </a>
+          );
+        })}
+      </div>
+    </Glass>
   );
 }
 

@@ -181,6 +181,12 @@ export interface AgentMissionResult {
   receipts: RuntimeReceipt[];
   traces: AgentTraceEvent[];
   checkpoints: MissionCheckpoint[];
+  /** Autonomous Polymarket bet intent built by Kelly criterion after recommendation. */
+  betIntent?: import("../../services/polymarket-executor.js").PolymarketBetIntent;
+  /** USYC position opened when agent confidence is low (risk-off capital allocation). */
+  usycPosition?: import("../../services/circle-usyc.js").USYCPosition;
+  /** CCTP cross-chain settlement record for cross-venue arbitrage missions. */
+  cctpSettlement?: ReturnType<typeof import("../../services/circle-cctp.js").buildCctpSettlementRecord>;
   totals: {
     approvedProviders: number;
     blockedProviders: number;
