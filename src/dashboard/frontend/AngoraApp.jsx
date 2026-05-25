@@ -527,58 +527,80 @@ function Home({ setMode }) {
 
 function MeshHeroVisual() {
   const meshPoints = [
-    { label: "Mission", detail: "market question", tone: "blue", className: "left-1/2 top-[70px] -translate-x-1/2" },
-    { label: "Providers", detail: "paid signals", tone: "good", className: "right-[72px] top-[214px]" },
-    { label: "Policy", detail: "trust + spend", tone: "purple", className: "right-[150px] top-[348px]" },
-    { label: "Payment", detail: "Circle/x402", tone: "blue", className: "left-[150px] top-[348px]" },
-    { label: "Proof", detail: "receipt hash", tone: "good", className: "left-[72px] top-[214px]" },
+    { label: "Mission", detail: "market intent", tone: "blue", icon: MessageSquare, className: "left-1/2 top-[86px] -translate-x-1/2" },
+    { label: "Providers", detail: "paid signals", tone: "good", icon: Store, className: "right-[42px] top-[238px]" },
+    { label: "Policy", detail: "trust gate", tone: "purple", icon: ShieldCheck, className: "right-[132px] top-[388px]" },
+    { label: "Payment", detail: "Circle/x402", tone: "blue", icon: WalletCards, className: "left-[132px] top-[388px]" },
+    { label: "Proof", detail: "receipt hash", tone: "good", icon: FileCheck2, className: "left-[42px] top-[238px]" },
   ];
 
   return (
-    <Glass className="relative min-h-[560px] overflow-hidden p-8">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.11),transparent_52%)]" />
+    <Glass className="relative min-h-[640px] overflow-hidden bg-white/60 p-8">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12),transparent_54%)]" />
       <div className="absolute left-8 top-8 rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">mission-aware route</div>
       <div className="absolute right-8 top-8 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">Arc USDC</div>
 
-      <svg className="absolute inset-x-8 top-16 h-[420px] w-[calc(100%-4rem)]" viewBox="0 0 640 420" fill="none" aria-hidden="true">
-        <circle cx="320" cy="220" r="150" stroke="rgb(203 213 225)" strokeWidth="1" opacity="0.7" />
-        <circle cx="320" cy="220" r="96" stroke="rgb(103 232 249)" strokeWidth="1.2" opacity="0.85" />
-        <path d="M320 72L505 184L435 350H205L135 184L320 72Z" stroke="rgb(203 213 225)" strokeWidth="1" opacity="0.8" />
-        <path d="M320 220L320 72M320 220L505 184M320 220L435 350M320 220L205 350M320 220L135 184" stroke="rgb(103 232 249)" strokeWidth="1.4" opacity="0.75" />
-        <path d="M320 72L505 184L435 350L205 350L135 184L320 72" stroke="rgb(6 182 212)" strokeWidth="2" opacity="0.25" />
-        <circle cx="320" cy="220" r="70" fill="rgb(236 254 255)" opacity="0.55" />
+      <svg className="absolute inset-x-6 top-[68px] h-[500px] w-[calc(100%-3rem)]" viewBox="0 0 680 500" fill="none" aria-hidden="true">
+        <defs>
+          <filter id="meshGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.04 0 0 0 0 0.72 0 0 0 0 0.84 0 0 0 0.28 0" />
+            <feBlend in="SourceGraphic" />
+          </filter>
+        </defs>
+        <circle cx="340" cy="255" r="178" stroke="rgb(203 213 225)" strokeWidth="1" opacity="0.72" />
+        <circle cx="340" cy="255" r="118" stroke="rgb(103 232 249)" strokeWidth="1.2" opacity="0.82" />
+        <circle cx="340" cy="255" r="82" fill="rgb(236 254 255)" opacity="0.5" />
+        <path d="M340 75L585 222L492 430H188L95 222L340 75Z" stroke="rgb(148 163 184)" strokeWidth="1.2" opacity="0.62" />
+        <path d="M340 255L340 75M340 255L585 222M340 255L492 430M340 255L188 430M340 255L95 222" stroke="rgb(103 232 249)" strokeWidth="1.3" opacity="0.58" />
+        <path filter="url(#meshGlow)" d="M340 75L585 222L492 430L188 430L95 222L340 75" stroke="rgb(6 182 212)" strokeWidth="3" strokeLinecap="round" strokeDasharray="16 14" opacity="0.5">
+          <animate attributeName="stroke-dashoffset" values="80;0" dur="10s" repeatCount="indefinite" />
+        </path>
+        <path d="M95 222L585 222M188 430L492 430M340 75L188 430M340 75L492 430" stroke="rgb(203 213 225)" strokeWidth="1" opacity="0.35" />
       </svg>
 
-      <div className="absolute left-1/2 top-[284px] z-10 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-cyan-200 bg-white/95 text-center shadow-2xl shadow-cyan-100/80 ring-8 ring-cyan-50/80 backdrop-blur-xl">
-        <div className="absolute inset-3 rounded-full border border-cyan-100" />
-        <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-cyan-50 ring-1 ring-cyan-200">
-          <span className="absolute inset-0 rounded-full bg-cyan-200/30 animate-ping" />
-          <Route className="h-6 w-6 text-cyan-700" />
+      <div className="absolute left-1/2 top-[323px] z-10 flex h-44 w-44 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-cyan-300/60 bg-slate-950 text-center text-white shadow-2xl shadow-cyan-200/70 ring-8 ring-cyan-100/80">
+        <div className="absolute inset-4 rounded-full border border-white/10" />
+        <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-400/30">
+          <span className="absolute inset-0 rounded-full bg-cyan-200/40 animate-ping" />
+          <Route className="h-6 w-6" />
         </div>
-        <p className="relative mt-3 text-sm font-black text-slate-950">Angora Mesh</p>
-        <p className="relative mt-1 max-w-[110px] text-xs leading-5 text-slate-500">route, pay, prove</p>
+        <p className="relative mt-3 text-base font-black">Angora Mesh</p>
+        <p className="relative mt-1 max-w-[116px] text-xs leading-5 text-cyan-50/70">decision layer for paid intelligence</p>
       </div>
 
       {meshPoints.map((point) => (
         <MeshPoint key={point.label} {...point} />
       ))}
 
-      <div className="absolute bottom-8 left-1/2 z-30 w-[min(520px,calc(100%-4rem))] -translate-x-1/2 rounded-full border border-slate-200 bg-white/80 px-5 py-3 text-center text-xs font-semibold leading-5 text-slate-600 shadow-sm backdrop-blur-xl">
-        Agent asks. Angora scores trusted providers, pays approved calls, and keeps proof.
+      <div className="absolute bottom-8 left-8 right-8 z-30 grid gap-3 rounded-[22px] border border-slate-200 bg-white/82 p-3 shadow-xl shadow-slate-200/50 backdrop-blur-xl md:grid-cols-4">
+        {[
+          ["Ask", "market mission"],
+          ["Route", "trusted services"],
+          ["Pay", "approved calls"],
+          ["Prove", "audit trail"],
+        ].map(([label, value]) => (
+          <div key={label} className="border-l border-cyan-200 pl-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-700">{label}</p>
+            <p className="mt-0.5 text-xs font-black text-slate-700">{value}</p>
+          </div>
+        ))}
       </div>
     </Glass>
   );
 }
 
-function MeshPoint({ className, label, detail, tone }) {
+function MeshPoint({ className, label, detail, tone, icon: Icon }) {
   return (
-    <div className={cx("absolute z-20 flex w-32 flex-col items-center text-center", className)}>
-      <div className={cx("flex h-16 w-16 items-center justify-center rounded-full border bg-white/90 shadow-xl shadow-slate-200/50 backdrop-blur-xl", tone === "good" ? "border-emerald-200 text-emerald-700" : tone === "purple" ? "border-violet-200 text-violet-700" : "border-cyan-200 text-cyan-700")}>
-        <span className={cx("h-3 w-3 rounded-full", tone === "good" ? "bg-emerald-400" : tone === "purple" ? "bg-violet-400" : "bg-cyan-400")} />
+    <div className={cx("absolute z-20 flex w-36 flex-col items-center text-center", className)}>
+      <div className={cx("flex h-[86px] w-[86px] items-center justify-center rounded-full border bg-white/95 shadow-2xl shadow-slate-200/70 backdrop-blur-xl", tone === "good" ? "border-emerald-200 text-emerald-700" : tone === "purple" ? "border-violet-200 text-violet-700" : "border-cyan-200 text-cyan-700")}>
+        <div className={cx("flex h-12 w-12 items-center justify-center rounded-full", tone === "good" ? "bg-emerald-50" : tone === "purple" ? "bg-violet-50" : "bg-cyan-50")}>
+          <Icon className="h-5 w-5" />
+        </div>
       </div>
-      <div className="mt-2">
+      <div className="mt-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 shadow-sm">
         <p className="text-xs font-black text-slate-950">{label}</p>
-        <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{detail}</p>
+        <p className="mt-0.5 text-[10px] leading-4 text-slate-500">{detail}</p>
       </div>
     </div>
   );
