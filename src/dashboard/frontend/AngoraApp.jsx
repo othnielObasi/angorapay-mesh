@@ -932,6 +932,17 @@ function Product({ setMode, openConsole }) {
     ["During service use", "Create payment context, call approved services, collect delivery evidence, and capture output hashes."],
     ["After delivery", "Show receipts, route scorecards, reconciliation status, provider deliveries, and audit-ready trace history."],
   ];
+  const platformCapabilities = [
+    ["Market catalogue", "Start missions from discoverable market opportunities instead of a blank prompt."],
+    ["Reference agents", "Prediction-market, arbitrage, and social-trading agents demonstrate what developers can build."],
+    ["Provider discovery", "Search paid odds, sentiment, risk, arbitrage, social, market-data, and proof services."],
+    ["Trust scoring", "Score provider reliability, proof support, delivery quality, cost discipline, and policy history."],
+    ["Policy gate", "Block low-trust, over-budget, no-proof, duplicate, or unsupported provider calls before payment."],
+    ["Circle/x402 context", "Keep payment authorization separate from agent reasoning and label each payment mode clearly."],
+    ["Proof receipts", "Record provider, service, route score, policy verdict, amount, output hash, and reconciliation tag."],
+    ["Reconciliation", "Match payment intents, provider delivery, receipts, and settlement state for audit review."],
+    ["Gateway / SDK", "Let developers embed the same mesh workflow inside their own agents and apps."],
+  ];
 
   return (
     <div className="space-y-0">
@@ -963,6 +974,25 @@ function Product({ setMode, openConsole }) {
       <section className="border-t border-slate-200/55 py-20">
         <div className="grid gap-10 md:grid-cols-4">
           {productPillars.map(([title, body]) => (
+            <Feature key={title} title={title} body={body} />
+          ))}
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Platform capabilities</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              What the mesh provides under every agent product.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            The Market Intelligence Agent is only the reference app. These are the reusable infrastructure capabilities developers get when they build on AngoraPay Mesh.
+          </p>
+        </div>
+        <div className="grid gap-x-10 gap-y-5 md:grid-cols-3">
+          {platformCapabilities.map(([title, body]) => (
             <Feature key={title} title={title} body={body} />
           ))}
         </div>
@@ -1239,142 +1269,139 @@ function Stat({ label, value, icon: Icon }) {
 
 function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, selectedMarket, setSelectedMarket }) {
   const traces = latestResult?.traces || [];
-  const checkpoints = latestResult?.checkpoints || [];
   const receipts = latestResult?.receipts || [];
   const recommendation = latestResult?.recommendation;
   const reasoningTrace = traces.find((trace) => trace.eventType === "llm.reasoning");
-  const liveTraceItems = latestResult ? (traces.length ? traces.slice(0, 6) : latestResult?.decisions || []) : [];
-  const missionTemplates = [
-    "Find the best paid odds, sentiment, risk, and proof services for a BTC prediction market question.",
-    "Route a cross-venue arbitrage check with max spend 0.05 USDC and proof required.",
-    "Evaluate whether a social trading signal is reliable enough to support a copy-trading decision.",
-  ];
+  const decisions = latestResult?.decisions || [];
+  const approvedCount = decisions.filter((decision) => decision.status !== "blocked").length;
+  const blockedCount = decisions.filter((decision) => decision.status === "blocked").length;
   const messages = latestResult
     ? [
         { role: "user", content: latestResult.context?.userGoal || agentGoal },
         { role: "assistant", content: latestResult.recommendation?.summary || "Mission completed." },
       ]
     : [
-        { role: "assistant", content: "Select a market or ask a market question. I will use the AngoraPay Mesh underneath to discover providers, enforce policy, route payment, create receipts, and return a proof-backed recommendation." },
+        { role: "assistant", content: "Pick a market, ask the question, and run the mission. I will return a recommendation with the proof facts beside the chat." },
       ];
-  const decisions = latestResult?.decisions || [];
   const selectMarket = (market) => {
     setSelectedMarket(market);
     setAgentGoal(market.mission);
   };
   return (
-    <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_390px]">
-      <Glass className="flex min-h-[680px] flex-col border-y border-slate-200 bg-white/45">
+    <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <Glass className="flex min-h-[720px] flex-col border-y border-slate-200 bg-white/45">
         <div className="border-b border-slate-200 p-5">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Reference app on the mesh</p>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Reference agent app</p>
               <h2 className="mt-1 text-2xl font-black text-slate-950">Market Intelligence Agent</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">This chat is the reference application built on AngoraPay Mesh. It starts from a market, runs a specialist agent, buys trusted intelligence through the mesh, and returns a proof-backed answer.</p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Select a market, ask the agent, then inspect what the mesh routed and proved.</p>
             </div>
             <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>{agentRunning ? "running mission" : latestResult ? "mission complete" : "ready"}</Pill>
           </div>
         </div>
-        <div className="border-b border-slate-200 bg-white/45 p-5">
-          <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Step 1</p>
-              <p className="mt-1 text-sm font-black text-slate-950">Select market</p>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              {discoverableMarkets.slice(0, 4).map((market) => (
-                <button key={market.id} type="button" onClick={() => selectMarket(market)} className={cx("border-y px-4 py-3 text-left transition", selectedMarket?.id === market.id ? "border-cyan-300 bg-cyan-50/70" : "border-slate-200 bg-white/40 hover:border-cyan-200")}>
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm font-black text-slate-950">{market.name}</p>
-                    <Pill compact tone={market.status === "active" ? "good" : "warn"}>{market.status}</Pill>
-                  </div>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">{market.category} - {market.agent}</p>
-                </button>
-              ))}
-            </div>
+        <div className="grid gap-0 border-b border-slate-200 bg-white/55 md:grid-cols-3">
+          <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Market</p>
+            <select
+              value={selectedMarket?.id || ""}
+              onChange={(event) => {
+                const market = discoverableMarkets.find((item) => item.id === event.target.value);
+                if (market) selectMarket(market);
+              }}
+              className="mt-2 w-full bg-transparent text-sm font-black text-slate-950 outline-none"
+            >
+              {discoverableMarkets.map((market) => <option key={market.id} value={market.id}>{market.name}</option>)}
+            </select>
+          </div>
+          <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Agent</p>
+            <p className="mt-2 truncate text-sm font-black text-slate-950">{selectedMarket?.agent || "Auto-select"}</p>
+          </div>
+          <div className="p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Payment mode</p>
+            <p className="mt-2 text-sm font-black text-slate-950">Arc testnet / USDC</p>
           </div>
         </div>
-        <div className="grid gap-0 border-b border-slate-200 bg-slate-950 text-white md:grid-cols-4">
-          <StageCell label="1. Market" value={selectedMarket?.name || "select"} />
-          <StageCell label="2. Agent" value={selectedMarket?.agent || latestResult?.specialistAgent || "choose"} />
-          <StageCell label="3. Payment" value={latestResult?.totals?.usdcRouted || "0.00 USDC"} />
-          <StageCell label="4. Proof" value={latestResult ? `${receipts.length} receipts` : "waiting"} />
-        </div>
-        <div className="flex-1 space-y-4 overflow-auto p-5">
+        <div className="flex-1 space-y-5 overflow-auto p-5">
           {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={cx("max-w-[88%] border-l-4 p-4", message.role === "user" ? "ml-auto border-slate-950 bg-slate-950 text-white" : "border-cyan-300 bg-transparent text-slate-700")}>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-60">{message.role === "user" ? "Builder" : "Angora agent"}</p>
+            <div key={`${message.role}-${index}`} className={cx("max-w-[86%] rounded-[22px] px-5 py-4", message.role === "user" ? "ml-auto bg-slate-950 text-white" : "bg-white/70 text-slate-700 shadow-[0_14px_40px_rgba(15,42,61,0.05)] ring-1 ring-slate-200/70")}>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-60">{message.role === "user" ? "You" : "Angora agent"}</p>
               <p className="mt-2 text-sm leading-6">{message.content}</p>
               {message.role === "assistant" && recommendation?.reasons?.length ? (
-                <div className="mt-3 space-y-2">
+                <div className="mt-4 space-y-2">
                   {recommendation.reasons.slice(0, 3).map((reason) => <p key={reason} className="border-t border-slate-200 py-2 text-xs leading-5 text-slate-600">{reason}</p>)}
                 </div>
               ) : null}
             </div>
           ))}
           {agentRunning ? (
-            <div className="max-w-[88%] border-l-4 border-cyan-300 p-4 text-slate-700">
+            <div className="max-w-[86%] rounded-[22px] bg-white/70 px-5 py-4 text-slate-700 ring-1 ring-cyan-100">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Angora agent</p>
-              <p className="mt-2 text-sm leading-6">Running mission: discovering providers, scoring routes, checking policy, attempting payment, and writing receipts.</p>
+              <p className="mt-2 text-sm leading-6">Running the mesh route: providers, policy, payment context, receipts, and recommendation.</p>
             </div>
           ) : null}
         </div>
         <div className="border-t border-slate-200 bg-white/70 p-4">
-          <div className="mb-4 grid gap-2 lg:grid-cols-3">
-            {missionTemplates.map((template) => (
-              <button key={template} type="button" onClick={() => setAgentGoal(template)} className="border border-slate-200 bg-white px-3 py-2 text-left text-xs font-semibold leading-5 text-slate-600 transition hover:border-cyan-300 hover:text-slate-950">
-                {template}
-              </button>
-            ))}
-          </div>
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-24 resize-none border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
-            <button type="button" onClick={runAgentMission} disabled={agentRunning || agentGoal.trim().length < 8} className="inline-flex items-center justify-center gap-2 bg-cyan-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
-              <Play className="h-4 w-4" />Run agent
+            <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-20 resize-none rounded-[20px] border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
+            <button type="button" onClick={runAgentMission} disabled={agentRunning || agentGoal.trim().length < 8} className="inline-flex min-h-20 items-center justify-center gap-2 rounded-[20px] bg-cyan-400 px-6 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
+              <Play className="h-4 w-4" />{agentRunning ? "Running" : "Run"}
             </button>
           </div>
         </div>
       </Glass>
       <div className="space-y-5">
         <Glass className="border-y border-slate-200 p-5">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Mission control</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Mission facts</p>
           <div className="mt-4 space-y-3">
-            <RouteLine label="Specialist" value={latestResult?.specialistAgent || "auto"} tone="blue" />
-            <RouteLine label="Selected market" value={selectedMarket?.name || "not selected"} tone={selectedMarket ? "good" : "warn"} />
-            <RouteLine label="RFP track" value={latestResult?.rfpTrack || "pending"} tone="purple" />
+            <RouteLine label="Market" value={selectedMarket?.name || "not selected"} tone={selectedMarket ? "good" : "warn"} />
+            <RouteLine label="Agent" value={latestResult?.specialistAgent || selectedMarket?.module || "auto"} tone="blue" />
+            <RouteLine label="Approved" value={String(approvedCount || 0)} tone={approvedCount ? "good" : "neutral"} />
+            <RouteLine label="Blocked" value={String(blockedCount || 0)} tone={blockedCount ? "bad" : "neutral"} />
             <RouteLine label="USDC routed" value={latestResult?.totals?.usdcRouted || "0.000000"} tone="good" />
             <RouteLine label="Receipts" value={String(latestResult?.totals?.receiptsCreated || receipts.length || 0)} tone="good" />
             <RouteLine label="Confidence" value={recommendation ? formatConfidence(recommendation.confidence) : "pending"} tone="blue" />
             <RouteLine label="Reasoning" value={reasoningTrace?.details?.source || "pending"} tone={reasoningTrace?.details?.source === "openai" ? "good" : "warn"} />
           </div>
         </Glass>
-        <Glass className="border-y border-slate-200 p-5">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Live trace</p>
-          <div className="mt-4 space-y-3">
-            {liveTraceItems.length ? liveTraceItems.map((item, index) => (
-              <div key={item.traceId || item.receipt?.receiptId || item.id || index} className="border-t border-slate-200 py-3 first:border-t-0">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-black text-slate-900">{item.label || item.serviceName || item.serviceId || item.category}</p>
-                  <Pill compact tone={item.status === "blocked" ? "bad" : "good"}>{item.status}</Pill>
-                </div>
-                <p className="mt-1 text-xs leading-5 text-slate-500">{item.details?.reason || item.routeReason || item.policyVerdict || item.eventType || "Recorded by the Angora mission runtime."}</p>
-              </div>
-            )) : <EmptyState title="No active mission trace" detail="Run an agent mission to generate live LLM planning, route decisions, receipts, and proof events." />}
-          </div>
-        </Glass>
-        <Glass className="border-y border-slate-200 p-5">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Recoverable checkpoints</p>
-          <div className="mt-4 space-y-2">
-            {(checkpoints.length ? checkpoints.slice(0, 5) : [{ stage: "waiting", status: "saved", resumeFrom: "Run a mission to create checkpoints" }]).map((checkpoint, index) => (
-              <div key={checkpoint.checkpointId || index} className="flex items-center justify-between gap-3 border-t border-slate-200 py-2 first:border-t-0">
-                <span className="text-xs font-semibold text-slate-700">{checkpoint.stage}</span>
-                <Pill compact tone={checkpoint.status === "terminal" ? "bad" : "good"}>{checkpoint.status}</Pill>
-              </div>
-            ))}
-          </div>
-        </Glass>
+        <MissionProofSummary decisions={decisions} receipts={receipts} traces={traces} />
       </div>
     </div>
+  );
+}
+
+function MissionProofSummary({ decisions, receipts, traces }) {
+  const rows = decisions.length ? decisions.slice(0, 5).map((decision) => ({
+    label: decision.providerId || decision.serviceName || decision.category,
+    value: decision.status,
+    detail: decision.routeReason || decision.policyVerdict || "Route recorded by AngoraPay Mesh.",
+    tone: decision.status === "blocked" ? "bad" : "good",
+  })) : traces.slice(0, 4).map((trace) => ({
+    label: trace.label,
+    value: trace.status,
+    detail: trace.eventType,
+    tone: trace.status === "blocked" ? "bad" : "good",
+  }));
+
+  return (
+    <Glass className="border-y border-slate-200 p-5">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Proof details</p>
+      <div className="mt-4 space-y-3">
+        {rows.length ? rows.map((row, index) => (
+          <div key={`${row.label}-${index}`} className="border-t border-slate-200 py-3 first:border-t-0">
+            <div className="flex items-center justify-between gap-3">
+              <p className="truncate text-sm font-black text-slate-900">{row.label}</p>
+              <Pill compact tone={row.tone}>{row.value}</Pill>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-slate-500">{row.detail}</p>
+          </div>
+        )) : <EmptyState title="No proof yet" detail="Run the agent to create route decisions, receipts, and trace records." />}
+      </div>
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <RouteLine label="Receipt IDs" value={receipts.length ? String(receipts.length) : "pending"} tone={receipts.length ? "good" : "warn"} />
+      </div>
+    </Glass>
   );
 }
 
