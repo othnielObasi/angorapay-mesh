@@ -389,10 +389,10 @@ function Header({ mode, setMode, openConsole }) {
     { id: "developers", label: "Developers" },
   ];
   const homeSections = [
-    ["01", "problem", "Problem"],
-    ["02", "flow", "Flow"],
-    ["03", "infrastructure", "Infrastructure"],
-    ["04", "proof", "Proof"],
+    ["problem", "Problem"],
+    ["flow", "Flow"],
+    ["infrastructure", "Infrastructure"],
+    ["proof", "Proof"],
   ];
   const goToPage = (pageId) => {
     setMode(pageId);
@@ -423,27 +423,26 @@ function Header({ mode, setMode, openConsole }) {
               key={item.id}
               type="button"
               onClick={() => goToPage(item.id)}
-              className={cx("rounded-full px-4 py-2 text-xs font-medium transition", mode === item.id ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:text-slate-950")}
+              className={cx("rounded-full px-4 py-2 text-xs font-medium transition", mode === item.id ? "bg-cyan-50 text-cyan-800 shadow-sm ring-1 ring-cyan-100" : "text-slate-500 hover:bg-white/70 hover:text-slate-950")}
             >
               {item.label}
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-slate-950 px-5 py-2.5 text-xs font-medium text-white shadow-[0_18px_45px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5">
+        <button type="button" onClick={() => openConsole("workspace")} className="rounded-full border border-slate-200/70 bg-white/65 px-5 py-2.5 text-xs font-medium text-slate-700 shadow-[0_18px_45px_rgba(15,42,61,0.08)] backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800">
           Sign in
         </button>
       </nav>
       {mode === "home" ? (
         <div className="mt-5 flex justify-center">
           <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-7 gap-y-2 border-y border-slate-200/55 px-3 py-3" aria-label="Home sections">
-            {homeSections.map(([number, sectionId, label]) => (
+            {homeSections.map(([sectionId, label]) => (
               <button
                 key={sectionId}
                 type="button"
                 onClick={() => goToHomeSection(sectionId)}
                 className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-slate-950"
               >
-                <span className="font-mono text-[10px] text-cyan-700/80">{number}</span>
                 <span>{label}</span>
               </button>
             ))}
@@ -515,7 +514,7 @@ function Home({ setMode, openConsole }) {
             Circle enables payment. Angora decides, routes, blocks, proves, and reconciles.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => openConsole("workspace")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-7 py-4 text-sm font-medium text-white shadow-[0_20px_55px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-900">
+            <button type="button" onClick={() => openConsole("workspace")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-7 py-4 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
               Run market mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </button>
             <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/40 bg-white/40 px-6 py-4 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-200/70 hover:text-cyan-800">
@@ -849,7 +848,7 @@ function Product({ setMode, openConsole }) {
             Circle/x402 enables payment. AngoraPay Mesh decides which service to buy, who to trust, which route policy allows, and what proof must be attached before a recommendation is accepted.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => openConsole("workspace")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3.5 text-sm font-medium text-white shadow-[0_20px_55px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5">
+            <button type="button" onClick={() => openConsole("workspace")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
               Sign in to run a mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </button>
             <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/45 bg-white/45 px-6 py-3.5 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:text-cyan-800">
@@ -1011,7 +1010,7 @@ function Developers({ openConsole }) {
           <p className="mt-7 max-w-2xl text-lg font-medium leading-8 text-slate-600">
             Use AngoraPay Mesh as the policy-aware wrapper around Circle/x402 on Arc. Developers call one Gateway or SDK while Angora handles discovery, provider routing, receipts, execution history, and traction metrics.
           </p>
-          <button type="button" onClick={() => openConsole("workspace")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3.5 text-sm font-medium text-white shadow-[0_20px_55px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5">
+          <button type="button" onClick={() => openConsole("workspace")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
             Sign in to test Gateway <ArrowRight className="h-4 w-4" />
           </button>
         </div>
