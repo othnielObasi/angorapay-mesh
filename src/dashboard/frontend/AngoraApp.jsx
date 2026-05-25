@@ -1205,11 +1205,12 @@ function Developers({ openConsole }) {
 
 function CodeBlock({ title, code }) {
   return (
-    <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-950 shadow-2xl shadow-slate-200/70">
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
-        <span className="font-mono text-[11px] text-white/45">{title}</span>
+    <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white/70 shadow-[0_22px_70px_rgba(15,42,61,0.08)] backdrop-blur">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-sky-50/65 px-5 py-3">
+        <span className="font-mono text-[11px] font-black uppercase tracking-[0.16em] text-cyan-700">{title}</span>
+        <span className="rounded-full border border-cyan-200 bg-white/70 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">example</span>
       </div>
-      <pre className="overflow-auto p-6 text-xs leading-7 text-cyan-50/90">{code}</pre>
+      <pre className="overflow-auto border-l-4 border-cyan-300/70 p-6 font-mono text-xs leading-7 text-slate-700">{code}</pre>
     </div>
   );
 }
@@ -1730,8 +1731,8 @@ function MetricsPanel({ live }) {
   return <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Submission metrics</p><h2 className="mt-1 text-2xl font-black text-slate-950">Users, transactions, volume, receipts</h2><div className="mt-6 grid gap-x-8 gap-y-5 md:grid-cols-3 xl:grid-cols-4">{liveMetrics.map(([label, value]) => <div key={label} className="border-t border-slate-200 pt-4"><p className="text-xs text-slate-500">{label}</p><p className="mt-2 text-3xl font-black text-slate-950">{value}</p></div>)}</div></Glass>;
 }
 
-function DeveloperPanel() {
-  return <Developers />;
+function DeveloperPanel(props) {
+  return <Developers {...props} />;
 }
 
 function RunAgentWorkspace(props) {
@@ -2111,7 +2112,7 @@ export default function AngoraUiCanvas() {
 
   return (
     <ConsoleShell activeTab={tab} setActiveTab={setTab} goHome={() => setView("landing")} live={live} latestResult={latestResult}>
-      <Panel runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} selectedMarket={selectedMarket} setSelectedMarket={setSelectedMarket} selectMarketAndMission={selectMarketAndMission} />
+      <Panel runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} selectedMarket={selectedMarket} setSelectedMarket={setSelectedMarket} selectMarketAndMission={selectMarketAndMission} openConsole={openConsole} />
     </ConsoleShell>
   );
 }
