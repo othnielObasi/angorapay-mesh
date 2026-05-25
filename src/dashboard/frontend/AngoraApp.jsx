@@ -385,9 +385,9 @@ function Background({ children }) {
 
 function Glass({ children, className = "" }) {
   return (
-    <div className={cx("rounded-lg border border-slate-200/80 bg-white/80 shadow-2xl shadow-slate-200/60 backdrop-blur-xl", className)}>
+    <section className={cx("bg-white/55", className)}>
       {children}
-    </div>
+    </section>
   );
 }
 
@@ -678,7 +678,7 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
             })}
           </nav>
         </div>
-        <div className="mb-5 grid gap-3 md:grid-cols-4">
+        <div className="mb-6 grid gap-0 border-y border-slate-200 bg-white/45 md:grid-cols-4">
           <Stat label="Agent state" value={latestResult ? "active" : "ready"} icon={MessageSquare} />
           <Stat label="Gateway calls" value={String(metrics?.gatewayCalls || 0)} icon={Route} />
           <Stat label="Receipts" value={String(metrics?.receiptsCreated || live?.receipts?.length || 0)} icon={FileCheck2} />
@@ -692,10 +692,10 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
 
 function Stat({ label, value, icon: Icon }) {
   return (
-    <Glass className="p-4">
+    <Glass className="border-b border-slate-200 p-4 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
       <div className="flex items-center justify-between">
         <div><p className="text-xs text-slate-500">{label}</p><p className="mt-1 text-2xl font-black text-slate-950">{value}</p></div>
-        <div className="rounded-2xl bg-cyan-50 p-3 text-cyan-700"><Icon className="h-5 w-5" /></div>
+        <div className="text-cyan-700"><Icon className="h-5 w-5" /></div>
       </div>
     </Glass>
   );
@@ -716,9 +716,9 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
       ];
   const decisions = latestResult?.decisions || [];
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
-      <Glass className="flex min-h-[680px] flex-col overflow-hidden">
-        <div className="border-b border-slate-200/80 bg-white/80 p-5">
+    <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_390px]">
+      <Glass className="flex min-h-[680px] flex-col border-y border-slate-200 bg-white/45">
+        <div className="border-b border-slate-200 p-5">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Agent workspace</p>
@@ -730,37 +730,37 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
         </div>
         <div className="flex-1 space-y-4 overflow-auto p-5">
           {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={cx("max-w-[88%] rounded-lg p-4 ring-1", message.role === "user" ? "ml-auto bg-slate-950 text-white ring-slate-800" : "bg-white/90 text-slate-700 ring-slate-200")}>
+            <div key={`${message.role}-${index}`} className={cx("max-w-[88%] border-l-4 p-4", message.role === "user" ? "ml-auto border-slate-950 bg-slate-950 text-white" : "border-cyan-300 bg-transparent text-slate-700")}>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-60">{message.role === "user" ? "Builder" : "Angora agent"}</p>
               <p className="mt-2 text-sm leading-6">{message.content}</p>
               {message.role === "assistant" && recommendation?.reasons?.length ? (
                 <div className="mt-3 space-y-2">
-                  {recommendation.reasons.slice(0, 3).map((reason) => <p key={reason} className="rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">{reason}</p>)}
+                  {recommendation.reasons.slice(0, 3).map((reason) => <p key={reason} className="border-t border-slate-200 py-2 text-xs leading-5 text-slate-600">{reason}</p>)}
                 </div>
               ) : null}
             </div>
           ))}
           {agentRunning ? (
-            <div className="max-w-[88%] rounded-lg bg-white/90 p-4 text-slate-700 ring-1 ring-cyan-200">
+            <div className="max-w-[88%] border-l-4 border-cyan-300 p-4 text-slate-700">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Angora agent</p>
               <p className="mt-2 text-sm leading-6">Running mission: discovering providers, scoring routes, checking policy, attempting payment, and writing receipts.</p>
             </div>
           ) : null}
         </div>
-        <div className="border-t border-slate-200/80 bg-slate-50/70 p-4">
+        <div className="border-t border-slate-200 bg-white/70 p-4">
           <div className="mb-3 flex flex-wrap gap-2">
             {["Prediction market", "BTC", "0.05 USDC budget", "Arc testnet", "Proof required"].map((chip) => <Pill key={chip} compact tone="blue">{chip}</Pill>)}
           </div>
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-24 resize-none rounded-lg border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
-            <button type="button" onClick={runAgentMission} disabled={agentRunning || agentGoal.trim().length < 8} className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
+            <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-24 resize-none border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
+            <button type="button" onClick={runAgentMission} disabled={agentRunning || agentGoal.trim().length < 8} className="inline-flex items-center justify-center gap-2 bg-cyan-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
               <Play className="h-4 w-4" />Run agent
             </button>
           </div>
         </div>
       </Glass>
       <div className="space-y-5">
-        <Glass className="p-5">
+        <Glass className="border-y border-slate-200 p-5">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Mission control</p>
           <div className="mt-4 space-y-3">
             <RouteLine label="Specialist" value={latestResult?.specialistAgent || "auto"} tone="blue" />
@@ -770,11 +770,11 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
             <RouteLine label="Confidence" value={recommendation ? `${Math.round(recommendation.confidence * 100)}%` : "pending"} tone="blue" />
           </div>
         </Glass>
-        <Glass className="p-5">
+        <Glass className="border-y border-slate-200 p-5">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Live trace</p>
           <div className="mt-4 space-y-3">
             {(traces.length ? traces.slice(0, 6) : decisions.length ? decisions : live?.execution?.slice(0, 4) || []).map((item, index) => (
-              <div key={item.traceId || item.receipt?.receiptId || item.id || index} className="rounded-lg bg-white/70 p-3 ring-1 ring-slate-200">
+              <div key={item.traceId || item.receipt?.receiptId || item.id || index} className="border-t border-slate-200 py-3 first:border-t-0">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-black text-slate-900">{item.label || item.serviceName || item.serviceId || item.category}</p>
                   <Pill compact tone={item.status === "blocked" ? "bad" : "good"}>{item.status}</Pill>
@@ -784,11 +784,11 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
             ))}
           </div>
         </Glass>
-        <Glass className="p-5">
+        <Glass className="border-y border-slate-200 p-5">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Recoverable checkpoints</p>
           <div className="mt-4 space-y-2">
             {(checkpoints.length ? checkpoints.slice(0, 5) : [{ stage: "waiting", status: "saved", resumeFrom: "Run a mission to create checkpoints" }]).map((checkpoint, index) => (
-              <div key={checkpoint.checkpointId || index} className="flex items-center justify-between gap-3 rounded-lg bg-white/70 px-3 py-2 ring-1 ring-slate-200">
+              <div key={checkpoint.checkpointId || index} className="flex items-center justify-between gap-3 border-t border-slate-200 py-2 first:border-t-0">
                 <span className="text-xs font-semibold text-slate-700">{checkpoint.stage}</span>
                 <Pill compact tone={checkpoint.status === "terminal" ? "bad" : "good"}>{checkpoint.status}</Pill>
               </div>
@@ -819,7 +819,7 @@ function RunPanel({ runDemo, completed, live }) {
 
 function StepRow({ step, index }) {
   const tone = step.status === "done" ? "good" : step.status === "running" ? "blue" : "neutral";
-  return <div className="flex gap-4 rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-700">{index + 1}</div><div className="min-w-0 flex-1"><p className="font-black text-slate-950">{step.title}</p><p className="mt-1 text-sm leading-6 text-slate-600">{step.detail}</p></div><Pill tone={tone}>{step.status}</Pill></div>;
+  return <div className="flex gap-4 border-t border-slate-200 py-4 first:border-t-0"><div className="w-8 shrink-0 font-mono text-sm font-black text-cyan-700">{String(index + 1).padStart(2, "0")}</div><div className="min-w-0 flex-1"><p className="font-black text-slate-950">{step.title}</p><p className="mt-1 text-sm leading-6 text-slate-600">{step.detail}</p></div><Pill tone={tone}>{step.status}</Pill></div>;
 }
 
 function RouteLine({ label, value, tone }) {
@@ -829,10 +829,10 @@ function RouteLine({ label, value, tone }) {
 function ServiceTile({ service }) {
   const statusTone = service.status === "approved" ? "good" : "bad";
   return (
-    <div className="rounded-3xl bg-white/70 p-5 ring-1 ring-slate-200">
+    <div className="border-t border-slate-200 py-5 first:border-t-0">
       <div className="flex items-start justify-between gap-3"><div><p className="font-black text-slate-950">{service.name}</p><p className="mt-1 text-sm text-slate-500">{service.provider}</p></div><Pill tone={statusTone}>{service.status}</Pill></div>
       <p className="mt-4 text-sm leading-6 text-slate-600">{service.reason}</p>
-      <div className="mt-5 grid grid-cols-4 gap-2 text-center text-xs">
+      <div className="mt-5 grid grid-cols-4 divide-x divide-slate-200 border-y border-slate-200 text-center text-xs">
         <Metric label="Price" value={service.price.toFixed(3)} />
         <Metric label="Trust" value={service.trust} />
         <Metric label="Score" value={service.score} />
@@ -843,7 +843,7 @@ function ServiceTile({ service }) {
 }
 
 function Metric({ label, value }) {
-  return <div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">{label}</p><p className="mt-1 font-black text-slate-950">{value}</p></div>;
+  return <div className="p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">{label}</p><p className="mt-1 font-black text-slate-950">{value}</p></div>;
 }
 
 function MarketplacePanel({ live }) {
@@ -864,12 +864,12 @@ function MarketplacePanel({ live }) {
   const sourceServices = liveServices.length > 0 ? liveServices : marketServices;
   const filtered = sourceServices.filter((service) => `${service.name} ${service.provider} ${service.category}`.toLowerCase().includes(query.toLowerCase()));
   return (
-    <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
-      <Glass className="p-5">
-        <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center"><div><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Marketplace</p><h2 className="mt-1 text-2xl font-black text-slate-950">Paid market services</h2></div><div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 ring-1 ring-slate-200"><Search className="h-4 w-4 text-cyan-700" /><input value={query} onChange={(event) => setQuery(event.target.value)} className="w-36 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400" placeholder="Search" /></div></div>
-        <div className="grid gap-3 md:grid-cols-2">{filtered.map((service) => <ServiceTile key={service.id} service={service} />)}</div>
+    <div className="grid gap-8 xl:grid-cols-[1fr_280px]">
+      <Glass className="border-y border-slate-200 p-5">
+        <div className="mb-2 flex flex-col justify-between gap-4 md:flex-row md:items-center"><div><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Marketplace</p><h2 className="mt-1 text-2xl font-black text-slate-950">Paid market services</h2></div><div className="flex items-center gap-2 border-b border-slate-300 bg-transparent py-2"><Search className="h-4 w-4 text-cyan-700" /><input value={query} onChange={(event) => setQuery(event.target.value)} className="w-40 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400" placeholder="Search services" /></div></div>
+        <div className="grid gap-x-8 md:grid-cols-2">{filtered.map((service) => <ServiceTile key={service.id} service={service} />)}</div>
       </Glass>
-      <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Mission filters</p><div className="mt-5 space-y-4"><RouteLine label="Max spend" value="0.05 USDC" tone="blue" /><RouteLine label="Min trust" value="85" tone="good" /><RouteLine label="Proof" value="required" tone="good" /><RouteLine label="Network" value="Arc" tone="purple" /></div></Glass>
+      <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Mission filters</p><div className="mt-5 space-y-4"><RouteLine label="Max spend" value="0.05 USDC" tone="blue" /><RouteLine label="Min trust" value="85" tone="good" /><RouteLine label="Proof" value="required" tone="good" /><RouteLine label="Network" value="Arc" tone="purple" /></div></Glass>
     </div>
   );
 }
@@ -889,10 +889,10 @@ function ScorecardPanel({ live }) {
       }))
     : routeCandidates;
   return (
-    <Glass className="p-5">
+    <Glass className="border-y border-slate-200 p-5">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Route scorecard</p>
       <h2 className="mt-1 text-2xl font-black text-slate-950">Why providers were selected or blocked</h2>
-      <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white">
+      <div className="mt-6 overflow-x-auto border-y border-slate-200 bg-white/40">
         <div className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Provider</span><span>Fit</span><span>Policy</span><span>Proof</span><span>Score</span><span>Verdict</span></div>
         {rows.map((candidate) => <div key={`${candidate.provider}-${candidate.service}`} className="grid grid-cols-[1fr_90px_90px_90px_90px_110px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span><b>{candidate.provider}</b><br /><span className="text-xs text-slate-500">{candidate.service}</span></span><span>{candidate.missionFit}</span><span>{candidate.policy}</span><span>{candidate.proof}</span><span>{candidate.routeScore}</span><Pill compact tone={candidate.verdict === "blocked" ? "bad" : candidate.verdict === "selected" ? "good" : "blue"}>{candidate.verdict}</Pill></div>)}
       </div>
@@ -913,16 +913,16 @@ function PolicyPanel({ live }) {
     ["Allowed categories", (policy.allowedCategories || []).join(", ")],
     ["Blocked providers", (policy.blockedProviders || []).join(", ") || "none"],
   ] : policyRules;
-  return <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Policy</p><h2 className="mt-1 text-2xl font-black text-slate-950">Mission controls before payment</h2><div className="mt-6 grid gap-3 md:grid-cols-2">{rows.map(([key, value]) => <div key={key} className="flex items-center justify-between gap-4 rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200"><span className="text-sm text-slate-500">{key}</span><span className="text-right text-sm font-black text-slate-950">{value}</span></div>)}</div></Glass>;
+  return <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Policy</p><h2 className="mt-1 text-2xl font-black text-slate-950">Mission controls before payment</h2><div className="mt-6 divide-y divide-slate-200">{rows.map(([key, value]) => <div key={key} className="flex items-center justify-between gap-4 py-3"><span className="text-sm text-slate-500">{key}</span><span className="text-right text-sm font-black text-slate-950">{value}</span></div>)}</div></Glass>;
 }
 
 function ProviderPanel({ live }) {
   const deliveries = live?.providerDeliveries || [];
   return <div className="grid gap-5 lg:grid-cols-2">
-    {providerOnboarding.map(([title, detail], index) => <Glass key={title} className="p-5"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">{index + 1}</div><p className="mt-5 text-xl font-black text-slate-950">{title}</p><p className="mt-3 text-sm leading-6 text-slate-600">{detail}</p></Glass>)}
-    <Glass className="p-5 lg:col-span-2">
+    {providerOnboarding.map(([title, detail], index) => <Glass key={title} className="border-t border-slate-200 py-5"><div className="font-mono text-sm font-black text-cyan-700">{String(index + 1).padStart(2, "0")}</div><p className="mt-3 text-xl font-black text-slate-950">{title}</p><p className="mt-3 text-sm leading-6 text-slate-600">{detail}</p></Glass>)}
+    <Glass className="border-y border-slate-200 p-5 lg:col-span-2">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Live provider deliveries</p>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">{deliveries.slice(0, 6).map((delivery) => <div key={delivery.deliveryId || delivery.receiptId} className="rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200"><div className="flex items-center justify-between"><p className="font-black text-slate-900">{delivery.providerId}</p><Pill compact tone={delivery.status === "delivered" ? "good" : "warn"}>{delivery.status}</Pill></div><p className="mt-1 text-xs text-slate-500">{delivery.serviceId} · {delivery.receiptId}</p></div>)}</div>
+      <div className="mt-4 divide-y divide-slate-200">{deliveries.slice(0, 6).map((delivery) => <div key={delivery.deliveryId || delivery.receiptId} className="py-3"><div className="flex items-center justify-between"><p className="font-black text-slate-900">{delivery.providerId}</p><Pill compact tone={delivery.status === "delivered" ? "good" : "warn"}>{delivery.status}</Pill></div><p className="mt-1 text-xs text-slate-500">{delivery.serviceId} · {delivery.receiptId}</p></div>)}</div>
     </Glass>
   </div>;
 }
@@ -938,10 +938,10 @@ function HistoryPanel({ live }) {
   }));
   const rows = liveRows.length > 0 ? liveRows : executionHistory;
   return (
-    <Glass className="p-5">
+    <Glass className="border-y border-slate-200 p-5">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Execution history</p>
       <h2 className="mt-1 text-2xl font-black text-slate-950">Paid, pending, and blocked calls</h2>
-      <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white">
+      <div className="mt-6 overflow-x-auto border-y border-slate-200 bg-white/40">
         <div className="grid grid-cols-[90px_1fr_120px_90px_100px_120px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Time</span><span>Provider</span><span>Service</span><span>Score</span><span>Amount</span><span>Status</span></div>
         {rows.map((row) => <div key={`${row.time}-${row.provider}-${row.service}`} className="grid grid-cols-[90px_1fr_120px_90px_100px_120px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0"><span className="font-mono text-xs text-slate-500">{row.time}</span><span className="font-semibold text-slate-800">{row.provider}</span><span>{row.service}</span><span>{row.score}</span><span>{row.amount.toFixed(3)}</span><Pill compact tone={row.status === "blocked" ? "bad" : row.status === "settled" || row.status === "delivered" ? "good" : "warn"}>{row.status}</Pill></div>)}
       </div>
@@ -970,8 +970,8 @@ function ProofPanel({ live, latestResult }) {
   ] : proofRows;
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
-      <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Receipt packet</p><h2 className="mt-1 text-2xl font-black text-slate-950">Payment-linked market proof</h2><div className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-3xl bg-white/70 ring-1 ring-slate-200">{rows.map(([key, value]) => <div key={key} className="grid gap-3 p-4 md:grid-cols-[220px_1fr]"><p className="font-mono text-xs text-slate-400">{key}</p><p className="break-all font-semibold text-slate-700">{value || "n/a"}</p></div>)}</div></Glass>
-      <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Audit answer</p><h3 className="mt-2 text-2xl font-black text-slate-950">What signal was bought, why, and which mission did it support?</h3><p className="mt-4 text-sm leading-7 text-slate-600">The receipt connects mission intent, provider route, policy verdict, Circle/x402 authorization, Arc settlement state, provider output, output hash, and recommendation.</p></Glass>
+      <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Receipt packet</p><h2 className="mt-1 text-2xl font-black text-slate-950">Payment-linked market proof</h2><div className="mt-6 divide-y divide-slate-200 border-y border-slate-200 bg-white/40">{rows.map(([key, value]) => <div key={key} className="grid gap-3 py-3 md:grid-cols-[220px_1fr]"><p className="font-mono text-xs text-slate-400">{key}</p><p className="break-all font-semibold text-slate-700">{value || "n/a"}</p></div>)}</div></Glass>
+      <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Audit answer</p><h3 className="mt-2 text-2xl font-black text-slate-950">What signal was bought, why, and which mission did it support?</h3><p className="mt-4 text-sm leading-7 text-slate-600">The receipt connects mission intent, provider route, policy verdict, Circle/x402 authorization, Arc settlement state, provider output, output hash, and recommendation.</p></Glass>
     </div>
   );
 }
@@ -982,7 +982,7 @@ function ReconciliationPanel({ live, runReconciliation, reconciliationRunning })
   const deliveries = live?.providerDeliveries || [];
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
-      <Glass className="p-5">
+      <Glass className="border-y border-slate-200 p-5">
         <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Reconciliation</p>
@@ -992,7 +992,7 @@ function ReconciliationPanel({ live, runReconciliation, reconciliationRunning })
             <CheckCircle2 className="h-4 w-4" />{reconciliationRunning ? "Running" : "Run reconciliation"}
           </button>
         </div>
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto border-y border-slate-200 bg-white/40">
           <div className="grid grid-cols-[1fr_90px_90px_90px_90px] gap-3 border-b border-slate-200 bg-slate-50 p-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400"><span>Run</span><span>Checked</span><span>Matched</span><span>Pending</span><span>Failed</span></div>
           {(runs.length ? runs : [{ reconciliationRunId: "waiting", checked: 0, matched: 0, pending: live?.receipts?.length || 0, failed: 0 }]).slice(0, 8).map((run) => (
             <div key={run.reconciliationRunId} className="grid grid-cols-[1fr_90px_90px_90px_90px] gap-3 border-b border-slate-100 p-3 text-sm last:border-b-0">
@@ -1002,8 +1002,8 @@ function ReconciliationPanel({ live, runReconciliation, reconciliationRunning })
         </div>
       </Glass>
       <div className="space-y-5">
-        <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Payment intents</p><div className="mt-4 space-y-3">{paymentIntents.slice(0, 5).map((intent) => <RouteLine key={intent.paymentIntentId} label={intent.paymentIntentId?.slice(0, 18) || "intent"} value={intent.status || "pending"} tone={intent.status === "settled" ? "good" : "warn"} />)}</div></Glass>
-        <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Provider deliveries</p><div className="mt-4 space-y-3">{deliveries.slice(0, 5).map((delivery) => <RouteLine key={delivery.deliveryId || delivery.receiptId} label={delivery.providerId || "provider"} value={delivery.status || "pending"} tone={delivery.status === "delivered" ? "good" : "warn"} />)}</div></Glass>
+        <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Payment intents</p><div className="mt-4 space-y-3">{paymentIntents.slice(0, 5).map((intent) => <RouteLine key={intent.paymentIntentId} label={intent.paymentIntentId?.slice(0, 18) || "intent"} value={intent.status || "pending"} tone={intent.status === "settled" ? "good" : "warn"} />)}</div></Glass>
+        <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Provider deliveries</p><div className="mt-4 space-y-3">{deliveries.slice(0, 5).map((delivery) => <RouteLine key={delivery.deliveryId || delivery.receiptId} label={delivery.providerId || "provider"} value={delivery.status || "pending"} tone={delivery.status === "delivered" ? "good" : "warn"} />)}</div></Glass>
       </div>
     </div>
   );
@@ -1025,7 +1025,7 @@ function MetricsPanel({ live }) {
     ["Providers used", metrics.providersUsed],
     ["RFP coverage", "6 / 6"],
   ] : submissionMetrics;
-  return <Glass className="p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Submission metrics</p><h2 className="mt-1 text-2xl font-black text-slate-950">Users, transactions, volume, receipts</h2><div className="mt-6 grid gap-3 md:grid-cols-3 xl:grid-cols-4">{liveMetrics.map(([label, value]) => <div key={label} className="rounded-3xl bg-white/70 p-5 ring-1 ring-slate-200"><p className="text-xs text-slate-500">{label}</p><p className="mt-2 text-3xl font-black text-slate-950">{value}</p></div>)}</div></Glass>;
+  return <Glass className="border-y border-slate-200 p-5"><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Submission metrics</p><h2 className="mt-1 text-2xl font-black text-slate-950">Users, transactions, volume, receipts</h2><div className="mt-6 grid gap-x-8 gap-y-5 md:grid-cols-3 xl:grid-cols-4">{liveMetrics.map(([label, value]) => <div key={label} className="border-t border-slate-200 pt-4"><p className="text-xs text-slate-500">{label}</p><p className="mt-2 text-3xl font-black text-slate-950">{value}</p></div>)}</div></Glass>;
 }
 
 function DeveloperPanel() {
@@ -1088,7 +1088,7 @@ function MetricsDeveloperWorkspace({ live }) {
 
 function SectionHeader({ eyebrow, title }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white/80 p-5">
+    <div className="border-y border-slate-200 bg-white/35 py-5">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">{eyebrow}</p>
       <h2 className="mt-1 text-2xl font-black text-slate-950">{title}</h2>
     </div>
