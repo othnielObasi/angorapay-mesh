@@ -9,6 +9,7 @@ import {
   Play,
   Route,
   Search,
+  ShieldCheck,
   Store,
   WalletCards,
 } from "lucide-react";
@@ -525,56 +526,61 @@ function Home({ setMode }) {
 }
 
 function MeshHeroVisual() {
-  const routeMetrics = [
-    ["route", "OddsNode"],
-    ["cost", "0.004"],
-    ["score", "96"],
-    ["asset", "USDC"],
+  const meshPoints = [
+    { label: "Mission", detail: "market question", tone: "blue", className: "left-1/2 top-[70px] -translate-x-1/2" },
+    { label: "Providers", detail: "paid signals", tone: "good", className: "right-[72px] top-[214px]" },
+    { label: "Policy", detail: "trust + spend", tone: "purple", className: "right-[150px] top-[348px]" },
+    { label: "Payment", detail: "Circle/x402", tone: "blue", className: "left-[150px] top-[348px]" },
+    { label: "Proof", detail: "receipt hash", tone: "good", className: "left-[72px] top-[214px]" },
   ];
 
   return (
-    <Glass className="relative min-h-[620px] overflow-hidden p-8">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12),transparent_48%)]" />
+    <Glass className="relative min-h-[560px] overflow-hidden p-8">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.11),transparent_52%)]" />
       <div className="absolute left-8 top-8 rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">mission-aware route</div>
       <div className="absolute right-8 top-8 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">Arc USDC</div>
 
-      <div className="absolute left-1/2 top-[300px] h-[330px] w-[330px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200" />
-      <div className="absolute left-1/2 top-[300px] h-[220px] w-[220px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200" />
-      <div className="absolute left-[120px] right-[120px] top-[300px] h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent" />
-      <div className="absolute left-1/2 top-[96px] h-[408px] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-slate-200 to-transparent" />
+      <svg className="absolute inset-x-8 top-16 h-[420px] w-[calc(100%-4rem)]" viewBox="0 0 640 420" fill="none" aria-hidden="true">
+        <circle cx="320" cy="220" r="150" stroke="rgb(203 213 225)" strokeWidth="1" opacity="0.7" />
+        <circle cx="320" cy="220" r="96" stroke="rgb(103 232 249)" strokeWidth="1.2" opacity="0.85" />
+        <path d="M320 72L505 184L435 350H205L135 184L320 72Z" stroke="rgb(203 213 225)" strokeWidth="1" opacity="0.8" />
+        <path d="M320 220L320 72M320 220L505 184M320 220L435 350M320 220L205 350M320 220L135 184" stroke="rgb(103 232 249)" strokeWidth="1.4" opacity="0.75" />
+        <path d="M320 72L505 184L435 350L205 350L135 184L320 72" stroke="rgb(6 182 212)" strokeWidth="2" opacity="0.25" />
+        <circle cx="320" cy="220" r="70" fill="rgb(236 254 255)" opacity="0.55" />
+      </svg>
 
-      <div className="absolute left-1/2 top-[300px] z-10 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-[2rem] border border-cyan-200 bg-white/95 text-center shadow-2xl shadow-slate-200/70 backdrop-blur-xl">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 ring-1 ring-cyan-200">
+      <div className="absolute left-1/2 top-[284px] z-10 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-cyan-200 bg-white/95 text-center shadow-2xl shadow-cyan-100/80 ring-8 ring-cyan-50/80 backdrop-blur-xl">
+        <div className="absolute inset-3 rounded-full border border-cyan-100" />
+        <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-cyan-50 ring-1 ring-cyan-200">
+          <span className="absolute inset-0 rounded-full bg-cyan-200/30 animate-ping" />
           <Route className="h-6 w-6 text-cyan-700" />
         </div>
-        <p className="mt-3 text-sm font-black text-slate-950">Route mesh</p>
-        <p className="mt-1 text-xs text-slate-500">select - pay - prove</p>
+        <p className="relative mt-3 text-sm font-black text-slate-950">Angora Mesh</p>
+        <p className="relative mt-1 max-w-[110px] text-xs leading-5 text-slate-500">route, pay, prove</p>
       </div>
 
-      <HeroNode className="left-1/2 top-[74px] -translate-x-1/2" label="Market mission" value="+EV odds" badge="intent" tone="blue" />
-      <HeroNode className="right-12 top-[220px]" label="Route policy" value="trust >= 85" badge="score" tone="purple" />
-      <HeroNode className="right-[18%] top-[356px]" label="OddsNode" value="0.004 USDC" badge="selected" tone="good" />
-      <HeroNode className="left-[18%] top-[356px]" label="Circle/x402" value="Arc USDC" badge="pay" tone="blue" />
-      <HeroNode className="left-12 top-[220px]" label="Proof" value="receipt + hash" badge="stored" tone="good" />
+      {meshPoints.map((point) => (
+        <MeshPoint key={point.label} {...point} />
+      ))}
 
-      <div className="absolute bottom-6 left-8 right-8 z-30 rounded-[24px] border border-slate-200 bg-white/85 p-3.5 backdrop-blur-xl">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-cyan-700">Live route trace</p>
-            <p className="mt-1 text-xs text-slate-500">mission - marketplace - scorecard - Circle/x402 - receipt</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {routeMetrics.map(([label, value]) => (
-              <div key={label} className="min-w-[74px] rounded-xl bg-slate-50 px-2.5 py-1.5 text-center ring-1 ring-slate-200">
-                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">{label}</p>
-                <p className="mt-0.5 text-[11px] font-black text-slate-700">{value}</p>
-              </div>
-            ))}
-            <Pill tone="good">policy-ready</Pill>
-          </div>
-        </div>
+      <div className="absolute bottom-8 left-1/2 z-30 w-[min(520px,calc(100%-4rem))] -translate-x-1/2 rounded-full border border-slate-200 bg-white/80 px-5 py-3 text-center text-xs font-semibold leading-5 text-slate-600 shadow-sm backdrop-blur-xl">
+        Agent asks. Angora scores trusted providers, pays approved calls, and keeps proof.
       </div>
     </Glass>
+  );
+}
+
+function MeshPoint({ className, label, detail, tone }) {
+  return (
+    <div className={cx("absolute z-20 flex w-32 flex-col items-center text-center", className)}>
+      <div className={cx("flex h-16 w-16 items-center justify-center rounded-full border bg-white/90 shadow-xl shadow-slate-200/50 backdrop-blur-xl", tone === "good" ? "border-emerald-200 text-emerald-700" : tone === "purple" ? "border-violet-200 text-violet-700" : "border-cyan-200 text-cyan-700")}>
+        <span className={cx("h-3 w-3 rounded-full", tone === "good" ? "bg-emerald-400" : tone === "purple" ? "bg-violet-400" : "bg-cyan-400")} />
+      </div>
+      <div className="mt-2">
+        <p className="text-xs font-black text-slate-950">{label}</p>
+        <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{detail}</p>
+      </div>
+    </div>
   );
 }
 
@@ -587,21 +593,6 @@ function WorkflowCard({ workflow }) {
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-600">{workflow.job}</p>
       <p className="mt-3 border-l border-cyan-200 pl-3 text-xs font-semibold leading-5 text-slate-500">{workflow.support}</p>
-    </div>
-  );
-}
-
-function HeroNode({ className, label, value, badge, tone }) {
-  return (
-    <div className={cx("absolute z-20 flex h-[92px] w-[148px] flex-col justify-between rounded-[22px] border border-slate-200 bg-white/80 p-3 shadow-xl shadow-slate-200/50 backdrop-blur-xl", className)}>
-      <div className="mb-2 flex items-center justify-between">
-        <span className={cx("h-2 w-2 rounded-full", tone === "good" ? "bg-emerald-400" : tone === "purple" ? "bg-violet-400" : "bg-cyan-400")} />
-        <Pill tone={tone} compact>{badge}</Pill>
-      </div>
-      <div>
-        <p className="truncate text-[13px] font-black text-slate-950">{label}</p>
-        <p className="mt-0.5 truncate text-[11px] text-slate-500">{value}</p>
-      </div>
     </div>
   );
 }
@@ -657,6 +648,14 @@ function Product({ setMode }) {
       </section>
       <section className="border-y border-slate-200 py-8">
         <div className="mb-6 max-w-2xl">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">How Angora routes a mission</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">From market question to approved paid-service route.</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">This is the operational view behind the landing-page mesh: Angora turns an agent mission into provider selection, policy approval, payment routing, proof capture, and a recommendation trail.</p>
+        </div>
+        <MissionRoutePreview />
+      </section>
+      <section className="border-y border-slate-200 py-8">
+        <div className="mb-6 max-w-2xl">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">User categories</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">What each user can do today</h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">The console is organized around the same operating loop: mission, network, proof. These user paths explain where each role fits.</p>
@@ -665,6 +664,76 @@ function Product({ setMode }) {
           {userWorkflows.map((workflow) => (
             <WorkflowCard key={workflow.user} workflow={workflow} />
           ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function MissionRoutePreview() {
+  const providerRows = [
+    ["OddsNode", "odds", "94", "0.004", "selected"],
+    ["SentimentMesh", "sentiment", "91", "0.005", "selected"],
+    ["VolGuard", "risk", "92", "0.006", "selected"],
+    ["Unknown Alpha", "research", "41", "0.002", "blocked"],
+  ];
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="space-y-5">
+        <section className="border-y border-slate-200 bg-slate-950 p-5 text-white">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">Market mission</p>
+          <h3 className="mt-3 text-2xl font-black leading-tight">Is this BTC prediction market mispriced?</h3>
+          <p className="mt-4 text-sm leading-6 text-slate-300">The agent needs paid odds, sentiment, risk, and proof services before it can recommend an action.</p>
+        </section>
+
+        <section className="border-y border-slate-200 bg-white/70 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Policy gate</p>
+            <ShieldCheck className="h-5 w-5 text-cyan-700" />
+          </div>
+          <div className="mt-4 grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200 text-center">
+            <Metric label="Trust" value=">= 85" />
+            <Metric label="Spend" value="0.05" />
+            <Metric label="Proof" value="required" />
+          </div>
+        </section>
+      </div>
+
+      <section className="border-y border-slate-200 bg-white/70 p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Provider route</p>
+            <p className="mt-1 text-sm font-black text-slate-950">Score, select, or block before payment</p>
+          </div>
+          <Route className="h-5 w-5 text-cyan-700" />
+        </div>
+
+        <div className="mt-5 divide-y divide-slate-200 border-y border-slate-200">
+          {providerRows.map(([provider, category, trust, price, status]) => (
+            <div key={provider} className="grid grid-cols-[1fr_70px_72px_82px] items-center gap-3 py-3 text-sm">
+              <div className="min-w-0">
+                <p className="truncate font-black text-slate-950">{provider}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{category}</p>
+              </div>
+              <p className="font-mono text-xs font-black text-slate-700">{trust}</p>
+              <p className="font-mono text-xs text-slate-500">{price}</p>
+              <Pill compact tone={status === "blocked" ? "bad" : "good"}>{status}</Pill>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <div className="border-l border-cyan-200 pl-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Payment</p>
+            <p className="mt-1 font-black text-slate-950">0.016 USDC routed</p>
+            <p className="mt-1 text-xs text-slate-500">Circle/x402 boundary on Arc testnet</p>
+          </div>
+          <div className="border-l border-cyan-200 pl-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Proof</p>
+            <p className="mt-1 font-black text-slate-950">4 receipts created</p>
+            <p className="mt-1 text-xs text-slate-500">Trace, output hash, reconciliation tag</p>
+          </div>
         </div>
       </section>
     </div>
