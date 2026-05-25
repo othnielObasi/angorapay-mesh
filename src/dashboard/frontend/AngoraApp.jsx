@@ -297,6 +297,7 @@ async function loadLiveSnapshot() {
     traces,
     checkpoints,
     reputation,
+    readiness,
   ] = await Promise.all([
     api("/v1/angora/dashboard/summary"),
     api("/v1/angora/services/search?max_price=1&require_verified=false"),
@@ -310,6 +311,7 @@ async function loadLiveSnapshot() {
     api("/v1/angora/agent-traces?limit=12"),
     api("/v1/angora/agent-checkpoints?limit=12"),
     api("/v1/angora/reputation"),
+    api("/v1/angora/production/readiness"),
   ]);
   return {
     dashboard,
@@ -326,6 +328,7 @@ async function loadLiveSnapshot() {
     traces: traces.traces?.rows || traces.traces || [],
     checkpoints: checkpoints.checkpoints?.rows || checkpoints.checkpoints || [],
     reputation: reputation.reputation || [],
+    readiness: readiness.readiness || dashboard.readiness,
   };
 }
 
@@ -1101,6 +1104,41 @@ function ReconciliationPanel({ live, runReconciliation, reconciliationRunning })
   );
 }
 
+function ProductionReadinessPanel({ live }) {
+  const readiness = live?.readiness || live?.dashboard?.readiness;
+  const checks = readiness?.checks || [];
+  const toneFor = (status) => status === "ready" ? "good" : status === "attention" ? "warn" : "neutral";
+  return (
+    <Glass className="border-y border-slate-200 p-5">
+      <div className="mb-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Production readiness</p>
+          <h2 className="mt-1 text-2xl font-black text-slate-950">Truthful path from testnet release to production target</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{readiness?.summary || "Readiness data is unavailable until the backend status endpoint responds."}</p>
+        </div>
+        <div className="border-y border-slate-200 bg-white/45 p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Current stage</p>
+          <p className="mt-2 text-2xl font-black text-slate-950">{readiness?.currentStage || "unknown"}</p>
+          <div className="mt-3"><Pill tone={readiness?.productionReady ? "good" : "warn"}>{readiness?.productionReady ? "production ready" : "testnet ready"}</Pill></div>
+        </div>
+      </div>
+      {checks.length ? (
+        <div className="grid gap-x-8 gap-y-3 md:grid-cols-2">
+          {checks.map((check) => (
+            <div key={check.id} className="border-t border-slate-200 py-4">
+              <div className="flex items-start justify-between gap-4">
+                <p className="font-black text-slate-950">{check.label}</p>
+                <Pill tone={toneFor(check.status)} compact>{check.status}</Pill>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{check.detail}</p>
+            </div>
+          ))}
+        </div>
+      ) : <EmptyState title="No readiness checks" detail="The production readiness endpoint has not returned any checks yet." />}
+    </Glass>
+  );
+}
+
 function MetricsPanel({ live }) {
   const metrics = live?.dashboard?.metrics;
   const liveMetrics = metrics ? [
@@ -1163,6 +1201,7 @@ function ProofOpsWorkspace({ live, latestResult, runReconciliation, reconciliati
       <ProofPanel live={live} latestResult={latestResult} />
       <HistoryPanel live={live} />
       <ReconciliationPanel live={live} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} />
+      <ProductionReadinessPanel live={live} />
       <MetricsPanel live={live} />
       <DeveloperPanel />
     </div>

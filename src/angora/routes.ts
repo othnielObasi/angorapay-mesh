@@ -15,7 +15,7 @@ import { incrementMetric, getRuntimeMetrics, requestContext, writeStructuredLog 
 import { evaluateAngoraCall } from "./policy-engine.js";
 import { checkRateLimit, rateLimitKey } from "./rate-limiter.js";
 import { recordBlockedAttempt, recordFailedDelivery, recordSuccessfulDelivery, listReputation } from "./reputation-engine.js";
-import { registerProviderService, searchServices, validateProviderService } from "./service-registry.js";
+import { listServices, registerProviderService, searchServices, validateProviderService } from "./service-registry.js";
 import { createAngoraReceipt, getReceipt, listReceipts, summarize } from "./receipt-store.js";
 import { reconcileSettlementStates } from "./settlement-reconciler.js";
 import { getSubmissionMetrics } from "./submission-metrics.js";
@@ -86,6 +86,105 @@ function enforceRateLimit(req: express.Request, res: express.Response, scope: st
   res.setHeader("retry-after", String(Math.ceil(limit.retryAfterMs / 1000)));
   res.status(429).json({ error: "Rate limit exceeded", retryAfterMs: limit.retryAfterMs });
   return false;
+}
+
+function configured(...names: string[]) {
+  return names.some((name) => Boolean(process.env[name]?.trim()));
+}
+
+function buildProductionReadiness() {
+  const services = listServices();
+  const realProviderCount = services.filter((service) => !service.x402Url.startsWith("mock://")).length;
+  const receiptSummary = summarize();
+  const execution = executionSummary();
+  const reconciliationRuns = listReconciliationRuns({ limit: 1 });
+  const authRequired = process.env.ANGORA_REQUIRE_AUTH === "true" && process.env.ANGORA_AUTH_DISABLED !== "true";
+  const storageDriver = process.env.ANGORA_STORAGE_DRIVER || "json-file";
+  const realX402Enabled = process.env.KAIROS_ENABLE_REAL_X402 === "true";
+  const circleSignerConfigured = configured("CIRCLE_API_KEY") && configured("CIRCLE_ENTITY_SECRET") && configured("CIRCLE_WALLET_ID");
+  const walletSignerConfigured = circleSignerConfigured || configured("PRIVATE_KEY", "OWS_MNEMONIC", "X402_MNEMONIC");
+  const openAiConfigured = configured("OPENAI_API_KEY");
+  const hasReceipts = receiptSummary.totalReceipts > 0;
+  const hasReconciliation = reconciliationRuns.length > 0;
+
+  const checks = [
+    {
+      id: "core_workflow",
+      label: "Mission routing workflow",
+      status: "ready",
+      detail: "Mission classification, provider discovery, route scoring, policy checks, provider delivery, receipts, recommendation, and reconciliation routes are implemented.",
+    },
+    {
+      id: "auth",
+      label: "Production auth boundary",
+      status: authRequired ? "ready" : "attention",
+      detail: authRequired ? "API-key auth is required for protected Angora routes." : "Demo mode is passwordless/auth-disabled. Enable ANGORA_REQUIRE_AUTH=true and ANGORA_AUTH_DISABLED=false before real users or spend.",
+    },
+    {
+      id: "storage",
+      label: "Durable storage",
+      status: storageDriver === "postgres" ? "ready" : "attention",
+      detail: storageDriver === "postgres" ? "Postgres storage driver is selected." : `Current storage driver is ${storageDriver}; JSON volume is acceptable for testnet/demo, not enterprise production.`,
+    },
+    {
+      id: "llm",
+      label: "LLM reasoning",
+      status: openAiConfigured ? "ready" : "attention",
+      detail: openAiConfigured ? "OPENAI_API_KEY is configured for LLM mission planning and recommendations." : "No OPENAI_API_KEY detected; deterministic recommendation fallback is active.",
+    },
+    {
+      id: "real_x402",
+      label: "Real x402 provider calls",
+      status: realX402Enabled && realProviderCount > 0 && walletSignerConfigured ? "ready" : "attention",
+      detail: realX402Enabled && realProviderCount > 0 && walletSignerConfigured
+        ? `${realProviderCount} non-mock provider endpoint(s) can use the x402 adapter with a configured signer.`
+        : `Real x402 requires KAIROS_ENABLE_REAL_X402=true, a signer, and non-mock provider URLs. Current non-mock providers: ${realProviderCount}.`,
+    },
+    {
+      id: "circle_signer",
+      label: "Circle/Arc signer",
+      status: walletSignerConfigured ? "ready" : "attention",
+      detail: circleSignerConfigured ? "Circle Wallet signer variables are configured." : walletSignerConfigured ? "EOA signer variables are configured." : "No Circle Wallet or EOA signer variables detected for real x402/Arc payment paths.",
+    },
+    {
+      id: "receipts",
+      label: "Receipt and proof trail",
+      status: hasReceipts ? "ready" : "pending",
+      detail: hasReceipts ? `${receiptSummary.totalReceipts} receipt(s) recorded with output hashes and reconciliation tags.` : "No receipts recorded yet. Run a mission to create proof artifacts.",
+    },
+    {
+      id: "reconciliation",
+      label: "Reconciliation",
+      status: hasReconciliation ? "ready" : "pending",
+      detail: hasReconciliation ? `Latest reconciliation checked ${reconciliationRuns[0].checked} item(s).` : "No reconciliation run recorded yet.",
+    },
+  ];
+
+  const productionReady = checks.every((check) => check.status === "ready");
+  return {
+    target: "Production-grade paid-intelligence routing, payment, trust, and proof layer for market agents",
+    currentStage: productionReady ? "production_ready" : "production_testnet_ready",
+    productionReady,
+    summary: productionReady
+      ? "All production gates are ready."
+      : "Core product workflow is live, but one or more external production gates still need configuration.",
+    runtime: {
+      nodeEnv: process.env.NODE_ENV || "development",
+      mode: process.env.MODE || "simulation",
+      storageDriver,
+      authRequired,
+      realX402Enabled,
+      openAiConfigured,
+      circleSignerConfigured,
+      walletSignerConfigured,
+      providerCount: services.length,
+      realProviderCount,
+      receiptCount: receiptSummary.totalReceipts,
+      executionCount: execution.totalExecutions,
+      latestReconciliationRunId: reconciliationRuns[0]?.reconciliationRunId || null,
+    },
+    checks,
+  };
 }
 
 function workspaceIdForRequest(req: express.Request) {
@@ -561,9 +660,13 @@ export function registerAngoraRoutes(app: express.Express) {
   });
   app.get("/v1/angora/runtime/metrics", (_req, res) => res.json({ runtime: getRuntimeMetrics(), submission: getSubmissionMetrics(), execution: executionSummary() }));
   app.get("/v1/angora/submission/metrics", (_req, res) => res.json({ metrics: getSubmissionMetrics() }));
+  app.get("/v1/angora/production/readiness", (req, res) => {
+    if (process.env.ANGORA_REQUIRE_AUTH === "true" && !requireApiKey(req, res, "metrics:read")) return;
+    res.json({ readiness: buildProductionReadiness() });
+  });
   app.get("/v1/angora/dashboard/summary", (_req, res) => {
     const mission = listMissions()[0] || null;
-    res.json({ product: "AngoraPay Mesh for Angora market agents", positioning: "Mission-aware trust, routing, and proof layer for market agents using Circle/x402 on Arc", mission, summary: summarize(), execution: executionSummary(), metrics: getSubmissionMetrics(), runtime: getRuntimeMetrics(), traction: tractionSummary(), routeSimulation: mission ? simulateRoutePlan(mission) : null, rfpAreas: RFP_AREAS, reputation: listReputation() });
+    res.json({ product: "AngoraPay Mesh for Angora market agents", positioning: "Mission-aware trust, routing, and proof layer for market agents using Circle/x402 on Arc", mission, summary: summarize(), execution: executionSummary(), metrics: getSubmissionMetrics(), runtime: getRuntimeMetrics(), readiness: buildProductionReadiness(), traction: tractionSummary(), routeSimulation: mission ? simulateRoutePlan(mission) : null, rfpAreas: RFP_AREAS, reputation: listReputation() });
   });
 
   app.post("/v1/angora/agent-missions/run", async (req, res) => {
