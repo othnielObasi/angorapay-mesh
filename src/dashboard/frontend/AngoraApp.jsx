@@ -70,6 +70,21 @@ const userWorkflows = [
   },
 ];
 
+const defaultFlow = [
+  ["1", "Ask", "A builder or market team enters a market question, trading hypothesis, or provider need."],
+  ["2", "Classify", "Angora chooses the right specialist path: prediction, arbitrage, social, portfolio, perps, or proof."],
+  ["3", "Route", "The mesh ranks paid providers by trust, price, latency, proof support, and mission fit."],
+  ["4", "Control", "Workspace policy blocks low-trust, no-proof, over-budget, or disallowed providers."],
+  ["5", "Pay", "Approved calls move through the Circle/x402 payment path with Arc USDC context."],
+  ["6", "Prove", "Receipts, traces, output hashes, delivery records, and reconciliation tags are stored for review."],
+];
+
+const consoleFlows = [
+  ["Agent Workspace", "Run the default market-agent mission and inspect the recommendation, trace, checkpoints, and routed services."],
+  ["Market Network", "Evaluate providers, pricing, trust scores, proof support, route scorecards, and blocked services."],
+  ["Proof & Ops", "Audit receipts, payment intents, provider deliveries, reconciliation runs, policies, and runtime metrics."],
+];
+
 const marketServices = [
   {
     id: "svc-odds",
@@ -427,29 +442,25 @@ function Landing({ openConsole }) {
 
 function Home({ setMode }) {
   const proofPoints = [
-    ["Choose trusted services", "Find the right provider before the agent acts."],
-    ["Pay through Circle/x402", "Use the payment rail without hiding the route logic."],
-    ["Prove every call", "Keep receipts for every market-supporting service."],
+    ["Default user", "Market-agent builders and teams that need paid intelligence before acting."],
+    ["Default action", "Run a mission, route providers, enforce policy, then create a proof-backed answer."],
+    ["Default proof", "Every approved service call is tied to a receipt, trace, output hash, and reconciliation path."],
   ];
 
   return (
-    <div className="space-y-12">
-      <section className="grid gap-12 lg:grid-cols-[0.86fr_1.14fr] lg:items-center">
+    <div className="space-y-14">
+      <section className="grid gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
         <div>
-          <Pill tone="blue">Market-agent routing and proof on Arc</Pill>
+          <Pill tone="blue">Market-agent control layer on Arc</Pill>
           <div className="mt-7 max-w-4xl">
             <div className="mb-5 inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-700">
               <span className="h-2 w-2 rounded-full bg-cyan-500 shadow-[0_0_18px_rgba(6,182,212,0.55)]" />
-              Trusted service routing before market action
+              Paid intelligence before market action
             </div>
-            <h1 className="text-4xl font-black leading-[1.02] tracking-[-0.045em] text-slate-950 md:text-6xl lg:text-7xl">
-              <span className="block">Discover.</span>
-              <span className="block">Route.</span>
-              <span className="block">Pay.</span>
-              <span className="block bg-gradient-to-r from-cyan-600 via-slate-950 to-violet-600 bg-clip-text text-transparent">Prove.</span>
-            </h1>
+            <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.045em] text-slate-950 md:text-7xl">AngoraPay Mesh</h1>
           </div>
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">AngoraPay Mesh helps market agents route trusted paid services and prove every call.</p>
+          <p className="mt-7 max-w-2xl text-xl font-semibold leading-9 text-slate-700">A routing, policy, payment, and proof layer for market agents that buy intelligence before making trading, prediction, arbitrage, or portfolio decisions.</p>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">The default flow is simple: ask a market question, let Angora choose the specialist path, route trusted paid services, enforce spend policy, settle approved calls through Circle/x402 on Arc, and keep receipts for audit.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <button type="button" onClick={() => setMode("product")} className="rounded-full bg-cyan-400 px-6 py-3 text-sm font-black text-slate-950 shadow-xl shadow-cyan-200">Explore user workflows</button>
             <button type="button" onClick={() => setMode("developers")} className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 ring-1 ring-slate-200">Developer docs</button>
@@ -467,20 +478,24 @@ function Home({ setMode }) {
         ))}
       </section>
 
-      <section className="pt-2">
-        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-          <div className="max-w-xl">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Angora RFP coverage</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Built for prediction-market, arbitrage, social-trading, portfolio, and perps agents.</p>
+      <section className="border-y border-slate-200 py-8">
+        <div className="mb-7 grid gap-5 lg:grid-cols-[360px_1fr]">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Default flow</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">What happens after a user signs in</h2>
           </div>
-          <div className="flex max-w-3xl flex-wrap gap-x-6 gap-y-3 text-sm font-black text-slate-700">
-            {rfpAreas.map((area) => (
-              <span key={area} className="inline-flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                {area}
-              </span>
-            ))}
-          </div>
+          <p className="max-w-3xl text-sm leading-7 text-slate-600">AngoraPay Mesh is not a broker or exchange. It is the operating layer around market agents: it helps them decide which paid service to use, whether the call is allowed, and how the result can be verified later.</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {defaultFlow.map(([step, title, detail]) => (
+            <div key={title} className="border-t border-slate-200 py-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 font-mono text-xs font-black text-cyan-300">{step}</span>
+                <p className="font-black text-slate-950">{title}</p>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{detail}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -493,6 +508,22 @@ function Home({ setMode }) {
         <div className="grid gap-4 md:grid-cols-2">
           {userWorkflows.slice(0, 4).map((workflow) => (
             <WorkflowCard key={workflow.user} workflow={workflow} />
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-6 border-y border-slate-200 py-8 lg:grid-cols-[360px_1fr]">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Console map</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Three default work areas</h2>
+          <p className="mt-4 text-sm leading-7 text-slate-600">The console is intentionally split by the job users need to perform, not by abstract product features.</p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {consoleFlows.map(([title, detail]) => (
+            <div key={title} className="border-l border-cyan-200 pl-5">
+              <p className="font-black text-slate-950">{title}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
+            </div>
           ))}
         </div>
       </section>
