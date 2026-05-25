@@ -1,33 +1,25 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  BarChart3,
   CheckCircle2,
-  Code2,
   FileCheck2,
-  Gauge,
   Globe2,
   LineChart,
   MessageSquare,
   Play,
   Route,
   Search,
-  Settings2,
   ShieldCheck,
   Store,
-  UploadCloud,
   WalletCards,
 } from "lucide-react";
 
 const APP_NAME = "AngoraPay Mesh";
 
 const tabs = [
-  { id: "workspace", label: "Workspace", icon: MessageSquare },
-  { id: "marketplace", label: "Marketplace", icon: Store },
-  { id: "routing", label: "Policy & Routing", icon: ShieldCheck },
-  { id: "proof", label: "Payments & Proof", icon: FileCheck2 },
-  { id: "reconciliation", label: "Reconciliation", icon: CheckCircle2 },
-  { id: "metrics", label: "Metrics & Dev", icon: BarChart3 },
+  { id: "workspace", label: "Agent Workspace", icon: MessageSquare, intent: "Run a market mission and watch the agent decide." },
+  { id: "network", label: "Market Network", icon: Store, intent: "Inspect providers, trust, pricing, and routing policy." },
+  { id: "ops", label: "Proof & Ops", icon: FileCheck2, intent: "Verify receipts, payments, reconciliation, and submission metrics." },
 ];
 
 const rfpAreas = [
@@ -338,7 +330,7 @@ async function loadLiveSnapshot() {
 }
 
 function runSelfTests() {
-  console.assert(tabs.length === 6, "Angora UI should expose six purposeful console sections");
+  console.assert(tabs.length === 3, "Angora UI should expose three product-level console sections");
   console.assert(new Set(tabs.map((tab) => tab.id)).size === tabs.length, "tab IDs should be unique");
   console.assert(approvedServices(marketServices).length === 6, "six market services should be approved");
   console.assert(blockedServices(marketServices).length === 1, "one market service should be blocked");
@@ -658,31 +650,38 @@ function CodeBlock({ title, code }) {
 function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, children }) {
   const metrics = live?.dashboard?.metrics;
   const runtime = live?.dashboard?.runtime;
+  const activeSection = tabs.find((tabItem) => tabItem.id === activeTab) || tabs[0];
   return (
     <Background>
       <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
-        <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <button type="button" onClick={goHome} className="flex items-center gap-3 text-left">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700 ring-1 ring-cyan-200"><Globe2 className="h-5 w-5" /></div>
-            <div><p className="text-sm font-black text-slate-950">{APP_NAME}</p><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Console</p></div>
+            <div className="flex h-10 w-10 items-center justify-center bg-slate-950 text-cyan-300"><Globe2 className="h-5 w-5" /></div>
+            <div><p className="text-sm font-black text-slate-950">{APP_NAME}</p><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Market agent console</p></div>
           </button>
-          <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:justify-end" aria-label="Console sections">
+          <nav className="grid gap-1 border border-slate-200 bg-white/70 p-1 sm:grid-cols-3" aria-label="Console sections">
             {tabs.map((tabItem) => {
               const Icon = tabItem.icon;
               const active = activeTab === tabItem.id;
               return (
-                <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition", active ? "bg-slate-950 text-white" : "bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-950")}>
+                <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-10 items-center justify-center gap-2 px-4 py-2 text-xs font-black transition", active ? "bg-slate-950 text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-950")}>
                   <Icon className="h-4 w-4" />{tabItem.label}
                 </button>
               );
             })}
           </nav>
         </div>
-        <div className="mb-6 grid gap-0 border-y border-slate-200 bg-white/45 md:grid-cols-4">
-          <Stat label="Agent state" value={latestResult ? "active" : "ready"} icon={MessageSquare} />
-          <Stat label="Gateway calls" value={String(metrics?.gatewayCalls || 0)} icon={Route} />
-          <Stat label="Receipts" value={String(metrics?.receiptsCreated || live?.receipts?.length || 0)} icon={FileCheck2} />
-          <Stat label="Runtime requests" value={String(runtime?.requests || 0)} icon={Activity} />
+        <div className="mb-8 grid gap-6 border-y border-slate-200 py-5 lg:grid-cols-[minmax(0,1fr)_520px]">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">{activeSection.label}</p>
+            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">{activeSection.intent}</h1>
+          </div>
+          <div className="grid gap-0 border border-slate-200 bg-white/45 sm:grid-cols-2">
+            <Stat label="Agent state" value={latestResult ? "active" : "ready"} icon={MessageSquare} />
+            <Stat label="Gateway calls" value={String(metrics?.gatewayCalls || 0)} icon={Route} />
+            <Stat label="Receipts" value={String(metrics?.receiptsCreated || live?.receipts?.length || 0)} icon={FileCheck2} />
+            <Stat label="Runtime requests" value={String(runtime?.requests || 0)} icon={Activity} />
+          </div>
         </div>
         {children}
       </div>
@@ -692,7 +691,7 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
 
 function Stat({ label, value, icon: Icon }) {
   return (
-    <Glass className="border-b border-slate-200 p-4 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
+    <Glass className="border-b border-slate-200 p-4 even:border-r-0 last:border-b-0 sm:border-r sm:[&:nth-child(3)]:border-b-0">
       <div className="flex items-center justify-between">
         <div><p className="text-xs text-slate-500">{label}</p><p className="mt-1 text-2xl font-black text-slate-950">{value}</p></div>
         <div className="text-cyan-700"><Icon className="h-5 w-5" /></div>
@@ -706,6 +705,11 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
   const checkpoints = latestResult?.checkpoints || live?.checkpoints || [];
   const receipts = latestResult?.receipts || live?.receipts || [];
   const recommendation = latestResult?.recommendation;
+  const missionTemplates = [
+    "Find the best paid odds, sentiment, risk, and proof services for a BTC prediction market question.",
+    "Route a cross-venue arbitrage check with max spend 0.05 USDC and proof required.",
+    "Evaluate whether a social trading signal is reliable enough to support a copy-trading decision.",
+  ];
   const messages = latestResult
     ? [
         { role: "user", content: latestResult.context?.userGoal || agentGoal },
@@ -728,6 +732,12 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
             <Pill tone={agentRunning ? "blue" : latestResult ? "good" : "neutral"}>{agentRunning ? "running mission" : latestResult ? "mission complete" : "ready"}</Pill>
           </div>
         </div>
+        <div className="grid gap-0 border-b border-slate-200 bg-slate-950 text-white md:grid-cols-4">
+          <StageCell label="1. Intent" value={latestResult?.specialistAgent || "classify"} />
+          <StageCell label="2. Providers" value={latestResult ? `${latestResult.decisions?.length || 0} routed` : "pending"} />
+          <StageCell label="3. Payment" value={latestResult?.totals?.usdcRouted || "0.00 USDC"} />
+          <StageCell label="4. Proof" value={latestResult ? `${receipts.length} receipts` : "waiting"} />
+        </div>
         <div className="flex-1 space-y-4 overflow-auto p-5">
           {messages.map((message, index) => (
             <div key={`${message.role}-${index}`} className={cx("max-w-[88%] border-l-4 p-4", message.role === "user" ? "ml-auto border-slate-950 bg-slate-950 text-white" : "border-cyan-300 bg-transparent text-slate-700")}>
@@ -748,8 +758,12 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
           ) : null}
         </div>
         <div className="border-t border-slate-200 bg-white/70 p-4">
-          <div className="mb-3 flex flex-wrap gap-2">
-            {["Prediction market", "BTC", "0.05 USDC budget", "Arc testnet", "Proof required"].map((chip) => <Pill key={chip} compact tone="blue">{chip}</Pill>)}
+          <div className="mb-4 grid gap-2 lg:grid-cols-3">
+            {missionTemplates.map((template) => (
+              <button key={template} type="button" onClick={() => setAgentGoal(template)} className="border border-slate-200 bg-white px-3 py-2 text-left text-xs font-semibold leading-5 text-slate-600 transition hover:border-cyan-300 hover:text-slate-950">
+                {template}
+              </button>
+            ))}
           </div>
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <textarea value={agentGoal} onChange={(event) => setAgentGoal(event.target.value)} className="min-h-24 resize-none border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-900 outline-none focus:border-cyan-300" />
@@ -796,6 +810,15 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
           </div>
         </Glass>
       </div>
+    </div>
+  );
+}
+
+function StageCell({ label, value }) {
+  return (
+    <div className="border-b border-white/10 p-4 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">{label}</p>
+      <p className="mt-1 truncate text-sm font-black">{value}</p>
     </div>
   );
 }
@@ -1032,65 +1055,66 @@ function DeveloperPanel() {
   return <Developers />;
 }
 
-function MarketplaceWorkspace({ live }) {
+function MarketNetworkWorkspace({ live }) {
+  const metrics = live?.dashboard?.metrics;
   return (
-    <div className="space-y-5">
-      <SectionHeader
-        eyebrow="Marketplace"
-        title="Find the market services the agent can safely buy"
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Market Network"
+        title="Provider marketplace, trust policy, and route selection in one place."
+        metrics={[
+          ["Providers used", metrics?.providersUsed || live?.services?.length || 0],
+          ["Min trust", live?.workspace?.policy?.minProviderTrustScore || 85],
+          ["Route score", live?.workspace?.policy?.minRouteScore || 80],
+        ]}
       />
       <MarketplacePanel live={live} />
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+        <ScorecardPanel live={live} />
+        <PolicyPanel live={live} />
+      </div>
       <ProviderPanel live={live} />
     </div>
   );
 }
 
-function RoutingWorkspace({ live }) {
+function ProofOpsWorkspace({ live, latestResult, runReconciliation, reconciliationRunning }) {
+  const metrics = live?.dashboard?.metrics;
   return (
-    <div className="space-y-5">
-      <SectionHeader
-        eyebrow="Policy & routing"
-        title="Decide what the agent is allowed to call"
-      />
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-        <ScorecardPanel live={live} />
-        <PolicyPanel live={live} />
-      </div>
-    </div>
-  );
-}
-
-function PaymentsProofWorkspace({ live, latestResult }) {
-  return (
-    <div className="space-y-5">
-      <SectionHeader
-        eyebrow="Payments & proof"
-        title="Inspect what was paid for and what evidence was written"
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Proof & Operations"
+        title="Audit the chain of intent, payment, delivery, receipt, and reconciliation."
+        metrics={[
+          ["Receipts", metrics?.receiptsCreated || live?.receipts?.length || 0],
+          ["USDC routed", metrics?.totalVolumeUSDC || "0"],
+          ["Reconciliation runs", live?.reconciliationRuns?.length || 0],
+        ]}
       />
       <ProofPanel live={live} latestResult={latestResult} />
       <HistoryPanel live={live} />
-    </div>
-  );
-}
-
-function MetricsDeveloperWorkspace({ live }) {
-  return (
-    <div className="space-y-5">
-      <SectionHeader
-        eyebrow="Metrics & developer surface"
-        title="Show traction, runtime activity, and integration paths"
-      />
+      <ReconciliationPanel live={live} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} />
       <MetricsPanel live={live} />
       <DeveloperPanel />
     </div>
   );
 }
 
-function SectionHeader({ eyebrow, title }) {
+function ActionBand({ eyebrow, title, metrics }) {
   return (
-    <div className="border-y border-slate-200 bg-white/35 py-5">
-      <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">{eyebrow}</p>
-      <h2 className="mt-1 text-2xl font-black text-slate-950">{title}</h2>
+    <div className="grid gap-5 border-y border-slate-200 bg-white/35 py-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">{eyebrow}</p>
+        <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{title}</h2>
+      </div>
+      <div className="grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200 bg-white/50">
+        {metrics.map(([label, value]) => (
+          <div key={label} className="p-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{label}</p>
+            <p className="mt-1 truncate text-lg font-black text-slate-950">{value}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1121,12 +1145,17 @@ export default function AngoraUiCanvas() {
     const legacyTargets = {
       chat: "workspace",
       run: "workspace",
-      market: "marketplace",
-      scorecard: "routing",
-      policy: "routing",
-      providers: "marketplace",
-      history: "proof",
-      developers: "metrics",
+      marketplace: "network",
+      market: "network",
+      scorecard: "network",
+      routing: "network",
+      policy: "network",
+      providers: "network",
+      proof: "ops",
+      reconciliation: "ops",
+      history: "ops",
+      metrics: "ops",
+      developers: "ops",
     };
     setTab(legacyTargets[target] || target);
     setView("console");
@@ -1189,11 +1218,8 @@ export default function AngoraUiCanvas() {
   const Panel = useMemo(() => {
     const panelMap = {
       workspace: AgentChatPanel,
-      marketplace: MarketplaceWorkspace,
-      routing: RoutingWorkspace,
-      proof: PaymentsProofWorkspace,
-      reconciliation: ReconciliationPanel,
-      metrics: MetricsDeveloperWorkspace,
+      network: MarketNetworkWorkspace,
+      ops: ProofOpsWorkspace,
     };
     return panelMap[tab] || AgentChatPanel;
   }, [tab]);
