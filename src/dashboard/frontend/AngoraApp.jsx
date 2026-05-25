@@ -284,13 +284,14 @@ const submissionMetrics = [
 ];
 
 const developerExamples = {
-  sdk: `npm install @angorapay/sdk
+  sdk: `// Local SDK package in this repo: sdk/typescript
+// Replace the import path with the published package name after release.
 
-import { AngoraPay } from '@angorapay/sdk';
+import { AngoraPay } from './sdk/typescript';
 
 const angora = new AngoraPay({
   apiKey: process.env.ANGORA_API_KEY,
-  gatewayUrl: process.env.ANGORA_GATEWAY_URL,
+  gatewayUrl: process.env.ANGORA_GATEWAY_URL || 'http://localhost:3000',
 });
 
 const result = await angora.runMarketMission({
@@ -326,7 +327,52 @@ Idempotency-Key: mission-001-odds-call-001
   "proof_supported": true,
   "arc_supported": true
 }`,
+  response: `{
+  "mission_id": "prediction-market-intel-demo",
+  "recommendation": {
+    "action": "monitor",
+    "confidence": 0.88,
+    "summary": "Approved providers met trust, spend, and proof policy."
+  },
+  "route": {
+    "providers_scanned": 7,
+    "approved": 4,
+    "blocked": 1,
+    "usdc_routed": "0.013",
+    "payment_mode": "arc_testnet"
+  },
+  "proof": {
+    "receipts": ["ang_rcpt_9013", "ang_rcpt_9014"],
+    "output_hash": "0x...",
+    "reconciliation": "matched"
+  }
+}`,
 };
+
+const developerSurfaces = [
+  ["Gateway API", "Best for any agent runtime or backend. Send HTTPS requests, keep API keys server-side, and let Angora return route decisions, payment context, receipts, and reconciliation state."],
+  ["TypeScript SDK", "Best for Node, Next.js, Vite, and agent apps that want typed helpers around market missions, provider calls, receipts, and policy controls."],
+  ["Python SDK", "Best for research notebooks, trading research pipelines, and Python agent workflows that need the same mission and proof objects."],
+  ["Provider API", "Best for paid intelligence providers registering endpoints, price, service category, proof support, and delivery metadata."],
+];
+
+const developerEnv = [
+  ["ANGORA_GATEWAY_URL", "Base URL for the Angora Gateway, for example http://localhost:3000 or the deployed host."],
+  ["ANGORA_API_KEY", "Workspace API key used by your backend or agent service."],
+  ["CIRCLE_API_KEY", "Server-side Circle key for Wallets/Contracts/Gateway operations."],
+  ["CIRCLE_ENTITY_SECRET", "Circle entity secret. Keep server-side only."],
+  ["CIRCLE_WALLET_ID", "Wallet used for Arc testnet payment context and balance checks."],
+  ["OPENAI_API_KEY", "Used by the reference Market Intelligence Agent for reasoning."],
+];
+
+const developerEndpoints = [
+  ["POST", "/v1/angora/agent-missions/run", "Run a specialist market-intelligence mission."],
+  ["POST", "/v1/angora/gateway/call", "Route one paid provider call through policy and payment boundaries."],
+  ["GET", "/v1/angora/services/search", "Find providers by category, price, trust, and proof support."],
+  ["POST", "/v1/angora/providers/register", "Register or update a paid intelligence provider."],
+  ["GET", "/v1/angora/receipts", "Read proof receipts created by paid calls."],
+  ["POST", "/v1/angora/reconciliation/run", "Match payment intents, provider deliveries, receipts, and settlement state."],
+];
 
 function cx(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -1173,6 +1219,28 @@ function Developers({ openConsole }) {
       <section className="border-t border-slate-200/55 py-20">
         <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
           <div>
+            <Badge>What to use</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Pick the integration surface that matches your agent.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            The UI is the reference app. Production developers normally call the Gateway from a backend or use the local SDK packages in this repository. The SDKs are not yet published externally, so the page is explicit about what works now and what ships as a package later.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {developerSurfaces.map(([title, body]) => (
+            <Glass key={title} className="border-t border-slate-200 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">{title}</p>
+              <p className="mt-4 text-sm leading-7 text-slate-600">{body}</p>
+            </Glass>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
             <Badge>Gateway API</Badge>
             <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
               Request a policy-aware route before the agent pays.
@@ -1183,6 +1251,66 @@ function Developers({ openConsole }) {
           </p>
         </div>
         <CodeBlock title="market mission call" code={developerExamples.gateway} />
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Response contract</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Your agent gets a decision, route facts, and proof handles.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            A production integration should never treat the answer as only text. Store the recommendation, approved and blocked providers, USDC routed, receipt IDs, output hash, and reconciliation state with the market decision.
+          </p>
+        </div>
+        <CodeBlock title="mission response" code={developerExamples.response} />
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Endpoints</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              The minimum API surface for real agent workflows.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            These routes separate the reference agent product from the reusable mesh infrastructure. Teams can run the demo agent, integrate the gateway directly, register providers, inspect receipts, and reconcile payment with delivery.
+          </p>
+        </div>
+        <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white/45">
+          {developerEndpoints.map(([method, path, body]) => (
+            <div key={path} className="grid gap-3 p-4 md:grid-cols-[90px_280px_1fr] md:items-center">
+              <Pill compact tone={method === "GET" ? "blue" : "good"}>{method}</Pill>
+              <p className="font-mono text-sm font-black text-slate-950">{path}</p>
+              <p className="text-sm leading-6 text-slate-600">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Environment</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Keep keys server-side and be honest about payment mode.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            Testnet integrations should label payment state clearly: real x402, Arc testnet, pending, fallback, or blocked. Demo fallback must not be presented as settled USDC.
+          </p>
+        </div>
+        <div className="grid gap-x-8 gap-y-0 border-y border-slate-200 bg-white/40 md:grid-cols-2">
+          {developerEnv.map(([key, body]) => (
+            <div key={key} className="border-b border-slate-200 py-4 md:odd:border-r md:odd:pr-6 md:even:pl-6">
+              <p className="font-mono text-xs font-black text-cyan-700">{key}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="border-t border-slate-200/55 py-20">
