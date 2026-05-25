@@ -368,8 +368,8 @@ function Header({ mode, setMode, openConsole }) {
           </button>
         ))}
       </div>
-      <button type="button" onClick={() => openConsole("run")} className="rounded-full bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-slate-200">
-        Open console
+      <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-slate-200">
+        Sign in
       </button>
     </nav>
   );
@@ -412,7 +412,7 @@ function Home({ openConsole, setMode }) {
           </div>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">AngoraPay Mesh helps market agents route trusted paid services and prove every call.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <button type="button" onClick={() => openConsole("run")} className="rounded-full bg-cyan-400 px-6 py-3 text-sm font-black text-slate-950 shadow-xl shadow-cyan-200">Run market mission</button>
+            <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-cyan-400 px-6 py-3 text-sm font-black text-slate-950 shadow-xl shadow-cyan-200">Sign in</button>
             <button type="button" onClick={() => setMode("product")} className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 ring-1 ring-slate-200">View product</button>
           </div>
         </div>
@@ -494,7 +494,7 @@ function MeshHeroVisual({ openConsole }) {
               </div>
             ))}
           </div>
-          <button type="button" onClick={() => openConsole("run")} className="rounded-full bg-cyan-400 px-3.5 py-2 text-xs font-black text-slate-950">Inspect</button>
+          <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-cyan-400 px-3.5 py-2 text-xs font-black text-slate-950">Sign in</button>
         </div>
       </div>
     </Glass>
@@ -563,7 +563,7 @@ function Product({ openConsole, setMode }) {
             ))}
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" onClick={() => openConsole("run")} className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950">Open console</button>
+            <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950">Sign in</button>
             <button type="button" onClick={() => setMode("developers")} className="rounded-full bg-white px-5 py-3 text-sm font-black text-slate-950 ring-1 ring-slate-200">Developer docs</button>
           </div>
         </Glass>
@@ -610,21 +610,26 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
     <Background>
       <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
         <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <button type="button" onClick={goHome} className="flex items-center gap-3 text-left">
+          <div className="flex items-center gap-3 text-left">
             <div className="flex h-10 w-10 items-center justify-center bg-slate-950 text-cyan-300"><Globe2 className="h-5 w-5" /></div>
             <div><p className="text-sm font-black text-slate-950">{APP_NAME}</p><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Market agent console</p></div>
-          </button>
-          <nav className="grid gap-1 border border-slate-200 bg-white/70 p-1 sm:grid-cols-3" aria-label="Console sections">
-            {tabs.map((tabItem) => {
-              const Icon = tabItem.icon;
-              const active = activeTab === tabItem.id;
-              return (
-                <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-10 items-center justify-center gap-2 px-4 py-2 text-xs font-black transition", active ? "bg-slate-950 text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-950")}>
-                  <Icon className="h-4 w-4" />{tabItem.label}
-                </button>
-              );
-            })}
-          </nav>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <nav className="grid gap-1 border border-slate-200 bg-white/70 p-1 sm:grid-cols-3" aria-label="Console sections">
+              {tabs.map((tabItem) => {
+                const Icon = tabItem.icon;
+                const active = activeTab === tabItem.id;
+                return (
+                  <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-10 items-center justify-center gap-2 px-4 py-2 text-xs font-black transition", active ? "bg-slate-950 text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-950")}>
+                    <Icon className="h-4 w-4" />{tabItem.label}
+                  </button>
+                );
+              })}
+            </nav>
+            <button type="button" onClick={goHome} className="min-h-10 border border-slate-200 bg-white px-4 text-xs font-black text-slate-600 transition hover:border-slate-950 hover:text-slate-950">
+              Sign out
+            </button>
+          </div>
         </div>
         <div className="mb-8 grid gap-6 border-y border-slate-200 py-5 lg:grid-cols-[minmax(0,1fr)_520px]">
           <div>
@@ -659,6 +664,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
   const traces = latestResult?.traces || live?.traces || [];
   const checkpoints = latestResult?.checkpoints || live?.checkpoints || [];
   const receipts = latestResult?.receipts || live?.receipts || [];
+  const recentExecutions = Array.isArray(live?.execution?.recent) ? live.execution.recent : [];
   const recommendation = latestResult?.recommendation;
   const missionTemplates = [
     "Find the best paid odds, sentiment, risk, and proof services for a BTC prediction market question.",
@@ -742,7 +748,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
         <Glass className="border-y border-slate-200 p-5">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Live trace</p>
           <div className="mt-4 space-y-3">
-            {(traces.length ? traces.slice(0, 6) : decisions.length ? decisions : live?.execution?.slice(0, 4) || []).map((item, index) => (
+            {(traces.length ? traces.slice(0, 6) : decisions.length ? decisions : recentExecutions.slice(0, 4)).map((item, index) => (
               <div key={item.traceId || item.receipt?.receiptId || item.id || index} className="border-t border-slate-200 py-3 first:border-t-0">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-black text-slate-900">{item.label || item.serviceName || item.serviceId || item.category}</p>
