@@ -1,7 +1,10 @@
 export type AngoraSource = "canteen" | "arc-discord" | "circle" | "linkedin" | "x" | "hackathon" | "manual";
 
+export const ANGORAPAY_SDK_VERSION = "0.1.0";
+
 export interface AngoraClientOptions {
-  baseUrl: string;
+  baseUrl?: string;
+  gatewayUrl?: string;
   apiKey?: string;
   fetchImpl?: typeof fetch;
 }
@@ -36,7 +39,9 @@ export class AngoraPay {
   private readonly fetchImpl: typeof fetch;
 
   constructor(options: AngoraClientOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/$/, "");
+    const baseUrl = options.baseUrl || options.gatewayUrl;
+    if (!baseUrl) throw new Error("AngoraPay requires baseUrl or gatewayUrl");
+    this.baseUrl = baseUrl.replace(/\/$/, "");
     this.apiKey = options.apiKey;
     this.fetchImpl = options.fetchImpl || fetch;
   }
@@ -102,6 +107,20 @@ export class AngoraPay {
 
   getSubmissionMetrics() {
     return this.request("/v1/angora/submission/metrics");
+  }
+
+  getProductionReadiness() {
+    return this.request("/v1/angora/production/readiness");
+  }
+
+  listReceipts(params: { missionId?: string; status?: string; executionMode?: string; limit?: number; offset?: number } = {}) {
+    const query = new URLSearchParams();
+    if (params.missionId) query.set("mission_id", params.missionId);
+    if (params.status) query.set("status", params.status);
+    if (params.executionMode) query.set("execution_mode", params.executionMode);
+    if (params.limit != null) query.set("limit", String(params.limit));
+    if (params.offset != null) query.set("offset", String(params.offset));
+    return this.request(`/v1/angora/receipts?${query.toString()}`);
   }
 
   runAgentMission(input: { userGoal: string; module?: "prediction_market" | "cross_venue_arbitrage" | "social_trading"; conversationId?: string; userId?: string; budgetUSDC?: string; paymentMode?: "real_x402" | "arc_testnet" | "demo_fallback"; payload?: Record<string, unknown> }) {

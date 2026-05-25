@@ -6,6 +6,8 @@ from urllib.parse import urlencode
 
 import requests
 
+__version__ = "0.1.0"
+
 
 @dataclass
 class AngoraPay:
@@ -64,6 +66,12 @@ class AngoraPay:
 
     def submission_metrics(self) -> Dict[str, Any]:
         return self._request("GET", "/v1/angora/submission/metrics")
+
+    def production_readiness(self) -> Dict[str, Any]:
+        return self._request("GET", "/v1/angora/production/readiness")
+
+    def receipts(self, **params: Any) -> Dict[str, Any]:
+        return self._request("GET", f"/v1/angora/receipts?{urlencode(params)}")
 
     def run_agent_mission(self, **payload: Any) -> Dict[str, Any]:
         return self._request("POST", "/v1/angora/agent-missions/run", json=payload)

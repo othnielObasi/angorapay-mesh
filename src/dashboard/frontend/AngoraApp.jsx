@@ -291,17 +291,14 @@ import { AngoraPay } from './sdk/typescript';
 
 const angora = new AngoraPay({
   apiKey: process.env.ANGORA_API_KEY,
-  gatewayUrl: process.env.ANGORA_GATEWAY_URL || 'http://localhost:3000',
+  baseUrl: process.env.ANGORA_GATEWAY_URL || 'http://localhost:3000',
 });
 
-const result = await angora.runMarketMission({
-  missionId: 'prediction-market-intel-demo',
-  agentId: 'prediction-agent-01',
-  intent: 'evaluate +EV BTC election-odds market',
-  maxSpendUSDC: '0.05',
-  allowedCategories: ['odds', 'sentiment', 'risk', 'proof'],
-  minProviderTrust: 85,
-  requiredProof: true,
+const result = await angora.runAgentMission({
+  userGoal: 'Evaluate whether this BTC prediction market is mispriced after breaking news.',
+  module: 'prediction_market',
+  paymentMode: 'arc_testnet',
+  budgetUSDC: '0.05',
 });`,
   gateway: `POST /v1/angora/gateway/call
 Authorization: Bearer ang_live_xxxxx
@@ -1348,7 +1345,7 @@ function Developers({ openConsole, live }) {
             </h2>
           </div>
           <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            The UI is the reference app. Production developers normally call the Gateway from a backend or use the local SDK packages in this repository. The SDKs are not yet published externally, so the page is explicit about what works now and what ships as a package later.
+            The UI is the reference app. Production developers normally call the Gateway from a backend or use the SDK packages. Registry publication requires npm/PyPI credentials, and the local packages remain usable directly from this repository.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

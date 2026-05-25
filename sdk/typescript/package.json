@@ -5,11 +5,33 @@
   "type": "module",
   "main": "./dist/angorapay.js",
   "types": "./dist/angorapay.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/angorapay.d.ts",
+      "import": "./dist/angorapay.js"
+    }
+  },
   "files": ["dist", "README.md"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "pack:dry-run": "npm pack --dry-run",
+    "publish:public": "npm publish --access public"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/othnielObasi/angorapay-mesh.git",
+    "directory": "sdk/typescript"
+  },
+  "homepage": "https://github.com/othnielObasi/angorapay-mesh#readme",
+  "bugs": {
+    "url": "https://github.com/othnielObasi/angorapay-mesh/issues"
+  },
+  "author": "AngoraPay Mesh",
+  "license": "MIT",
   "devDependencies": {
     "typescript": "^5.6.3"
   },

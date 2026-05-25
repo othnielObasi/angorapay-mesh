@@ -458,7 +458,7 @@ import { AngoraPay } from "@angorapay/sdk";
 
 const angora = new AngoraPay({
   apiKey: process.env.ANGORA_API_KEY!,
-  gatewayUrl: process.env.ANGORA_GATEWAY_URL!,
+  baseUrl: process.env.ANGORA_GATEWAY_URL!,
 });
 
 const result = await angora.runAgentMission({
@@ -491,7 +491,7 @@ result = client.run_agent_mission({
 })
 ```
 
-The SDKs are integrated in this repository but are not yet published externally.
+The SDKs are integrated in this repository and have publish-ready package metadata. Registry publication requires npm/PyPI credentials on the publishing machine.
 
 ## Production Path
 
@@ -531,19 +531,40 @@ WEBHOOK_SIGNING_SECRET=...
 | Area | Status |
 | --- | --- |
 | Angora backend | Integrated under `src/angora` |
-| Angora UI | Available at `/angora.html` |
+| Angora UI | Available at `/angora-app/` on the deployed Gateway and `/angora.html` as legacy static UI |
 | API routes | Mounted at `/v1/angora/*` |
 | Local JSON storage | Implemented |
 | PostgreSQL schema | Included |
 | TypeScript SDK | Builds and packs locally |
 | Python SDK | Builds locally |
 | Full checks | Passing |
-| npm publishing | Not completed |
-| PyPI publishing | Not completed |
-| hosted gateway deployment | Not completed |
+| npm publishing | Package metadata and publish script ready; registry login required |
+| PyPI publishing | Package metadata and publish script ready; Python + PyPI login required |
+| hosted gateway deployment | Live on Vultr at `http://108.61.173.24/angora-app/` |
 | real Circle/x402 production config | Not completed |
 | PostgreSQL repository adapters | Not completed |
-| merge into `main` | Not completed |
+| merge into `main` | Completed |
+
+## Publishing SDKs
+
+TypeScript package:
+
+```bash
+npm run angora:sdk:typescript:build
+npm run angora:sdk:typescript:pack
+npm login
+npm run angora:sdk:typescript:publish
+```
+
+Python package:
+
+```bash
+npm run angora:sdk:python:build
+python -m twine check sdk/python/dist/*
+python -m twine upload sdk/python/dist/*
+```
+
+The TypeScript package name is `@angorapay/sdk`. If the npm organization is not created or the current user does not have access, create/claim the `angorapay` organization first or publish under a temporary unscoped package name.
 
 ## Validation Commands
 
