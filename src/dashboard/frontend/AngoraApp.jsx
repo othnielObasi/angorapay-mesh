@@ -19,12 +19,8 @@ import {
 const APP_NAME = "AngoraPay Mesh";
 
 const tabs = [
-  { id: "markets", label: "Markets", icon: LineChart, intent: "Pick a discoverable market opportunity for agents to evaluate." },
-  { id: "missions", label: "Agent Missions", icon: MessageSquare, intent: "Run the reference market-intelligence agent on a selected market." },
-  { id: "mesh", label: "Mesh / Gateway", icon: Network, intent: "See the infrastructure layer that routes, pays, proves, and reconciles." },
-  { id: "providers", label: "Providers", icon: Store, intent: "Inspect paid intelligence services the mesh can select or block." },
-  { id: "trust", label: "Trust & Policy", icon: ShieldCheck, intent: "Understand why providers are selected, limited, or blocked." },
-  { id: "proof", label: "Payments & Proof", icon: FileCheck2, intent: "Verify payment, delivery, receipts, and reconciliation." },
+  { id: "run", label: "Run Agent", icon: MessageSquare, intent: "Start with a market, run the reference agent, and inspect the proof-backed answer." },
+  { id: "mesh", label: "Mesh", icon: Network, intent: "Inspect the AngoraPay Mesh infrastructure that routes, pays, proves, and reconciles." },
   { id: "developers", label: "Developers", icon: Code2, intent: "Embed AngoraPay Mesh through Gateway APIs and SDK examples." },
 ];
 
@@ -423,7 +419,7 @@ async function loadLiveSnapshot() {
 }
 
 function runSelfTests() {
-  console.assert(tabs.length === 7, "Angora UI should expose seven journey-level console sections");
+  console.assert(tabs.length === 3, "Angora UI should expose three primary console areas");
   console.assert(new Set(tabs.map((tab) => tab.id)).size === tabs.length, "tab IDs should be unique");
   console.assert(discoverableMarkets.length >= 4, "market catalogue should provide a usable opportunity universe");
   console.assert(approvedServices(marketServices).length === 6, "six market services should be approved");
@@ -518,7 +514,7 @@ function Header({ mode, setMode, openConsole }) {
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => openConsole("markets")} className="justify-self-start rounded-full bg-slate-950 px-5 py-2.5 text-xs font-semibold text-white shadow-[0_14px_32px_rgba(15,23,42,0.12)] transition hover:-translate-y-0.5 hover:bg-cyan-700 md:justify-self-end">
+        <button type="button" onClick={() => openConsole("run")} className="justify-self-start rounded-full bg-slate-950 px-5 py-2.5 text-xs font-semibold text-white shadow-[0_14px_32px_rgba(15,23,42,0.12)] transition hover:-translate-y-0.5 hover:bg-cyan-700 md:justify-self-end">
           Sign in
         </button>
       </nav>
@@ -605,7 +601,7 @@ function Home({ setMode, openConsole }) {
             Circle enables payment. Angora decides, routes, blocks, proves, and reconciles.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => openConsole("markets")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-7 py-4 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
+            <button type="button" onClick={() => openConsole("run")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-7 py-4 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
               Run market mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </button>
             <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/40 bg-white/40 px-6 py-4 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-200/70 hover:text-cyan-800">
@@ -970,7 +966,7 @@ function Product({ setMode, openConsole }) {
             The included Market Intelligence Agents are the reference application on top of the mesh, showing how other developers can build agent products that buy trusted intelligence and prove every decision trail.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => openConsole("markets")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
+            <button type="button" onClick={() => openConsole("run")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
               Sign in to run a mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </button>
             <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/45 bg-white/45 px-6 py-3.5 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:text-cyan-800">
@@ -1151,7 +1147,7 @@ function Developers({ openConsole }) {
           <p className="mt-7 max-w-2xl text-lg font-medium leading-8 text-slate-600">
             Use AngoraPay Mesh as the policy-aware wrapper around Circle/x402 on Arc. Developers call one Gateway or SDK while Angora handles discovery, provider routing, receipts, execution history, and traction metrics.
           </p>
-          <button type="button" onClick={() => openConsole("markets")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
+          <button type="button" onClick={() => openConsole("run")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
             Sign in to test Gateway <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -1231,12 +1227,12 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
             <div><p className="text-sm font-semibold text-slate-950">{APP_NAME}</p><p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Platform console</p></div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <nav className="flex max-w-5xl flex-wrap items-center justify-end gap-x-4 gap-y-2" aria-label="Console sections">
+            <nav className="flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-2" aria-label="Console sections">
               {tabs.map((tabItem) => {
                 const Icon = tabItem.icon;
                 const active = activeTab === tabItem.id;
                 return (
-                  <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-9 items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition", active ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:bg-white/55 hover:text-slate-950")}>
+                  <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-9 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-semibold ring-1 transition", active ? "bg-white text-cyan-700 shadow-sm ring-cyan-200" : "text-slate-500 ring-transparent hover:bg-white/55 hover:text-slate-950")}>
                     <Icon className="h-4 w-4" />{tabItem.label}
                   </button>
                 );
@@ -1385,7 +1381,8 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
 
 function PaymentReadinessPanel({ gatewayBalance, paymentIntents, latestResult }) {
   const balanceValue = Number(gatewayBalance?.formatted || gatewayBalance?.balance || 0);
-  const requiredFloat = Number(latestResult?.totals?.usdcRouted || 0.05);
+  const requiredFloat = Number(latestResult?.totals?.usdcRouted || calculateTotal(selectedRun));
+  const routeRequirementLabel = latestResult ? "USDC routed" : "Estimated route cost";
   const hasWalletBalance = Number.isFinite(balanceValue) && balanceValue > 0;
   const hasEnoughForMission = hasWalletBalance && balanceValue >= requiredFloat;
   const latestIntent = latestResult?.receipts?.[0]?.metadata?.paymentIntentId
@@ -1404,7 +1401,7 @@ function PaymentReadinessPanel({ gatewayBalance, paymentIntents, latestResult })
       </div>
       <div className="mt-4 space-y-3">
         <RouteLine label="Wallet balance" value={balanceLabel} tone={hasWalletBalance ? "good" : "warn"} />
-        <RouteLine label="Needed for mission" value={`${formatUSDC(requiredFloat)} USDC`} tone={hasEnoughForMission ? "good" : "warn"} />
+        <RouteLine label={routeRequirementLabel} value={`${formatUSDC(requiredFloat)} USDC`} tone={hasEnoughForMission ? "good" : "warn"} />
         <RouteLine label="Balance source" value={gatewayBalance?.kind || "unconfigured"} tone={gatewayBalance?.kind === "unconfigured" ? "warn" : "blue"} />
         <RouteLine label="Mission payment" value="arc_testnet" tone="purple" />
         <RouteLine label="Latest intent" value={latestIntent?.status || "none"} tone={latestIntent?.status === "settled" ? "good" : latestIntent ? "warn" : "neutral"} />
@@ -1737,6 +1734,80 @@ function DeveloperPanel() {
   return <Developers />;
 }
 
+function RunAgentWorkspace(props) {
+  const { selectedMarket, selectMarketAndMission } = props;
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Reference agent app"
+        title="Market Intelligence Agents show how builders can use AngoraPay Mesh in a real workflow."
+        metrics={[
+          ["Markets", discoverableMarkets.length],
+          ["Selected", selectedMarket?.asset || "none"],
+          ["Proof", "required"],
+        ]}
+      />
+      <Glass className="border-y border-slate-200 p-5">
+        <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-end">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Market catalogue</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">Choose a market before asking the agent.</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">This keeps the demo grounded: markets feed the agent, and the agent uses the mesh to buy trusted intelligence.</p>
+          </div>
+          <Pill tone="blue">Circle-ready market universe</Pill>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {discoverableMarkets.map((market) => {
+            const active = selectedMarket?.id === market.id;
+            return (
+              <button
+                key={market.id}
+                type="button"
+                onClick={() => selectMarketAndMission(market)}
+                className={cx("min-h-32 border border-slate-200 bg-white/45 p-4 text-left transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-white", active && "border-cyan-300 bg-cyan-50/55")}
+              >
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-700">{market.category}</p>
+                <p className="mt-2 text-sm font-black leading-5 text-slate-950">{market.name}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">{market.agent}</p>
+              </button>
+            );
+          })}
+        </div>
+      </Glass>
+      <AgentChatPanel {...props} />
+    </div>
+  );
+}
+
+function MeshWorkspace({ live, latestResult, runReconciliation, reconciliationRunning }) {
+  const metrics = live?.dashboard?.metrics;
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="AngoraPay Mesh"
+        title="The reusable infrastructure beneath the reference agents."
+        metrics={[
+          ["Gateway calls", metrics?.gatewayCalls || 0],
+          ["Providers", metrics?.providersUsed || live?.services?.length || 0],
+          ["Receipts", metrics?.receiptsCreated || live?.receipts?.length || 0],
+        ]}
+      />
+      <MeshFlowPanel live={live} />
+      <MarketplacePanel live={live} />
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+        <ScorecardPanel latestResult={latestResult} />
+        <PolicyPanel live={live} />
+      </div>
+      <ProviderPanel live={live} />
+      <ProofPanel live={live} latestResult={latestResult} />
+      <HistoryPanel live={live} />
+      <ReconciliationPanel live={live} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} />
+      <ProductionReadinessPanel live={live} />
+      <MetricsPanel live={live} />
+    </div>
+  );
+}
+
 function MarketsWorkspace({ selectedMarket, selectMarketAndMission }) {
   return (
     <div className="space-y-8">
@@ -1913,7 +1984,7 @@ function ActionBand({ eyebrow, title, metrics }) {
 
 export default function AngoraUiCanvas() {
   const [view, setView] = useState("landing");
-  const [tab, setTab] = useState("markets");
+  const [tab, setTab] = useState("run");
   const [completed, setCompleted] = useState(0);
   const [live, setLive] = useState(null);
   const [selectedMarket, setSelectedMarket] = useState(discoverableMarkets[0]);
@@ -1938,20 +2009,23 @@ export default function AngoraUiCanvas() {
 
   const openConsole = (target = "workspace") => {
     const legacyTargets = {
-      chat: "missions",
-      run: "missions",
-      workspace: "missions",
-      marketplace: "providers",
-      market: "markets",
-      scorecard: "trust",
+      chat: "run",
+      run: "run",
+      workspace: "run",
+      markets: "run",
+      market: "run",
+      missions: "run",
+      marketplace: "mesh",
+      scorecard: "mesh",
       routing: "mesh",
-      policy: "trust",
-      providers: "providers",
-      proof: "proof",
-      ops: "proof",
-      reconciliation: "proof",
-      history: "proof",
-      metrics: "proof",
+      policy: "mesh",
+      providers: "mesh",
+      trust: "mesh",
+      proof: "mesh",
+      ops: "mesh",
+      reconciliation: "mesh",
+      history: "mesh",
+      metrics: "mesh",
       developers: "developers",
     };
     setTab(legacyTargets[target] || target);
@@ -1961,7 +2035,7 @@ export default function AngoraUiCanvas() {
   const selectMarketAndMission = (market) => {
     setSelectedMarket(market);
     setAgentGoal(market.mission);
-    setTab("missions");
+    setTab("run");
     setView("console");
   };
 
@@ -2024,15 +2098,11 @@ export default function AngoraUiCanvas() {
 
   const Panel = useMemo(() => {
     const panelMap = {
-      markets: MarketsWorkspace,
-      missions: AgentChatPanel,
-      mesh: MeshGatewayWorkspace,
-      providers: ProvidersWorkspace,
-      trust: TrustPolicyWorkspace,
-      proof: PaymentsProofWorkspace,
+      run: RunAgentWorkspace,
+      mesh: MeshWorkspace,
       developers: DeveloperPanel,
     };
-    return panelMap[tab] || MarketsWorkspace;
+    return panelMap[tab] || RunAgentWorkspace;
   }, [tab]);
 
   if (view === "landing") {
