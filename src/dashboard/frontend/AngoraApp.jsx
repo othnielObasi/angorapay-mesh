@@ -276,6 +276,13 @@ function calculateTotal(items) {
   return items.reduce((sum, item) => sum + Number(item.price || item.amount || 0), 0);
 }
 
+function formatConfidence(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "pending";
+  const percent = numeric <= 1 ? numeric * 100 : numeric;
+  return `${Math.round(Math.max(0, Math.min(100, percent)))}%`;
+}
+
 async function api(path, options = {}) {
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -540,7 +547,7 @@ function Home({ setMode, openConsole }) {
         <MeshHeroVisual />
       </section>
 
-      <section id="problem" className="border-t border-slate-200/55 py-24">
+      <Band id="problem" tone="problem">
         <div className="grid gap-14 lg:grid-cols-[0.82fr_1.18fr]">
           <div>
             <Badge>Problem</Badge>
@@ -563,9 +570,9 @@ function Home({ setMode, openConsole }) {
             ))}
           </div>
         </div>
-      </section>
+      </Band>
 
-      <section id="flow" className="border-t border-slate-200/55 py-24">
+      <Band id="flow" tone="flow">
         <div className="grid gap-14 lg:grid-cols-[0.78fr_1.22fr]">
           <div>
             <Badge>The Angora flow</Badge>
@@ -583,9 +590,9 @@ function Home({ setMode, openConsole }) {
             ))}
           </div>
         </div>
-      </section>
+      </Band>
 
-      <section id="infrastructure" className="border-t border-slate-200/55 py-24">
+      <Band id="infrastructure" tone="infrastructure">
         <div className="grid gap-14 lg:grid-cols-[0.78fr_1.22fr]">
           <div>
             <Badge>Developer infrastructure</Badge>
@@ -599,9 +606,9 @@ function Home({ setMode, openConsole }) {
             ))}
           </div>
         </div>
-      </section>
+      </Band>
 
-      <section className="border-t border-slate-200/55 py-24">
+      <Band tone="tracks">
         <div className="grid gap-14 lg:grid-cols-[0.75fr_1.25fr]">
           <div>
             <Badge>Built for market-agent tracks</Badge>
@@ -621,9 +628,9 @@ function Home({ setMode, openConsole }) {
             ))}
           </div>
         </div>
-      </section>
+      </Band>
 
-      <section id="proof" className="pb-12">
+      <Band id="proof" tone="proof">
         <div className="relative overflow-hidden rounded-[2rem] border border-slate-200/55 bg-white/50 p-8 shadow-[0_24px_80px_rgba(15,42,61,0.055)] backdrop-blur-xl md:p-10">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_24%,rgba(34,211,238,0.10),transparent_30%),linear-gradient(145deg,rgba(255,255,255,0.78),transparent_42%)]" />
           <div className="relative grid items-start gap-12 lg:grid-cols-[0.74fr_1.26fr]">
@@ -675,7 +682,7 @@ function Home({ setMode, openConsole }) {
             </div>
           </div>
         </div>
-      </section>
+      </Band>
     </div>
   );
 }
@@ -686,6 +693,23 @@ function Badge({ children }) {
       <span className="h-1.5 w-1.5 rounded-full bg-cyan-500/80 shadow-[0_0_12px_rgba(6,182,212,0.45)]" />
       {children}
     </span>
+  );
+}
+
+function Band({ id, tone = "white", children }) {
+  const toneClass = {
+    white: "bg-white/42",
+    problem: "bg-[#F4F7FF]",
+    flow: "bg-[#FBFCFF]",
+    infrastructure: "bg-[#F1FAFC]",
+    tracks: "bg-[#F7F4FF]",
+    proof: "bg-[#F8FAFC]",
+  }[tone] || "bg-white/42";
+
+  return (
+    <section id={id} className={cx("relative left-1/2 -ml-[50vw] w-screen border-t border-slate-200/45 py-24", toneClass)}>
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">{children}</div>
+    </section>
   );
 }
 
@@ -1138,11 +1162,12 @@ function Stat({ label, value, icon: Icon }) {
 }
 
 function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning, latestResult, live }) {
-  const traces = latestResult?.traces || live?.traces || [];
-  const checkpoints = latestResult?.checkpoints || live?.checkpoints || [];
-  const receipts = latestResult?.receipts || live?.receipts || [];
-  const recentExecutions = Array.isArray(live?.execution?.recent) ? live.execution.recent : [];
+  const traces = latestResult?.traces || [];
+  const checkpoints = latestResult?.checkpoints || [];
+  const receipts = latestResult?.receipts || [];
   const recommendation = latestResult?.recommendation;
+  const reasoningTrace = traces.find((trace) => trace.eventType === "llm.reasoning");
+  const liveTraceItems = latestResult ? (traces.length ? traces.slice(0, 6) : latestResult?.decisions || []) : [];
   const missionTemplates = [
     "Find the best paid odds, sentiment, risk, and proof services for a BTC prediction market question.",
     "Route a cross-venue arbitrage check with max spend 0.05 USDC and proof required.",
@@ -1219,13 +1244,14 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
             <RouteLine label="RFP track" value={latestResult?.rfpTrack || "pending"} tone="purple" />
             <RouteLine label="USDC routed" value={latestResult?.totals?.usdcRouted || "0.000000"} tone="good" />
             <RouteLine label="Receipts" value={String(latestResult?.totals?.receiptsCreated || receipts.length || 0)} tone="good" />
-            <RouteLine label="Confidence" value={recommendation ? `${Math.round(recommendation.confidence * 100)}%` : "pending"} tone="blue" />
+            <RouteLine label="Confidence" value={recommendation ? formatConfidence(recommendation.confidence) : "pending"} tone="blue" />
+            <RouteLine label="Reasoning" value={reasoningTrace?.details?.source || "pending"} tone={reasoningTrace?.details?.source === "openai" ? "good" : "warn"} />
           </div>
         </Glass>
         <Glass className="border-y border-slate-200 p-5">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Live trace</p>
           <div className="mt-4 space-y-3">
-            {(traces.length ? traces.slice(0, 6) : decisions.length ? decisions : recentExecutions.slice(0, 4)).map((item, index) => (
+            {liveTraceItems.length ? liveTraceItems.map((item, index) => (
               <div key={item.traceId || item.receipt?.receiptId || item.id || index} className="border-t border-slate-200 py-3 first:border-t-0">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-black text-slate-900">{item.label || item.serviceName || item.serviceId || item.category}</p>
@@ -1233,7 +1259,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                 </div>
                 <p className="mt-1 text-xs leading-5 text-slate-500">{item.details?.reason || item.routeReason || item.policyVerdict || item.eventType || "Recorded by the Angora mission runtime."}</p>
               </div>
-            ))}
+            )) : <EmptyState title="No active mission trace" detail="Run an agent mission to generate live LLM planning, route decisions, receipts, and proof events." />}
           </div>
         </Glass>
         <Glass className="border-y border-slate-200 p-5">
