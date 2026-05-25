@@ -388,38 +388,69 @@ function Header({ mode, setMode, openConsole }) {
     { id: "product", label: "Product" },
     { id: "developers", label: "Developers" },
   ];
+  const homeSections = [
+    ["01", "problem", "Problem"],
+    ["02", "flow", "Flow"],
+    ["03", "infrastructure", "Infrastructure"],
+    ["04", "proof", "Proof"],
+  ];
   const goToPage = (pageId) => {
     setMode(pageId);
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
   };
+  const goToHomeSection = (sectionId) => {
+    setMode("home");
+    window.setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  };
 
   return (
-    <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-7 lg:px-8">
-      <button type="button" onClick={() => goToPage("home")} className="flex items-center gap-3 text-left">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-cyan-300 shadow-[0_14px_35px_rgba(15,23,42,0.16)] ring-1 ring-slate-900/5">
-          <Network className="h-5 w-5" />
+    <header className="mx-auto max-w-7xl px-6 py-7 lg:px-8">
+      <nav className="flex items-center justify-between">
+        <button type="button" onClick={() => goToPage("home")} className="flex items-center gap-3 text-left">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-cyan-300 shadow-[0_14px_35px_rgba(15,23,42,0.16)] ring-1 ring-slate-900/5">
+            <Network className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold tracking-tight text-slate-950">{APP_NAME}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Market-agent routing and proof</p>
+          </div>
+        </button>
+        <div className="hidden items-center gap-1 rounded-full border border-slate-200/45 bg-white/45 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur md:flex">
+          {pageItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => goToPage(item.id)}
+              className={cx("rounded-full px-4 py-2 text-xs font-medium transition", mode === item.id ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:text-slate-950")}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
-        <div>
-          <p className="text-sm font-semibold tracking-tight text-slate-950">{APP_NAME}</p>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Market-agent routing and proof</p>
+        <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-slate-950 px-5 py-2.5 text-xs font-medium text-white shadow-[0_18px_45px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5">
+          Sign in
+        </button>
+      </nav>
+      {mode === "home" ? (
+        <div className="mt-5 flex justify-center">
+          <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-7 gap-y-2 border-y border-slate-200/55 px-3 py-3" aria-label="Home sections">
+            {homeSections.map(([number, sectionId, label]) => (
+              <button
+                key={sectionId}
+                type="button"
+                onClick={() => goToHomeSection(sectionId)}
+                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-slate-950"
+              >
+                <span className="font-mono text-[10px] text-cyan-700/80">{number}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
-      </button>
-      <div className="hidden items-center gap-1 rounded-full border border-slate-200/45 bg-white/45 p-1 shadow-[0_16px_44px_rgba(15,42,61,0.045)] backdrop-blur md:flex">
-        {pageItems.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => goToPage(item.id)}
-            className={cx("rounded-full px-4 py-2 text-xs font-medium transition", mode === item.id ? "bg-slate-950 text-white shadow-sm" : "text-slate-500 hover:text-slate-950")}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-      <button type="button" onClick={() => openConsole("workspace")} className="rounded-full bg-slate-950 px-5 py-2.5 text-xs font-medium text-white shadow-[0_18px_45px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5">
-        Sign in
-      </button>
-    </nav>
+      ) : null}
+    </header>
   );
 }
 
@@ -435,12 +466,6 @@ function Landing({ openConsole }) {
 }
 
 function Home({ setMode, openConsole }) {
-  const storyNav = [
-    ["01", "problem", "Problem"],
-    ["02", "flow", "Flow"],
-    ["03", "infrastructure", "Infrastructure"],
-    ["04", "proof", "Proof"],
-  ];
   const proofLine = ["provider trust", "route score", "policy gate", "payment receipt", "reconciliation trail"];
   const problemPoints = [
     "Which provider should the agent trust?",
@@ -480,19 +505,6 @@ function Home({ setMode, openConsole }) {
       <section className="grid items-center gap-16 pb-20 pt-8 lg:grid-cols-[0.92fr_1.08fr]">
         <div>
           <Badge>Paid-intelligence routing and proof for market agents</Badge>
-          <div className="mt-7 flex max-w-2xl flex-wrap gap-x-7 gap-y-3 border-y border-slate-200/55 py-4">
-            {storyNav.map(([number, sectionId, label]) => (
-              <button
-                key={sectionId}
-                type="button"
-                onClick={() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                className="group inline-flex items-center gap-2 text-left text-xs font-semibold text-slate-500 transition hover:text-slate-950"
-              >
-                <span className="font-mono text-[10px] text-cyan-700/80">{number}</span>
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
           <h1 className="mt-8 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl lg:text-[5rem]">
             Buy trusted market intelligence before agents act.
           </h1>
