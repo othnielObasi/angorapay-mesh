@@ -26,7 +26,7 @@ const tabs = [
   { id: "payments", group: "Infrastructure platform", label: "Payments", icon: WalletCards, intent: "Match payment intents, provider delivery, receipts, and settlement state." },
   { id: "proof", group: "Infrastructure platform", label: "Receipts & Proof", icon: FileCheck2, intent: "Audit what was bought, why it was trusted, and what proof was created." },
   { id: "metrics", group: "Infrastructure platform", label: "Metrics", icon: LineChart, intent: "Track tenant usage, volume, blocks, receipts, and reliability." },
-  { id: "developers", group: "Infrastructure platform", label: "Developers", icon: Code2, intent: "Use public SDKs and Gateway APIs in your own agent products." },
+  { id: "developers", group: "Infrastructure platform", label: "Integrations", icon: Code2, intent: "Manage SDK access, OpenAPI, API keys, and webhooks." },
   { id: "demo", group: "Reference demo layer", label: "Demo Apps", icon: MessageSquare, intent: "Run Market Intelligence Agents as reference apps built on the gateway." },
 ];
 
@@ -395,33 +395,6 @@ Idempotency-Key: mission-001-odds-call-001
 }`,
 };
 
-const developerSurfaces = [
-  ["Workspace", "Every developer operates inside a tenant workspace with its own policy, budget, provider access, receipts, and audit records."],
-  ["API keys", "Keys are scoped to workspace capabilities. Keep them server-side and rotate them from the Gateway console or API."],
-  ["Gateway API", "The stable HTTP boundary for agent runtimes that need route decisions, payment context, receipts, and reconciliation state."],
-  ["SDKs", "Public TypeScript and Python packages wrap the same Gateway API for app backends, research workflows, and agent services."],
-];
-
-const developerModules = [
-  ["Provider Discovery", "Find services by category, price, trust, proof support, and provider state."],
-  ["Route Scoring", "Rank candidate providers by mission fit, policy compliance, proof completeness, delivery quality, and cost."],
-  ["Policy Engine", "Apply workspace spend caps, minimum trust, route-score gates, allowed categories, and blocked providers."],
-  ["Payment Context", "Attach Circle/x402, Arc, USDC, execution mode, and payment-intent metadata to approved calls."],
-  ["Receipt Generation", "Create receipt IDs, output hashes, policy verdicts, route facts, and reconciliation tags."],
-  ["Execution History", "Show every approved, blocked, delivered, failed, or duplicate call for the workspace."],
-  ["Reconciliation", "Match payment intent, provider delivery, receipt, webhook, and settlement state."],
-  ["Metrics / Usage", "Track users, calls, providers, blocked attempts, USDC routed, receipts, and failure rates."],
-];
-
-const productionChecklist = [
-  ["Auth boundary", "Enable API-key auth before real users or spend. Do not run enterprise traffic with auth disabled."],
-  ["Tenant storage", "Move from JSON volume to the Postgres schema for durable multi-workspace operation."],
-  ["Provider contracts", "Register real x402 providers with schema, timeout, proof, price, and reconciliation metadata."],
-  ["Spend controls", "Set workspace budgets, mission caps, route thresholds, and blocked-provider policy."],
-  ["Observability", "Review metrics, audit logs, payment intents, delivery records, receipts, and reconciliation runs."],
-  ["Secrets", "Keep Circle, OpenAI, webhook, and Angora API keys server-side. Rotate tokens after testing."],
-];
-
 const developerEnv = [
   ["ANGORA_GATEWAY_URL", "Base URL for the Angora Gateway, for example http://localhost:3000 or the deployed host."],
   ["ANGORA_API_KEY", "Workspace API key used by your backend or agent service."],
@@ -543,7 +516,7 @@ function runSelfTests() {
   console.assert(policyRules.some(([key]) => key === "Minimum route score"), "policy must include route-score gate");
   console.assert(rfpAreas.length === 6, "UI should cover all six AngoraPay Mesh RFP areas");
   console.assert(Object.values(developerExamples).every((value) => typeof value === "string" && value.length > 20), "developer examples should be complete strings");
-  console.assert(developerModules.length >= 8, "developer guide should expose configurable gateway modules");
+  console.assert(developerEndpoints.length >= 6, "integration console should expose the core gateway endpoints");
 }
 
 runSelfTests();
@@ -1245,297 +1218,94 @@ function MissionRoutePreview() {
 }
 
 function Developers({ openConsole, live }) {
-  const integrationSteps = [
-    ["Workspace", "Create a tenant workspace with policy, budget, provider access, and audit records."],
-    ["API key", "Issue a scoped server-side key for the backend or agent runtime that will call Angora."],
-    ["Gateway call", "Send mission intent or one provider request; Angora returns decision, payment context, and proof."],
-  ];
-  const [enterpriseForm, setEnterpriseForm] = useState({
-    displayName: "",
-    email: "",
-    organization: "",
-    userCategory: "agent-builder",
-    useCase: "",
-    testedMission: false,
-    rating: 5,
-    feedback: "",
-  });
-  const [enterpriseStatus, setEnterpriseStatus] = useState(null);
-  const traction = live?.traction || live?.dashboard?.traction;
-
-  const updateEnterpriseField = (field, value) => {
-    setEnterpriseForm((current) => ({ ...current, [field]: value }));
-  };
-
-  const submitEnterpriseInterest = async (event) => {
-    event.preventDefault();
-    setEnterpriseStatus({ tone: "blue", message: "Recording enterprise evaluation..." });
-    try {
-      const userResponse = await api("/v1/angora/traction/users", {
-        method: "POST",
-        body: JSON.stringify({
-          displayName: enterpriseForm.displayName,
-          email: enterpriseForm.email || undefined,
-          source: "manual",
-          metadata: {
-            organization: enterpriseForm.organization,
-            userCategory: enterpriseForm.userCategory,
-            useCase: enterpriseForm.useCase,
-            testedMission: enterpriseForm.testedMission,
-            channel: "enterprise-readiness-form",
-          },
-        }),
-      });
-      if (enterpriseForm.feedback.trim()) {
-        await api("/v1/angora/traction/feedback", {
-          method: "POST",
-          body: JSON.stringify({
-            userId: userResponse.user.userId,
-            rating: Number(enterpriseForm.rating),
-            comment: enterpriseForm.feedback,
-          }),
-        });
-      }
-      setEnterpriseStatus({ tone: "good", message: "Enterprise evaluation recorded. Metrics will update on refresh." });
-      setEnterpriseForm((current) => ({ ...current, feedback: "" }));
-    } catch (error) {
-      setEnterpriseStatus({ tone: "bad", message: error.message || "Could not record enterprise evaluation." });
-    }
-  };
+  const readiness = live?.readiness || live?.dashboard?.readiness || {};
+  const runtime = readiness.runtime || live?.dashboard?.runtime || {};
+  const checks = readiness.checks || [];
+  const blockingChecks = checks.filter((check) => check.status !== "ready");
+  const gatewayUrl = "http://108.61.173.24";
 
   return (
-    <div className="space-y-0">
-      <section className="grid gap-14 pb-20 pt-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
-        <div>
-          <Badge>Developers</Badge>
-          <h1 className="mt-7 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl">
-            Production guide for the Angora Gateway and SDKs.
-          </h1>
-          <p className="mt-7 max-w-2xl text-lg font-medium leading-8 text-slate-600">
-            Use AngoraPay Mesh as the tenant control plane around Circle/x402 on Arc. Developers create a workspace, issue API keys, configure modules, call the Gateway or SDK, and inspect decisions, payments, receipts, executions, and metrics.
-          </p>
-          <button type="button" onClick={() => openConsole("gateway")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
-            Open Gateway console <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-        <CodeBlock title="TypeScript SDK" code={developerExamples.sdk} />
-      </section>
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Integrations"
+        title="SDKs, OpenAPI, keys, and gateway access for production agent backends."
+        metrics={[
+          ["npm", "@angorapay/sdk"],
+          ["PyPI", "angorapay"],
+          ["OpenAPI", "live"],
+        ]}
+      />
 
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Getting started</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Start with a workspace, not a demo prompt.
-            </h2>
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <Glass className="border-y border-slate-200 p-5">
+          <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-start">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Connection</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">Gateway endpoint and client packages</h2>
+            </div>
+            <button type="button" onClick={() => openConsole("gateway")} className="inline-flex min-h-10 items-center justify-center rounded-full bg-cyan-400 px-4 text-xs font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-300">
+              Gateway overview
+            </button>
           </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            A production developer should onboard the way an enterprise account works: create a tenant, issue a scoped API key, configure gateway modules, then call Angora from their own backend or agent runtime.
-          </p>
-        </div>
-        <CodeBlock title="workspace setup" code={developerExamples.start} />
-      </section>
+          <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white/40">
+            <RouteLine label="Gateway URL" value={gatewayUrl} tone="blue" />
+            <RouteLine label="OpenAPI" value="/v1/angora/openapi.json" tone="good" />
+            <RouteLine label="TypeScript" value="npm install @angorapay/sdk" tone="purple" />
+            <RouteLine label="Python" value="pip install angorapay" tone="purple" />
+          </div>
+        </Glass>
 
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="grid gap-14 lg:grid-cols-[0.75fr_1.25fr]">
-          <div>
-            <Badge>Integration path</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              One route request, three things returned: decision, payment context, proof.
-            </h2>
+        <Glass className="border-y border-slate-200 p-5">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Access state</p>
+          <div className="mt-5 space-y-3">
+            <RouteLine label="Auth boundary" value={runtime.authRequired ? "api-key required" : "demo mode"} tone={runtime.authRequired ? "good" : "warn"} />
+            <RouteLine label="Storage" value={runtime.storageDriver || "json-file"} tone={runtime.storageDriver === "postgres" ? "good" : "warn"} />
+            <RouteLine label="Payment mode" value={runtime.circleConfigured ? "Circle configured" : "not configured"} tone={runtime.circleConfigured ? "good" : "warn"} />
+            <RouteLine label="Providers" value={String(runtime.providerCount || live?.services?.length || 0)} tone={(runtime.providerCount || live?.services?.length || 0) > 0 ? "good" : "warn"} />
           </div>
-          <div className="grid gap-8 md:grid-cols-3">
-            {integrationSteps.map(([number, title, body]) => (
-              <FlowStep key={title} number={number} title={title} body={body} />
+        </Glass>
+      </div>
+
+      {blockingChecks.length > 0 && (
+        <Glass className="border-y border-amber-200 bg-amber-50/45 p-5">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Production blockers</p>
+          <div className="mt-4 divide-y divide-amber-200/70">
+            {blockingChecks.slice(0, 5).map((check) => (
+              <div key={check.name} className="grid gap-3 py-3 md:grid-cols-[220px_1fr] md:items-center">
+                <p className="text-sm font-black text-slate-950">{check.name}</p>
+                <p className="text-sm leading-6 text-slate-700">{check.message}</p>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
+        </Glass>
+      )}
 
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Configurable modules</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Enable the parts your agent workflow needs.
-            </h2>
-          </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            Angora is useful because the modules are observable separately. Enterprises can inspect provider discovery, route scoring, policy, payment context, receipts, history, reconciliation, and usage instead of accepting an opaque agent answer.
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {developerModules.map(([title, body]) => (
-            <Glass key={title} className="border-t border-slate-200 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">{title}</p>
-              <p className="mt-4 text-sm leading-7 text-slate-600">{body}</p>
-            </Glass>
-          ))}
-        </div>
-      </section>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <CodeBlock title="TypeScript SDK" code={developerExamples.sdk} />
+        <CodeBlock title="Python SDK" code={developerExamples.python} />
+      </div>
 
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Enterprise evaluation</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Capture the buyer, use case, and proof that a real team tested it.
-            </h2>
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <CodeBlock title="Gateway call" code={developerExamples.gateway} />
+        <Glass className="border-y border-slate-200 p-5">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Core endpoints</p>
+          <div className="mt-5 divide-y divide-slate-200 border-y border-slate-200 bg-white/40">
+            {developerEndpoints.map(([method, path, body]) => (
+              <div key={path} className="grid gap-2 py-3 md:grid-cols-[64px_1fr]">
+                <Pill compact tone={method === "GET" ? "blue" : "good"}>{method}</Pill>
+                <div>
+                  <p className="font-mono text-xs font-black text-slate-950">{path}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{body}</p>
+                </div>
+              </div>
+            ))}
           </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            Enterprise adoption needs more than a demo click. This form records an evaluator, organization context, intended workflow, mission testing status, and feedback into Angora traction metrics.
-          </p>
-        </div>
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <form onSubmit={submitEnterpriseInterest} className="border-y border-slate-200 bg-white/45 p-5">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Name">
-                <input value={enterpriseForm.displayName} onChange={(event) => updateEnterpriseField("displayName", event.target.value)} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400" placeholder="Jane Operator" required />
-              </Field>
-              <Field label="Work email">
-                <input type="email" value={enterpriseForm.email} onChange={(event) => updateEnterpriseField("email", event.target.value)} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400" placeholder="jane@company.com" />
-              </Field>
-              <Field label="Organization">
-                <input value={enterpriseForm.organization} onChange={(event) => updateEnterpriseField("organization", event.target.value)} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400" placeholder="Market ops team" />
-              </Field>
-              <Field label="User category">
-                <select value={enterpriseForm.userCategory} onChange={(event) => updateEnterpriseField("userCategory", event.target.value)} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400">
-                  <option value="agent-builder">Agent builder</option>
-                  <option value="prediction-market-team">Prediction-market team</option>
-                  <option value="trading-operator">Trading operator</option>
-                  <option value="paid-intelligence-provider">Paid intelligence provider</option>
-                  <option value="enterprise-admin">Enterprise admin</option>
-                  <option value="auditor">Auditor / reviewer</option>
-                </select>
-              </Field>
-            </div>
-            <Field label="Enterprise use case" className="mt-5">
-              <textarea value={enterpriseForm.useCase} onChange={(event) => updateEnterpriseField("useCase", event.target.value)} className="min-h-24 w-full border border-slate-200 bg-white/45 p-4 text-sm leading-6 text-slate-950 outline-none focus:border-cyan-300" placeholder="Example: route paid odds, sentiment, and risk feeds before a prediction-market recommendation." />
-            </Field>
-            <div className="mt-5 grid gap-4 md:grid-cols-[1fr_160px]">
-              <label className="flex items-center gap-3 border-y border-slate-200 bg-white/35 p-4 text-sm font-semibold text-slate-700">
-                <input type="checkbox" checked={enterpriseForm.testedMission} onChange={(event) => updateEnterpriseField("testedMission", event.target.checked)} className="h-4 w-4 accent-cyan-500" />
-                I tested a market mission in Demo Apps.
-              </label>
-              <Field label="Rating">
-                <select value={enterpriseForm.rating} onChange={(event) => updateEnterpriseField("rating", Number(event.target.value))} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400">
-                  {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} / 5</option>)}
-                </select>
-              </Field>
-            </div>
-            <Field label="Feedback" className="mt-5">
-              <textarea value={enterpriseForm.feedback} onChange={(event) => updateEnterpriseField("feedback", event.target.value)} className="min-h-28 w-full border border-slate-200 bg-white/45 p-4 text-sm leading-6 text-slate-950 outline-none focus:border-cyan-300" placeholder="What would your team need before using this with real spend or real providers?" />
-            </Field>
-            <div className="mt-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-              {enterpriseStatus ? <Pill tone={enterpriseStatus.tone}>{enterpriseStatus.message}</Pill> : <p className="text-xs leading-5 text-slate-500">Records to Angora traction metrics and can be used in enterprise evaluation reporting.</p>}
-              <button type="submit" className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-500 px-6 text-sm font-black text-white shadow-[0_20px_55px_rgba(34,211,238,0.22)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
-                Record evaluation
-              </button>
-            </div>
-          </form>
-          <Glass className="border-y border-slate-200 p-5">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Current traction</p>
-            <div className="mt-5 space-y-3">
-              <RouteLine label="Users onboarded" value={String(traction?.usersOnboarded || 0)} tone={(traction?.usersOnboarded || 0) > 0 ? "good" : "warn"} />
-              <RouteLine label="Feedback count" value={String(traction?.feedbackCount || 0)} tone={(traction?.feedbackCount || 0) > 0 ? "good" : "warn"} />
-              <RouteLine label="Average rating" value={traction?.averageFeedbackRating ? `${traction.averageFeedbackRating} / 5` : "pending"} tone={traction?.averageFeedbackRating ? "good" : "neutral"} />
-            </div>
-            <p className="mt-5 border-t border-slate-200 pt-4 text-sm leading-6 text-slate-600">This is the first enterprise-grade feedback loop: every evaluator becomes an auditable product signal instead of an informal chat note.</p>
-          </Glass>
-        </div>
-      </section>
+        </Glass>
+      </div>
 
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>What to use</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Pick the integration surface that matches your agent.
-            </h2>
-          </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            The UI is the reference app. Production developers normally call the Gateway from a backend or use the public SDK packages: npm install @angorapay/sdk or pip install angorapay.
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {developerSurfaces.map(([title, body]) => (
-            <Glass key={title} className="border-t border-slate-200 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">{title}</p>
-              <p className="mt-4 text-sm leading-7 text-slate-600">{body}</p>
-            </Glass>
-          ))}
-        </div>
-        <div className="mt-8">
-          <CodeBlock title="Python SDK" code={developerExamples.python} />
-        </div>
-      </section>
-
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Gateway API</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Request a policy-aware route before the agent pays.
-            </h2>
-          </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            The Gateway is the boundary between agent intent and paid provider calls. It returns enough structure for teams to inspect, reconcile, and replay the decision path.
-          </p>
-        </div>
-        <CodeBlock title="market mission call" code={developerExamples.gateway} />
-      </section>
-
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Response contract</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Your agent gets a decision, route facts, and proof handles.
-            </h2>
-          </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            A production integration should never treat the answer as only text. Store the recommendation, approved and blocked providers, USDC routed, receipt IDs, output hash, and reconciliation state with the market decision.
-          </p>
-        </div>
-        <CodeBlock title="mission response" code={developerExamples.response} />
-      </section>
-
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Endpoints</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              The minimum API surface for real agent workflows.
-            </h2>
-          </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            These routes separate the reference agent product from the reusable mesh infrastructure. Teams can run the demo agent, integrate the gateway directly, register providers, inspect receipts, and reconcile payment with delivery.
-          </p>
-        </div>
-        <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white/45">
-          {developerEndpoints.map(([method, path, body]) => (
-            <div key={path} className="grid gap-3 p-4 md:grid-cols-[90px_280px_1fr] md:items-center">
-              <Pill compact tone={method === "GET" ? "blue" : "good"}>{method}</Pill>
-              <p className="font-mono text-sm font-black text-slate-950">{path}</p>
-              <p className="text-sm leading-6 text-slate-600">{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Environment</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Keep keys server-side and be honest about payment mode.
-            </h2>
-          </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            Testnet integrations should label payment state clearly: real x402, Arc testnet, pending, fallback, or blocked. Demo fallback must not be presented as settled USDC.
-          </p>
-        </div>
-        <div className="grid gap-x-8 gap-y-0 border-y border-slate-200 bg-white/40 md:grid-cols-2">
+      <Glass className="border-y border-slate-200 p-5">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Server environment</p>
+        <div className="mt-5 grid gap-x-8 gap-y-0 border-y border-slate-200 bg-white/40 md:grid-cols-2">
           {developerEnv.map(([key, body]) => (
             <div key={key} className="border-b border-slate-200 py-4 md:odd:border-r md:odd:pr-6 md:even:pl-6">
               <p className="font-mono text-xs font-black text-cyan-700">{key}</p>
@@ -1543,44 +1313,7 @@ function Developers({ openConsole, live }) {
             </div>
           ))}
         </div>
-      </section>
-
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Provider onboarding</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Register paid intelligence services with trust and proof metadata.
-            </h2>
-          </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            Providers expose category, price, latency, proof support, and delivery behavior so Angora can score the route before a market agent spends.
-          </p>
-        </div>
-        <CodeBlock title="provider registration" code={developerExamples.provider} />
-      </section>
-
-      <section className="border-t border-slate-200/55 py-20">
-        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div>
-            <Badge>Production checklist</Badge>
-            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              What has to be true before real enterprise spend.
-            </h2>
-          </div>
-          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            The SDKs are public, but enterprise readiness also requires auth, durable storage, real provider contracts, policy limits, observability, and disciplined secret handling.
-          </p>
-        </div>
-        <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white/45">
-          {productionChecklist.map(([title, body]) => (
-            <div key={title} className="grid gap-3 p-4 md:grid-cols-[240px_1fr] md:items-start">
-              <p className="font-black text-slate-950">{title}</p>
-              <p className="text-sm leading-6 text-slate-600">{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      </Glass>
     </div>
   );
 }
@@ -2144,30 +1877,14 @@ function GatewayOverviewWorkspace({ live, latestResult, setTab }) {
   const readiness = live?.readiness || live?.dashboard?.readiness;
   const latestReceipt = latestResult?.receipts?.[0] || receipts[0];
   const latestExecution = latestResult?.decisions?.[0] || executionRows[0];
-  const outputObject = {
-    decision: latestExecution?.status === "blocked" ? "block" : "allow",
-    selected_provider: latestExecution?.providerId || latestReceipt?.providerId || "pending",
-    route_score: latestExecution?.routeScore || latestReceipt?.scorecard?.routeScore || "pending",
-    policy_verdict: latestExecution?.policyVerdict || latestReceipt?.policyVerdict || "pending",
-    payment_context: {
-      rail: latestReceipt?.paymentRail || "Circle/x402",
-      amount: latestReceipt?.amountUSDC || "0.000",
-      asset: latestReceipt?.asset || "USDC",
-      mode: latestReceipt?.executionMode || "pending",
-    },
-    proof: {
-      receipt_id: latestReceipt?.receiptId || "pending",
-      output_hash: latestReceipt?.outputHash || "pending",
-      reconciliation_status: latestReceipt?.settlementStatus || "pending",
-    },
-    execution_history: ["providers.scanned", "route.scored", "payment.authorized", "provider.delivery", "receipt.created", "reconciliation.checked"],
-  };
+  const checks = readiness?.checks || [];
+  const blockingChecks = checks.filter((check) => check.status !== "ready");
 
   return (
     <div className="space-y-8">
       <ActionBand
         eyebrow="Tenant gateway"
-        title="The signed-in console is the control plane for paid-intelligence workflows."
+        title="Live operating state for paid-intelligence routing."
         metrics={[
           ["Executions", metrics.gatewayCalls || executionRows.length || 0],
           ["Blocked", metrics.blockedCalls || 0],
@@ -2180,8 +1897,8 @@ function GatewayOverviewWorkspace({ live, latestResult, setTab }) {
           <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-start">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Workspace flow</p>
-              <h2 className="mt-1 text-2xl font-black text-slate-950">Developer signs up, configures policy, calls the Gateway, and audits every paid call.</h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">Market Intelligence is the demo layer. The main product is the reusable gateway that decides, routes, pays, proves, and reconciles agent service calls.</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">Gateway, policy, payments, receipts, and reconciliation in one workspace.</h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">This page should answer one thing quickly: is the infrastructure ready to route a paid intelligence call, and what happened on the latest calls?</p>
             </div>
             <Pill tone={readiness?.productionReady ? "good" : "warn"}>{readiness?.currentStage || "testnet ready"}</Pill>
           </div>
@@ -2207,9 +1924,24 @@ function GatewayOverviewWorkspace({ live, latestResult, setTab }) {
         </Glass>
 
         <Glass className="border-y border-slate-200 p-5">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Gateway output object</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">This is the product object an enterprise agent should store beside its market decision.</p>
-          <pre className="mt-5 max-h-[520px] overflow-auto border-l-4 border-cyan-300/70 bg-white/60 p-4 font-mono text-[11px] leading-5 text-slate-700">{JSON.stringify(outputObject, null, 2)}</pre>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Latest route</p>
+          <div className="mt-5 space-y-3">
+            <RouteLine label="Decision" value={latestExecution?.status || "pending"} tone={latestExecution?.status === "blocked" ? "bad" : latestExecution?.status ? "good" : "neutral"} />
+            <RouteLine label="Provider" value={latestExecution?.providerId || latestReceipt?.providerId || "none yet"} tone="blue" />
+            <RouteLine label="Route score" value={String(latestExecution?.routeScore || latestReceipt?.scorecard?.routeScore || "pending")} tone="purple" />
+            <RouteLine label="Receipt" value={latestReceipt?.receiptId || "none yet"} tone={latestReceipt?.receiptId ? "good" : "neutral"} />
+            <RouteLine label="Reconciliation" value={latestReceipt?.settlementStatus || "pending"} tone={latestReceipt?.settlementStatus === "matched" ? "good" : "warn"} />
+          </div>
+          {blockingChecks.length > 0 && (
+            <div className="mt-6 border-t border-slate-200 pt-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Attention</p>
+              <div className="mt-3 space-y-3">
+                {blockingChecks.slice(0, 3).map((check) => (
+                  <p key={check.name} className="text-sm leading-6 text-slate-600"><span className="font-black text-slate-950">{check.name}:</span> {check.message}</p>
+                ))}
+              </div>
+            </div>
+          )}
         </Glass>
       </div>
 
@@ -2218,7 +1950,7 @@ function GatewayOverviewWorkspace({ live, latestResult, setTab }) {
           ["Executions", "Review allowed, blocked, delivered, failed, and duplicate calls.", "executions"],
           ["Policies", "Set trust, proof, category, budget, and provider access controls.", "policies"],
           ["Payments", "Inspect payment intents, delivery, settlement, and reconciliation.", "payments"],
-          ["Developers", "Install SDKs, read OpenAPI, issue keys, and connect your backend.", "developers"],
+          ["Integrations", "Install SDKs, read OpenAPI, issue keys, and connect your backend.", "developers"],
         ].map(([title, body, target]) => (
           <button key={title} type="button" onClick={() => setTab(target)} className="border-t border-slate-200 bg-white/45 p-5 text-left transition hover:-translate-y-0.5 hover:bg-white">
             <p className="text-sm font-black text-slate-950">{title}</p>
