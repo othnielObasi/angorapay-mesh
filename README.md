@@ -492,7 +492,10 @@ result = client.run_agent_mission({
 })
 ```
 
-The SDKs are integrated in this repository. The Python SDK is published on PyPI, and the TypeScript SDK has publish-ready npm package metadata.
+The SDKs are integrated in this repository and published publicly:
+
+- TypeScript: `npm install @angorapay/sdk`
+- Python: `pip install angorapay`
 
 The hosted Gateway exposes a public OpenAPI contract:
 
@@ -544,10 +547,10 @@ WEBHOOK_SIGNING_SECRET=...
 | API routes | Mounted at `/v1/angora/*` |
 | Local JSON storage | Implemented |
 | PostgreSQL schema | Included |
-| TypeScript SDK | Builds and packs locally |
+| TypeScript SDK | Published on npm as `@angorapay/sdk@0.1.0` |
 | Python SDK | Published on PyPI as `angorapay==0.1.0` |
 | Full checks | Passing |
-| npm publishing | Package metadata and publish script ready; registry login required |
+| npm publishing | Completed: https://www.npmjs.com/package/@angorapay/sdk |
 | PyPI publishing | Completed: https://pypi.org/project/angorapay/ |
 | hosted gateway deployment | Live on Vultr at `http://108.61.173.24/angora-app/` |
 | real Circle/x402 production config | Not completed |
@@ -573,7 +576,7 @@ python -m twine check sdk/python/dist/*
 python -m twine upload sdk/python/dist/*
 ```
 
-The TypeScript package name is `@angorapay/sdk`. If the npm organization is not created or the current user does not have access, create/claim the `angorapay` organization first or publish under a temporary unscoped package name.
+The TypeScript package name is `@angorapay/sdk`.
 
 The Python package name is `angorapay`. If PyPI already reserves that name, publish under `angorapay-mesh` and update `sdk/python/pyproject.toml` before uploading.
 

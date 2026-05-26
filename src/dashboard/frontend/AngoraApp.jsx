@@ -1346,7 +1346,7 @@ function Developers({ openConsole, live }) {
             </h2>
           </div>
           <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
-            The UI is the reference app. Production developers normally call the Gateway from a backend or use the SDK packages. The Python SDK is live on PyPI as angorapay, while the TypeScript package is ready for npm publication.
+            The UI is the reference app. Production developers normally call the Gateway from a backend or use the public SDK packages: npm install @angorapay/sdk or pip install angorapay.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
