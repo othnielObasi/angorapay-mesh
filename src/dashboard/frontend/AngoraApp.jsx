@@ -1217,7 +1217,137 @@ function MissionRoutePreview() {
   );
 }
 
-function Developers({ openConsole, live }) {
+function Developers({ openConsole }) {
+  const platformStack = [
+    ["Gateway API", "Route paid-intelligence calls through provider discovery, policy, payment context, receipts, and reconciliation.", "OpenAPI", "/v1/angora/openapi.json"],
+    ["TypeScript SDK", "Use @angorapay/sdk from backend services and agent runtimes.", "npm", "npm install @angorapay/sdk"],
+    ["Python SDK", "Use angorapay from research jobs, trading pipelines, and Python agent services.", "PyPI", "pip install angorapay"],
+    ["Provider Registry", "Register x402-capable paid services with price, category, proof support, and trust metadata.", "API", "/v1/angora/providers/register"],
+    ["Execution Ledger", "Inspect every allow, block, fail, delivery, receipt, and reconciliation event from SDK calls.", "Console", "Execution Ledger"],
+    ["Receipts & Proof", "Attach receipt IDs, output hashes, route score, policy verdict, and reconciliation state to agent decisions.", "Audit", "Proof trail"],
+  ];
+  const buildPaths = [
+    ["Connect an agent", "Call the Gateway from your backend, pass mission intent and budget, then store the returned execution record."],
+    ["Register a provider", "Expose a paid intelligence endpoint, declare x402/payment context, and submit service metadata."],
+    ["Audit a decision", "Look up the execution ID, inspect provider selection, payment status, receipt, and reconciliation outcome."],
+  ];
+  const resources = [
+    ["Documentation", "Core concepts, execution record shape, and production architecture.", "README.md"],
+    ["API Reference", "Generated OpenAPI contract for Gateway and provider operations.", "/v1/angora/openapi.json"],
+    ["Sample Apps", "Market Intelligence Agents showing how builders can use AngoraPay Mesh.", "Demo Apps"],
+    ["Console", "Gateway overview, executions, providers, policies, payments, proof, metrics, and integrations.", "Sign in"],
+  ];
+
+  return (
+    <div className="space-y-0">
+      <section className="grid gap-14 pb-20 pt-8 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
+        <div>
+          <Badge>Developer hub</Badge>
+          <h1 className="mt-7 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl">
+            Build paid-intelligence workflows on AngoraPay Mesh.
+          </h1>
+          <p className="mt-7 max-w-2xl text-lg font-medium leading-8 text-slate-600">
+            Use the Gateway API or public SDKs to let agents discover providers, enforce policy, route Circle/x402-style payments, create receipts, and reconcile delivery with proof.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button type="button" onClick={() => openConsole("developers")} className="inline-flex min-h-12 items-center justify-center rounded-full bg-cyan-400 px-6 text-sm font-black text-slate-950 shadow-[0_18px_45px_rgba(34,211,238,0.22)] transition hover:-translate-y-0.5 hover:bg-cyan-300">
+              Open console
+            </button>
+            <a href="/v1/angora/openapi.json" className="inline-flex min-h-12 items-center justify-center rounded-full border border-slate-200 bg-white/70 px-6 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:border-cyan-200">
+              View API reference
+            </a>
+          </div>
+        </div>
+        <div className="grid gap-4">
+          <CodeBlock title="install" code={`npm install @angorapay/sdk\npip install angorapay`} />
+          <CodeBlock title="first gateway call" code={developerExamples.gateway} />
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Platform stack</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              The modules developers build with.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            Each part can be used directly through the Gateway, but together they create the governed execution record a production agent should keep.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {platformStack.map(([title, body, label, value]) => (
+            <Glass key={title} className="border-t border-slate-200 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <p className="text-lg font-black text-slate-950">{title}</p>
+                <Pill compact tone="blue">{label}</Pill>
+              </div>
+              <p className="mt-4 text-sm leading-7 text-slate-600">{body}</p>
+              <p className="mt-5 font-mono text-xs font-black text-cyan-700">{value}</p>
+            </Glass>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="grid gap-14 lg:grid-cols-[0.75fr_1.25fr]">
+          <div>
+            <Badge>Build paths</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Start from the job you need done.
+            </h2>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3">
+            {buildPaths.map(([title, body]) => (
+              <FlowStep key={title} number="" title={title} body={body} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Execution record</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              The SDK returns an auditable record, not only text.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            Store this object beside your agent recommendation: it explains the decision, route, policy, payment, delivery, receipt, and reconciliation state.
+          </p>
+        </div>
+        <CodeBlock title="gateway response" code={developerExamples.response} />
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Resources</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Everything needed from first call to production review.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            Keep the public page as a developer hub. Use the signed-in console for live executions, keys, policies, receipts, and infrastructure state.
+          </p>
+        </div>
+        <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white/45">
+          {resources.map(([title, body, action]) => (
+            <div key={title} className="grid gap-3 p-4 md:grid-cols-[220px_1fr_180px] md:items-center">
+              <p className="font-black text-slate-950">{title}</p>
+              <p className="text-sm leading-6 text-slate-600">{body}</p>
+              <p className="font-mono text-xs font-black text-cyan-700">{action}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function IntegrationsWorkspace({ openConsole, live }) {
   const readiness = live?.readiness || live?.dashboard?.readiness || {};
   const runtime = readiness.runtime || live?.dashboard?.runtime || {};
   const checks = readiness.checks || [];
@@ -1865,7 +1995,7 @@ function MetricsPanel({ live }) {
 }
 
 function DeveloperPanel(props) {
-  return <Developers {...props} />;
+  return <IntegrationsWorkspace {...props} />;
 }
 
 function GatewayOverviewWorkspace({ live, latestResult, setTab }) {
