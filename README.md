@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">AngoraPay Mesh</h1>
-  <p align="center"><strong>Market agents buy trusted intelligence before they act.</strong></p>
+  <p align="center"><strong>The paid-intelligence gateway for market-agent workflows.</strong></p>
   <p align="center">
     <a href="#core-thesis">Core Thesis</a> &bull;
     <a href="#what-angorapay-mesh-proves">What It Proves</a> &bull;
@@ -16,6 +16,24 @@
 ---
 
 AngoraPay Mesh is the infrastructure platform for paid-intelligence routing, policy enforcement, Circle/x402 payment boundaries, receipts, traces, and reconciliation.
+
+The signed-in product is a developer tenant console:
+
+```text
+Developer signs up
+        |
+        v
+Workspace / tenant
+        |
+        v
+API key + module policy
+        |
+        v
+Gateway / SDK call
+        |
+        v
+Decision + payment context + receipt + reconciliation
+```
 
 Market Intelligence Agents are the reference application built on top of that infrastructure. They show how a developer can use the mesh to build a practical agent product that buys trusted signals, validates provider quality, and returns a proof-backed recommendation.
 
@@ -33,6 +51,20 @@ Angora combines two layers on one platform:
 | --- | --- | --- |
 | AngoraPay Mesh | Core infrastructure for provider discovery, trust scoring, route scorecards, policy, spend control, Circle/x402 payment context, receipts, reconciliation, workspace controls, and SDK/API access | Should this agent pay this provider, and can we prove what happened? |
 | Market Intelligence Agents | Reference app built on the mesh, including Prediction Market Intelligence, Cross-Venue Arbitrage, and Social Trading Intelligence agents | What should I do with this market question after buying and validating trusted intelligence? |
+
+The product priority is infrastructure first:
+
+1. Gateway Overview
+2. Executions
+3. Providers
+4. Policies
+5. Payments
+6. Receipts & Proof
+7. Metrics
+8. Developers
+9. Demo Apps
+
+The market-intelligence workflow lives under Demo Apps as the first reference application, not as the whole platform.
 
 The combined flow is:
 
@@ -95,7 +127,11 @@ AngoraPay Mesh is built to prove a commercial workflow, not only to render a das
 | Developers can integrate without using the UI | TypeScript SDK, Python SDK, `/v1/angora/*` APIs |
 | Teams can operate the system safely | Workspaces, API Keys, Roles, Budgets, Audit Logs |
 
-The value proposition:
+The infrastructure value proposition:
+
+> Developers can operationalize Circle/x402 paid-agent workflows with routing, policy, proof, reconciliation, tenant controls, and SDK access.
+
+The reference-app value proposition:
 
 > Teams can run market-intelligence agents that buy trusted paid signals, block weak providers, control spend, generate proof, and reconcile payment with delivery through a UI or SDK.
 
@@ -178,7 +214,7 @@ Evaluate whether this trader signal is reliable enough to follow with reduced si
 
 | Surface | Route or Path | Purpose |
 | --- | --- | --- |
-| Angora console | `/angora` | Primary UI for markets, reference agent missions, mesh/gateway health, providers, trust policy, payments, proof, and developer access |
+| Angora console | `/angora` | Tenant Gateway console for executions, providers, policies, payments, receipts/proof, metrics, developers, and reference demo apps |
 | Legacy static workspace | `/angora.html` | Older static UI retained for compatibility |
 | API root | `/v1/angora` | Canonical Angora API prefix |
 | Health | `/v1/angora/health` | Service health check |

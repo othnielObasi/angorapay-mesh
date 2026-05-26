@@ -19,9 +19,15 @@ import {
 const APP_NAME = "AngoraPay Mesh";
 
 const tabs = [
-  { id: "run", label: "Run Agent", icon: MessageSquare, intent: "Start with a market, run the reference agent, and inspect the proof-backed answer." },
-  { id: "mesh", label: "Mesh", icon: Network, intent: "Inspect the AngoraPay Mesh infrastructure that routes, pays, proves, and reconciles." },
-  { id: "developers", label: "Developers", icon: Code2, intent: "Embed AngoraPay Mesh through Gateway APIs and SDK examples." },
+  { id: "gateway", group: "Infrastructure platform", label: "Gateway Overview", icon: Network, intent: "Manage and observe your paid-intelligence gateway." },
+  { id: "executions", group: "Infrastructure platform", label: "Executions", icon: Activity, intent: "Inspect approved, blocked, delivered, and failed paid-intelligence calls." },
+  { id: "providers", group: "Infrastructure platform", label: "Providers", icon: Store, intent: "Manage paid intelligence supply and provider readiness." },
+  { id: "policies", group: "Infrastructure platform", label: "Policies", icon: ShieldCheck, intent: "Control trust, spend, proof, and route rules before payment." },
+  { id: "payments", group: "Infrastructure platform", label: "Payments", icon: WalletCards, intent: "Match payment intents, provider delivery, receipts, and settlement state." },
+  { id: "proof", group: "Infrastructure platform", label: "Receipts & Proof", icon: FileCheck2, intent: "Audit what was bought, why it was trusted, and what proof was created." },
+  { id: "metrics", group: "Infrastructure platform", label: "Metrics", icon: LineChart, intent: "Track tenant usage, volume, blocks, receipts, and reliability." },
+  { id: "developers", group: "Infrastructure platform", label: "Developers", icon: Code2, intent: "Use public SDKs and Gateway APIs in your own agent products." },
+  { id: "demo", group: "Reference demo layer", label: "Demo Apps", icon: MessageSquare, intent: "Run Market Intelligence Agents as reference apps built on the gateway." },
 ];
 
 const rfpAreas = [
@@ -284,73 +290,136 @@ const submissionMetrics = [
 ];
 
 const developerExamples = {
-  sdk: `// Local SDK package in this repo: sdk/typescript
-// Replace the import path with the published package name after release.
+  sdk: `npm install @angorapay/sdk
 
-import { AngoraPay } from './sdk/typescript';
+import { AngoraPay } from "@angorapay/sdk";
 
 const angora = new AngoraPay({
   apiKey: process.env.ANGORA_API_KEY,
-  baseUrl: process.env.ANGORA_GATEWAY_URL || 'http://localhost:3000',
+  baseUrl: process.env.ANGORA_GATEWAY_URL || "http://localhost:3000",
 });
 
 const result = await angora.runAgentMission({
-  userGoal: 'Evaluate whether this BTC prediction market is mispriced after breaking news.',
-  module: 'prediction_market',
-  paymentMode: 'arc_testnet',
-  budgetUSDC: '0.05',
+  userGoal: "Evaluate whether this BTC prediction market is mispriced after breaking news.",
+  module: "prediction_market",
+  paymentMode: "arc_testnet",
+  budgetUSDC: "0.05",
 });`,
+  python: `pip install angorapay
+
+from angorapay import AngoraPay
+
+client = AngoraPay(
+    base_url="https://your-angora-gateway.example",
+    api_key="ag_live_...",
+)
+
+result = client.run_agent_mission(
+    userGoal="Check whether this BTC prediction market is mispriced.",
+    module="prediction_market",
+    paymentMode="arc_testnet",
+    budgetUSDC="0.05",
+)`,
+  start: `# 1. Create or select workspace
+POST /v1/angora/workspaces
+
+# 2. Issue a server-side API key
+POST /v1/angora/auth/keys
+
+# 3. Configure the Gateway URL
+ANGORA_GATEWAY_URL=http://108.61.173.24
+ANGORA_API_KEY=ag_live_...
+
+# 4. Call from your backend or agent runtime
+npm install @angorapay/sdk
+# or
+pip install angorapay`,
   gateway: `POST /v1/angora/gateway/call
 Authorization: Bearer ang_live_xxxxx
 Idempotency-Key: mission-001-odds-call-001
 
 {
-  "agent_id": "prediction-agent-01",
-  "mission_id": "prediction-market-intel-demo",
+  "agentId": "prediction-agent-01",
+  "missionId": "prediction-market-intel-demo",
+  "consumerId": "enterprise-workspace",
   "intent": "evaluate +EV BTC election-odds market",
-  "max_spend_usdc": "0.05",
-  "allowed_categories": ["odds", "sentiment", "risk", "proof"],
-  "min_provider_trust": 85,
-  "required_proof": true
+  "category": "odds",
+  "maxPrice": "0.01",
+  "payload": {
+    "market": "BTC election odds",
+    "asset": "BTC"
+  }
 }`,
   provider: `POST /v1/angora/providers/register
 
 {
-  "provider_id": "oddsnode",
-  "service_name": "Prediction Market Odds API",
-  "x402_endpoint": "https://oddsnode.example/x402",
-  "categories": ["odds", "prediction_markets"],
-  "price_usdc": "0.004",
-  "proof_supported": true,
-  "arc_supported": true
+  "providerId": "oddsnode",
+  "serviceId": "prediction-market-odds",
+  "name": "Prediction Market Odds API",
+  "x402Url": "https://oddsnode.example/x402",
+  "category": "odds",
+  "price": "0.004",
+  "proofRequired": true,
+  "verified": true,
+  "trustScore": 96
 }`,
   response: `{
-  "mission_id": "prediction-market-intel-demo",
+  "decision": "allow",
+  "selected_provider": "OddsNode",
+  "route_score": 96,
+  "policy_verdict": "passed",
+  "payment_context": {
+    "rail": "circle_x402",
+    "amount": "0.004",
+    "asset": "USDC",
+    "mode": "arc_testnet"
+  },
   "recommendation": {
     "action": "monitor",
     "confidence": 0.88,
     "summary": "Approved providers met trust, spend, and proof policy."
   },
-  "route": {
-    "providers_scanned": 7,
-    "approved": 4,
-    "blocked": 1,
-    "usdc_routed": "0.013",
-    "payment_mode": "arc_testnet"
-  },
   "proof": {
-    "receipts": ["ang_rcpt_9013", "ang_rcpt_9014"],
+    "receipt_id": "ang_rcpt_9013",
     "output_hash": "0x...",
-    "reconciliation": "matched"
-  }
+    "reconciliation_status": "matched"
+  },
+  "execution_history": [
+    "providers.scanned",
+    "route.scored",
+    "payment.authorized",
+    "provider.delivery",
+    "receipt.created",
+    "reconciliation.checked"
+  ]
 }`,
 };
 
 const developerSurfaces = [
-  ["Gateway API", "Best for any agent runtime or backend. Send HTTPS requests, keep API keys server-side, and let Angora return route decisions, payment context, receipts, and reconciliation state."],
-  ["TypeScript SDK", "Best for Node, Next.js, Vite, and agent apps that want typed helpers around market missions, provider calls, receipts, and policy controls."],
-  ["Python SDK", "Best for research notebooks, trading research pipelines, and Python agent workflows that need the same mission and proof objects."],
-  ["Provider API", "Best for paid intelligence providers registering endpoints, price, service category, proof support, and delivery metadata."],
+  ["Workspace", "Every developer operates inside a tenant workspace with its own policy, budget, provider access, receipts, and audit records."],
+  ["API keys", "Keys are scoped to workspace capabilities. Keep them server-side and rotate them from the Gateway console or API."],
+  ["Gateway API", "The stable HTTP boundary for agent runtimes that need route decisions, payment context, receipts, and reconciliation state."],
+  ["SDKs", "Public TypeScript and Python packages wrap the same Gateway API for app backends, research workflows, and agent services."],
+];
+
+const developerModules = [
+  ["Provider Discovery", "Find services by category, price, trust, proof support, and provider state."],
+  ["Route Scoring", "Rank candidate providers by mission fit, policy compliance, proof completeness, delivery quality, and cost."],
+  ["Policy Engine", "Apply workspace spend caps, minimum trust, route-score gates, allowed categories, and blocked providers."],
+  ["Payment Context", "Attach Circle/x402, Arc, USDC, execution mode, and payment-intent metadata to approved calls."],
+  ["Receipt Generation", "Create receipt IDs, output hashes, policy verdicts, route facts, and reconciliation tags."],
+  ["Execution History", "Show every approved, blocked, delivered, failed, or duplicate call for the workspace."],
+  ["Reconciliation", "Match payment intent, provider delivery, receipt, webhook, and settlement state."],
+  ["Metrics / Usage", "Track users, calls, providers, blocked attempts, USDC routed, receipts, and failure rates."],
+];
+
+const productionChecklist = [
+  ["Auth boundary", "Enable API-key auth before real users or spend. Do not run enterprise traffic with auth disabled."],
+  ["Tenant storage", "Move from JSON volume to the Postgres schema for durable multi-workspace operation."],
+  ["Provider contracts", "Register real x402 providers with schema, timeout, proof, price, and reconciliation metadata."],
+  ["Spend controls", "Set workspace budgets, mission caps, route thresholds, and blocked-provider policy."],
+  ["Observability", "Review metrics, audit logs, payment intents, delivery records, receipts, and reconciliation runs."],
+  ["Secrets", "Keep Circle, OpenAI, webhook, and Angora API keys server-side. Rotate tokens after testing."],
 ];
 
 const developerEnv = [
@@ -463,8 +532,9 @@ async function loadLiveSnapshot() {
 }
 
 function runSelfTests() {
-  console.assert(tabs.length === 3, "Angora UI should expose three primary console areas");
+  console.assert(tabs.length === 9, "Angora UI should expose infrastructure pages plus reference demo apps");
   console.assert(new Set(tabs.map((tab) => tab.id)).size === tabs.length, "tab IDs should be unique");
+  console.assert(tabs[0].id === "gateway", "Gateway Overview should be the default signed-in page");
   console.assert(discoverableMarkets.length >= 4, "market catalogue should provide a usable opportunity universe");
   console.assert(approvedServices(marketServices).length === 6, "six market services should be approved");
   console.assert(blockedServices(marketServices).length === 1, "one market service should be blocked");
@@ -473,6 +543,7 @@ function runSelfTests() {
   console.assert(policyRules.some(([key]) => key === "Minimum route score"), "policy must include route-score gate");
   console.assert(rfpAreas.length === 6, "UI should cover all six AngoraPay Mesh RFP areas");
   console.assert(Object.values(developerExamples).every((value) => typeof value === "string" && value.length > 20), "developer examples should be complete strings");
+  console.assert(developerModules.length >= 8, "developer guide should expose configurable gateway modules");
 }
 
 runSelfTests();
@@ -1175,9 +1246,9 @@ function MissionRoutePreview() {
 
 function Developers({ openConsole, live }) {
   const integrationSteps = [
-    ["01", "Submit mission", "Send market question, budget, policy requirements, and provider categories to the Gateway."],
-    ["02", "Receive route plan", "Angora returns provider scores, blocked routes, payment context, and required proof fields."],
-    ["03", "Store proof", "Persist receipts, output hashes, policy verdicts, and reconciliation status with the final recommendation."],
+    ["Workspace", "Create a tenant workspace with policy, budget, provider access, and audit records."],
+    ["API key", "Issue a scoped server-side key for the backend or agent runtime that will call Angora."],
+    ["Gateway call", "Send mission intent or one provider request; Angora returns decision, payment context, and proof."],
   ];
   const [enterpriseForm, setEnterpriseForm] = useState({
     displayName: "",
@@ -1238,16 +1309,31 @@ function Developers({ openConsole, live }) {
         <div>
           <Badge>Developers</Badge>
           <h1 className="mt-7 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl">
-            Gateway and SDKs for paid market-agent services.
+            Production guide for the Angora Gateway and SDKs.
           </h1>
           <p className="mt-7 max-w-2xl text-lg font-medium leading-8 text-slate-600">
-            Use AngoraPay Mesh as the policy-aware wrapper around Circle/x402 on Arc. Developers call one Gateway or SDK while Angora handles discovery, provider routing, receipts, execution history, and traction metrics.
+            Use AngoraPay Mesh as the tenant control plane around Circle/x402 on Arc. Developers create a workspace, issue API keys, configure modules, call the Gateway or SDK, and inspect decisions, payments, receipts, executions, and metrics.
           </p>
-          <button type="button" onClick={() => openConsole("run")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
-            Sign in to test Gateway <ArrowRight className="h-4 w-4" />
+          <button type="button" onClick={() => openConsole("gateway")} className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
+            Open Gateway console <ArrowRight className="h-4 w-4" />
           </button>
         </div>
         <CodeBlock title="TypeScript SDK" code={developerExamples.sdk} />
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Getting started</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Start with a workspace, not a demo prompt.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            A production developer should onboard the way an enterprise account works: create a tenant, issue a scoped API key, configure gateway modules, then call Angora from their own backend or agent runtime.
+          </p>
+        </div>
+        <CodeBlock title="workspace setup" code={developerExamples.start} />
       </section>
 
       <section className="border-t border-slate-200/55 py-20">
@@ -1263,6 +1349,28 @@ function Developers({ openConsole, live }) {
               <FlowStep key={title} number={number} title={title} body={body} />
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Configurable modules</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              Enable the parts your agent workflow needs.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            Angora is useful because the modules are observable separately. Enterprises can inspect provider discovery, route scoring, policy, payment context, receipts, history, reconciliation, and usage instead of accepting an opaque agent answer.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {developerModules.map(([title, body]) => (
+            <Glass key={title} className="border-t border-slate-200 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">{title}</p>
+              <p className="mt-4 text-sm leading-7 text-slate-600">{body}</p>
+            </Glass>
+          ))}
         </div>
       </section>
 
@@ -1307,7 +1415,7 @@ function Developers({ openConsole, live }) {
             <div className="mt-5 grid gap-4 md:grid-cols-[1fr_160px]">
               <label className="flex items-center gap-3 border-y border-slate-200 bg-white/35 p-4 text-sm font-semibold text-slate-700">
                 <input type="checkbox" checked={enterpriseForm.testedMission} onChange={(event) => updateEnterpriseField("testedMission", event.target.checked)} className="h-4 w-4 accent-cyan-500" />
-                I tested a market mission in the Run Agent workspace.
+                I tested a market mission in Demo Apps.
               </label>
               <Field label="Rating">
                 <select value={enterpriseForm.rating} onChange={(event) => updateEnterpriseField("rating", Number(event.target.value))} className="w-full border-b border-slate-200 bg-transparent py-3 text-sm font-semibold text-slate-950 outline-none focus:border-cyan-400">
@@ -1356,6 +1464,9 @@ function Developers({ openConsole, live }) {
               <p className="mt-4 text-sm leading-7 text-slate-600">{body}</p>
             </Glass>
           ))}
+        </div>
+        <div className="mt-8">
+          <CodeBlock title="Python SDK" code={developerExamples.python} />
         </div>
       </section>
 
@@ -1448,6 +1559,28 @@ function Developers({ openConsole, live }) {
         </div>
         <CodeBlock title="provider registration" code={developerExamples.provider} />
       </section>
+
+      <section className="border-t border-slate-200/55 py-20">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+          <div>
+            <Badge>Production checklist</Badge>
+            <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
+              What has to be true before real enterprise spend.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base font-medium leading-8 text-slate-600 lg:pt-12">
+            The SDKs are public, but enterprise readiness also requires auth, durable storage, real provider contracts, policy limits, observability, and disciplined secret handling.
+          </p>
+        </div>
+        <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white/45">
+          {productionChecklist.map(([title, body]) => (
+            <div key={title} className="grid gap-3 p-4 md:grid-cols-[240px_1fr] md:items-start">
+              <p className="font-black text-slate-950">{title}</p>
+              <p className="text-sm leading-6 text-slate-600">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -1477,6 +1610,10 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
   const metrics = live?.dashboard?.metrics;
   const runtime = live?.dashboard?.runtime;
   const activeSection = tabs.find((tabItem) => tabItem.id === activeTab) || tabs[0];
+  const groupedTabs = tabs.reduce((groups, tabItem) => {
+    const group = tabItem.group || "Console";
+    return { ...groups, [group]: [...(groups[group] || []), tabItem] };
+  }, {});
   return (
     <Background>
       <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
@@ -1486,16 +1623,21 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
             <div><p className="text-sm font-semibold text-slate-950">{APP_NAME}</p><p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">Platform console</p></div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <nav className="flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-2" aria-label="Console sections">
-              {tabs.map((tabItem) => {
-                const Icon = tabItem.icon;
-                const active = activeTab === tabItem.id;
-                return (
-                  <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-9 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-semibold ring-1 transition", active ? "bg-white text-cyan-700 shadow-sm ring-cyan-200" : "text-slate-500 ring-transparent hover:bg-white/55 hover:text-slate-950")}>
-                    <Icon className="h-4 w-4" />{tabItem.label}
-                  </button>
-                );
-              })}
+            <nav className="flex max-w-5xl flex-wrap items-start justify-center gap-x-6 gap-y-3" aria-label="Console sections">
+              {Object.entries(groupedTabs).map(([group, items]) => (
+                <div key={group} className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="mr-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{group}</span>
+                  {items.map((tabItem) => {
+                    const Icon = tabItem.icon;
+                    const active = activeTab === tabItem.id;
+                    return (
+                      <button key={tabItem.id} type="button" onClick={() => setActiveTab(tabItem.id)} className={cx("flex min-h-9 items-center justify-center gap-2 rounded-full px-3.5 py-2 text-xs font-semibold ring-1 transition", active ? "bg-white text-cyan-700 shadow-sm ring-cyan-200" : "text-slate-500 ring-transparent hover:bg-white/55 hover:text-slate-950")}>
+                        <Icon className="h-4 w-4" />{tabItem.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </nav>
             <button type="button" onClick={goHome} className="min-h-10 rounded-full border border-slate-200/55 bg-white/55 px-4 text-xs font-medium text-slate-600 shadow-[0_14px_35px_rgba(15,42,61,0.04)] backdrop-blur transition hover:text-slate-950">
               Sign out
@@ -1508,7 +1650,7 @@ function ConsoleShell({ activeTab, setActiveTab, goHome, live, latestResult, chi
             <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">{activeSection.intent}</h1>
           </div>
           <div className="grid gap-0 border border-slate-200 bg-white/45 sm:grid-cols-2">
-            <Stat label="Agent state" value={latestResult ? "active" : "ready"} icon={MessageSquare} />
+            <Stat label="Gateway state" value={live ? "online" : "loading"} icon={Network} />
             <Stat label="Gateway calls" value={String(metrics?.gatewayCalls || 0)} icon={Route} />
             <Stat label="Receipts" value={String(metrics?.receiptsCreated || live?.receipts?.length || 0)} icon={FileCheck2} />
             <Stat label="Runtime requests" value={String(runtime?.requests || 0)} icon={Activity} />
@@ -1993,6 +2135,101 @@ function DeveloperPanel(props) {
   return <Developers {...props} />;
 }
 
+function GatewayOverviewWorkspace({ live, latestResult, setTab }) {
+  const metrics = live?.dashboard?.metrics || {};
+  const runtime = live?.dashboard?.runtime || {};
+  const receipts = live?.receipts || [];
+  const executionRows = live?.execution || [];
+  const paymentIntents = live?.paymentIntents || [];
+  const readiness = live?.readiness || live?.dashboard?.readiness;
+  const latestReceipt = latestResult?.receipts?.[0] || receipts[0];
+  const latestExecution = latestResult?.decisions?.[0] || executionRows[0];
+  const outputObject = {
+    decision: latestExecution?.status === "blocked" ? "block" : "allow",
+    selected_provider: latestExecution?.providerId || latestReceipt?.providerId || "pending",
+    route_score: latestExecution?.routeScore || latestReceipt?.scorecard?.routeScore || "pending",
+    policy_verdict: latestExecution?.policyVerdict || latestReceipt?.policyVerdict || "pending",
+    payment_context: {
+      rail: latestReceipt?.paymentRail || "Circle/x402",
+      amount: latestReceipt?.amountUSDC || "0.000",
+      asset: latestReceipt?.asset || "USDC",
+      mode: latestReceipt?.executionMode || "pending",
+    },
+    proof: {
+      receipt_id: latestReceipt?.receiptId || "pending",
+      output_hash: latestReceipt?.outputHash || "pending",
+      reconciliation_status: latestReceipt?.settlementStatus || "pending",
+    },
+    execution_history: ["providers.scanned", "route.scored", "payment.authorized", "provider.delivery", "receipt.created", "reconciliation.checked"],
+  };
+
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Tenant gateway"
+        title="The signed-in console is the control plane for paid-intelligence workflows."
+        metrics={[
+          ["Executions", metrics.gatewayCalls || executionRows.length || 0],
+          ["Blocked", metrics.blockedCalls || 0],
+          ["USDC routed", metrics.totalVolumeUSDC || "0"],
+        ]}
+      />
+
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <Glass className="border-y border-slate-200 p-5">
+          <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-start">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Workspace flow</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">Developer signs up, configures policy, calls the Gateway, and audits every paid call.</h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">Market Intelligence is the demo layer. The main product is the reusable gateway that decides, routes, pays, proves, and reconciles agent service calls.</p>
+            </div>
+            <Pill tone={readiness?.productionReady ? "good" : "warn"}>{readiness?.currentStage || "testnet ready"}</Pill>
+          </div>
+          <div className="grid gap-0 border-y border-slate-200 bg-white/40 md:grid-cols-4">
+            <StageCell label="Workspace" value={live?.workspace?.workspace?.name || "default tenant"} />
+            <StageCell label="Auth mode" value={runtime.authRequired ? "api-key" : "demo"} />
+            <StageCell label="Storage" value={runtime.storageDriver || "json-file"} />
+            <StageCell label="Provider count" value={String(runtime.providerCount || live?.services?.length || 0)} />
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-4">
+            {[
+              ["Approved calls", metrics.paidServiceCalls || 0, "good"],
+              ["Blocked calls", metrics.blockedCalls || 0, "bad"],
+              ["Receipts", metrics.receiptsCreated || receipts.length || 0, "blue"],
+              ["Reconciliations", live?.reconciliationRuns?.length || 0, "purple"],
+            ].map(([label, value, tone]) => (
+              <div key={label} className="border-t border-slate-200 pt-4">
+                <p className="text-xs text-slate-500">{label}</p>
+                <div className="mt-2"><Pill tone={tone}>{String(value)}</Pill></div>
+              </div>
+            ))}
+          </div>
+        </Glass>
+
+        <Glass className="border-y border-slate-200 p-5">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-700">Gateway output object</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">This is the product object an enterprise agent should store beside its market decision.</p>
+          <pre className="mt-5 max-h-[520px] overflow-auto border-l-4 border-cyan-300/70 bg-white/60 p-4 font-mono text-[11px] leading-5 text-slate-700">{JSON.stringify(outputObject, null, 2)}</pre>
+        </Glass>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          ["Executions", "Review allowed, blocked, delivered, failed, and duplicate calls.", "executions"],
+          ["Policies", "Set trust, proof, category, budget, and provider access controls.", "policies"],
+          ["Payments", "Inspect payment intents, delivery, settlement, and reconciliation.", "payments"],
+          ["Developers", "Install SDKs, read OpenAPI, issue keys, and connect your backend.", "developers"],
+        ].map(([title, body, target]) => (
+          <button key={title} type="button" onClick={() => setTab(target)} className="border-t border-slate-200 bg-white/45 p-5 text-left transition hover:-translate-y-0.5 hover:bg-white">
+            <p className="text-sm font-black text-slate-950">{title}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RunAgentWorkspace(props) {
   const { selectedMarket, selectMarketAndMission } = props;
   return (
@@ -2222,6 +2459,80 @@ function PaymentsProofWorkspace({ live, latestResult, runReconciliation, reconci
   );
 }
 
+function ExecutionsWorkspace({ live }) {
+  const metrics = live?.dashboard?.metrics;
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Executions"
+        title="Every paid-intelligence call should be inspectable by status, provider, score, amount, and delivery state."
+        metrics={[
+          ["Gateway calls", metrics?.gatewayCalls || 0],
+          ["Paid calls", metrics?.paidServiceCalls || 0],
+          ["Blocked", metrics?.blockedCalls || 0],
+        ]}
+      />
+      <HistoryPanel live={live} />
+    </div>
+  );
+}
+
+function PaymentsWorkspace({ live, runReconciliation, reconciliationRunning }) {
+  const metrics = live?.dashboard?.metrics;
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Payments"
+        title="Reconcile payment intent, provider delivery, receipt, webhook, and settlement state."
+        metrics={[
+          ["Payment intents", live?.paymentIntents?.length || 0],
+          ["USDC routed", metrics?.totalVolumeUSDC || "0"],
+          ["Runs", live?.reconciliationRuns?.length || 0],
+        ]}
+      />
+      <ReconciliationPanel live={live} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} />
+      <ProductionReadinessPanel live={live} />
+    </div>
+  );
+}
+
+function ReceiptsProofWorkspace({ live, latestResult }) {
+  const metrics = live?.dashboard?.metrics;
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Receipts & Proof"
+        title="Store the evidence that explains what was bought, why it was trusted, and what it influenced."
+        metrics={[
+          ["Receipts", metrics?.receiptsCreated || live?.receipts?.length || 0],
+          ["Proof required", "true"],
+          ["Output hashes", live?.receipts?.length || 0],
+        ]}
+      />
+      <ProofPanel live={live} latestResult={latestResult} />
+    </div>
+  );
+}
+
+function TenantMetricsWorkspace({ live }) {
+  const metrics = live?.dashboard?.metrics;
+  return (
+    <div className="space-y-8">
+      <ActionBand
+        eyebrow="Metrics"
+        title="Tenant usage, volume, reliability, proof coverage, and traction in one place."
+        metrics={[
+          ["Users", metrics?.usersOnboarded || 0],
+          ["Missions", metrics?.missionsCreated || 0],
+          ["Receipts", metrics?.receiptsCreated || 0],
+        ]}
+      />
+      <MetricsPanel live={live} />
+      <ProductionReadinessPanel live={live} />
+    </div>
+  );
+}
+
 function ActionBand({ eyebrow, title, metrics }) {
   return (
     <div className="grid gap-5 border-y border-slate-200 bg-white/35 py-5 lg:grid-cols-[minmax(0,1fr)_420px]">
@@ -2243,7 +2554,7 @@ function ActionBand({ eyebrow, title, metrics }) {
 
 export default function AngoraUiCanvas() {
   const [view, setView] = useState("landing");
-  const [tab, setTab] = useState("run");
+  const [tab, setTab] = useState("gateway");
   const [completed, setCompleted] = useState(0);
   const [live, setLive] = useState(null);
   const [selectedMarket, setSelectedMarket] = useState(discoverableMarkets[0]);
@@ -2268,23 +2579,23 @@ export default function AngoraUiCanvas() {
 
   const openConsole = (target = "workspace") => {
     const legacyTargets = {
-      chat: "run",
-      run: "run",
-      workspace: "run",
-      markets: "run",
-      market: "run",
-      missions: "run",
-      marketplace: "mesh",
-      scorecard: "mesh",
-      routing: "mesh",
-      policy: "mesh",
-      providers: "mesh",
-      trust: "mesh",
-      proof: "mesh",
-      ops: "mesh",
-      reconciliation: "mesh",
-      history: "mesh",
-      metrics: "mesh",
+      chat: "demo",
+      run: "demo",
+      workspace: "gateway",
+      markets: "demo",
+      market: "demo",
+      missions: "demo",
+      marketplace: "providers",
+      scorecard: "policies",
+      routing: "gateway",
+      policy: "policies",
+      providers: "providers",
+      trust: "policies",
+      proof: "proof",
+      ops: "gateway",
+      reconciliation: "payments",
+      history: "executions",
+      metrics: "metrics",
       developers: "developers",
     };
     setTab(legacyTargets[target] || target);
@@ -2294,7 +2605,7 @@ export default function AngoraUiCanvas() {
   const selectMarketAndMission = (market) => {
     setSelectedMarket(market);
     setAgentGoal(market.mission);
-    setTab("run");
+    setTab("demo");
     setView("console");
   };
 
@@ -2357,11 +2668,17 @@ export default function AngoraUiCanvas() {
 
   const Panel = useMemo(() => {
     const panelMap = {
-      run: RunAgentWorkspace,
-      mesh: MeshWorkspace,
+      gateway: GatewayOverviewWorkspace,
+      executions: ExecutionsWorkspace,
+      providers: ProvidersWorkspace,
+      policies: TrustPolicyWorkspace,
+      payments: PaymentsWorkspace,
+      proof: ReceiptsProofWorkspace,
+      metrics: TenantMetricsWorkspace,
       developers: DeveloperPanel,
+      demo: RunAgentWorkspace,
     };
-    return panelMap[tab] || RunAgentWorkspace;
+    return panelMap[tab] || GatewayOverviewWorkspace;
   }, [tab]);
 
   if (view === "landing") {
@@ -2370,7 +2687,7 @@ export default function AngoraUiCanvas() {
 
   return (
     <ConsoleShell activeTab={tab} setActiveTab={setTab} goHome={() => setView("landing")} live={live} latestResult={latestResult}>
-      <Panel runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} selectedMarket={selectedMarket} setSelectedMarket={setSelectedMarket} selectMarketAndMission={selectMarketAndMission} openConsole={openConsole} />
+      <Panel setTab={setTab} runDemo={runDemo} completed={completed} live={live} runAgentMission={runAgentMission} agentGoal={agentGoal} setAgentGoal={setAgentGoal} agentRunning={agentRunning} latestResult={latestResult} runReconciliation={runReconciliation} reconciliationRunning={reconciliationRunning} selectedMarket={selectedMarket} setSelectedMarket={setSelectedMarket} selectMarketAndMission={selectMarketAndMission} openConsole={openConsole} />
     </ConsoleShell>
   );
 }
