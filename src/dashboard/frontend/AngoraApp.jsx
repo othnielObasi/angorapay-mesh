@@ -564,8 +564,8 @@ function Header({ mode, setMode, openConsole }) {
   const homeSections = [
     ["problem", "Problem"],
     ["flow", "Flow"],
-    ["infrastructure", "Infrastructure"],
-    ["proof", "Proof"],
+    ["developers", "Infrastructure"],
+    ["proof-surface", "Proof"],
   ];
   const goToPage = (pageId) => {
     setMode(pageId);
@@ -640,32 +640,48 @@ function Landing({ openConsole }) {
 }
 
 function Home({ setMode, openConsole }) {
-  const proofLine = ["provider trust", "route score", "policy gate", "payment receipt", "reconciliation trail"];
+  const heroProofLine = ["provider trust", "route score", "policy gate", "payment receipt", "reconciliation trail"];
   const problemPoints = [
     "Which provider should the agent trust?",
     "Should this payment be allowed?",
     "Did the provider actually deliver?",
-    "Can the final recommendation be audited later?",
+    "Can the final output be audited later?",
   ];
   const flowSteps = [
-    ["01", "Mission", "A market agent submits a question with budget, trust, and proof requirements."],
+    ["01", "Request", "An agent submits a paid-intelligence request with budget, trust, and proof requirements."],
     ["02", "Discovery", "Angora discovers registered, preferred, provisional, and external providers."],
-    ["03", "Route score", "Providers are scored for mission fit, trust, cost, latency, proof support, and delivery quality."],
-    ["04", "Policy gate", "Weak routes, low-trust providers, repeated payment keys, and unsupported proof calls are blocked."],
-    ["05", "Payment + delivery", "Approved calls settle through Circle/x402-style rails and provider delivery is tracked."],
-    ["06", "Receipt + reconcile", "Payment, provider output, receipt, and recommendation are reconciled into an audit trail."],
+    ["03", "Route score", "Providers are scored for fit, trust, cost, latency, proof support, and delivery quality."],
+    ["04", "Policy gate", "Weak routes, low-trust providers, duplicate payment keys, and unsupported proof calls are blocked."],
+    ["05", "Payment + delivery", "Approved calls settle through Circle/x402-style rails while provider delivery is tracked."],
+    ["06", "Receipt + reconcile", "Payment, provider output, receipt, and final output are reconciled into an audit trail."],
   ];
   const infrastructureItems = [
     ["Gateway / SDK", "One integration point for agents to request paid intelligence before acting."],
-    ["Route Scorecard", "Scores mission fit, provider trust, proof support, cost, latency, delivery history, and reconciliation success."],
-    ["Policy Engine", "Trust thresholds, route score rules, budget limits, proof requirements, and duplicate-payment blocks."],
-    ["Payment Rail", "Labels calls as real_x402, arc_testnet, fallback, blocked, pending, failed, or local_proof."],
-    ["Proof Receipts", "Receipt ID, mission ID, provider ID, route score, policy verdict, amount, output hash, and linked recommendation."],
+    ["Route Scorecard", "Scores provider trust, proof support, cost, latency, delivery history, and reconciliation success."],
+    ["Policy Engine", "Applies trust thresholds, route rules, budget limits, proof requirements, and duplicate-payment blocks."],
+    ["Payment Rail", "Wraps Circle/x402 payment execution with allow, block, review, pending, failed, and proof states."],
+    ["Proof Receipts", "Stores receipt ID, execution ID, provider ID, route score, policy verdict, amount, and output hash."],
     ["Workspace Controls", "Teams manage policies, budgets, API keys, provider access, receipts, traces, and audit logs."],
   ];
+  const tracks = [
+    "Prediction-market intelligence",
+    "Cross-venue arbitrage",
+    "Social trading signals",
+    "Perpetual futures agents",
+    "Portfolio intelligence",
+    "Provider proof workflows",
+  ];
+  const proofTimeline = [
+    ["providers.scanned", "7 services evaluated"],
+    ["route.scored", "4 approved - 1 blocked"],
+    ["payment.authorized", "0.013 USDC routed"],
+    ["provider.delivery", "outputs received"],
+    ["receipt.created", "4 proof receipts"],
+    ["reconciliation.checked", "matched"],
+  ];
   const proofSnapshot = [
-    ["Mission", "BTC market mispricing check"],
-    ["Agent", "Prediction Market Intelligence"],
+    ["Execution", "BTC market mispricing check"],
+    ["Reference app", "Market Intelligence Demo"],
     ["Providers scanned", "7"],
     ["Approved", "OddsNode, SignalMesh, RiskLens, ProofSmith"],
     ["Blocked", "GreyAlpha - trust below threshold"],
@@ -678,39 +694,39 @@ function Home({ setMode, openConsole }) {
     <div className="space-y-0">
       <section className="grid items-center gap-16 pb-20 pt-8 lg:grid-cols-[0.92fr_1.08fr]">
         <div>
-          <Badge>Paid-intelligence routing and proof for market agents</Badge>
+          <Badge>Gateway and SDK for governed paid-intelligence calls</Badge>
           <h1 className="mt-8 max-w-3xl text-5xl font-extrabold leading-[1.04] tracking-[-0.038em] text-slate-950 md:text-6xl lg:text-[5rem]">
-            Buy trusted market intelligence before agents act.
+            Route, pay, and prove agent intelligence calls.
           </h1>
           <p className="mt-8 max-w-xl text-lg font-medium leading-8 text-slate-600 md:text-xl">
-            AngoraPay Mesh lets market agents discover paid providers, score routes, block weak services, pay approved calls through Circle/x402, and prove which intelligence supported the final recommendation.
+            Angora gives developers a gateway and SDK for provider discovery, route scoring, policy-gated payments, receipts, execution history, and reconciliation - with market intelligence as the first reference workflow.
           </p>
           <p className="mt-4 max-w-xl text-sm font-medium leading-6 text-slate-500">
-            Circle enables payment. Angora decides, routes, blocks, proves, and reconciles.
+            Built around Circle/x402 payments, Angora decides, routes, blocks, proves, and reconciles.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => openConsole("run")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-7 py-4 text-sm font-semibold text-white shadow-[0_20px_55px_rgba(34,211,238,0.28)] transition hover:-translate-y-0.5 hover:bg-cyan-600">
-              Run market mission <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            <button type="button" onClick={() => openConsole("gateway")} className="group inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-7 py-4 text-sm font-medium text-white shadow-[0_20px_55px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-900">
+              Open gateway console <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </button>
-            <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/40 bg-white/40 px-6 py-4 text-sm font-medium text-slate-600 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-200/70 hover:text-cyan-800">
-              View Gateway <Code2 className="h-4 w-4" />
+            <button type="button" onClick={() => setMode("developers")} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200/40 bg-white/34 px-6 py-4 text-sm font-medium text-slate-600 shadow-none backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-200/70 hover:text-cyan-800">
+              View SDK / Docs <Code2 className="h-4 w-4" />
             </button>
           </div>
           <div className="mt-12 border-t border-slate-200/30 pt-6">
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400">
-              {proofLine.map((item, index) => (
+              {heroProofLine.map((item, index) => (
                 <React.Fragment key={item}>
                   <span>{item}</span>
-                  {index < proofLine.length - 1 ? <span className="text-cyan-500/50">/</span> : null}
+                  {index < heroProofLine.length - 1 ? <span className="text-cyan-500/50">/</span> : null}
                 </React.Fragment>
               ))}
             </div>
             <p className="mt-4 text-xs font-medium leading-6 text-slate-500">
-              Example mission: 7 providers scanned - 4 approved - 1 blocked - 0.013 USDC routed - reconciliation matched
+              Example output: decision allow - route score 96 - payment context attached - receipt created - reconciliation matched
             </p>
           </div>
         </div>
-        <MeshHeroVisual />
+        <MeshVisual />
       </section>
 
       <Band id="problem" tone="problem">
@@ -721,10 +737,13 @@ function Home({ setMode, openConsole }) {
               The problem is not payment. The problem is trusted paid intelligence.
             </h2>
             <p className="mt-6 max-w-xl text-base font-medium leading-8 text-slate-600">
-              Market agents can call APIs and pay providers, but they still need to know who to trust, what to block, whether delivery happened, and what evidence supports the recommendation.
+              Agents can call APIs and pay providers, but they still need to know who to trust, what to block, whether delivery happened, and what evidence supports the output.
             </p>
             <p className="mt-4 max-w-xl text-sm font-medium leading-6 text-cyan-800/75">
               Angora answers those questions before money leaves the agent workflow.
+            </p>
+            <p className="mt-3 max-w-xl text-sm font-medium leading-6 text-slate-500">
+              It is not another AI trader; it is the trust, routing, proof, and reconciliation layer around paid intelligence.
             </p>
           </div>
           <div className="space-y-5 border-l border-cyan-200/60 pl-7">
@@ -743,14 +762,13 @@ function Home({ setMode, openConsole }) {
           <div>
             <Badge>The Angora flow</Badge>
             <h2 className="mt-6 max-w-xl text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Mission to recommendation, with proof in the middle.
+              Input to decision, with proof in the middle.
             </h2>
             <p className="mt-6 max-w-xl text-base font-medium leading-8 text-slate-600">
-              Angora turns a market mission into a scored, policy-gated, paid, delivered, receipted, and reconciled intelligence trail.
+              Angora turns an agent request into a scored, policy-gated, paid, delivered, receipted, and reconciled execution trail.
             </p>
           </div>
           <div className="relative grid gap-x-8 gap-y-10 md:grid-cols-3">
-            <div className="absolute left-0 right-0 top-5 hidden h-px bg-gradient-to-r from-cyan-100/70 via-slate-200/70 to-cyan-100/40 md:block" />
             {flowSteps.map(([number, title, body]) => (
               <FlowStep key={title} number={number} title={title} body={body} />
             ))}
@@ -758,12 +776,12 @@ function Home({ setMode, openConsole }) {
         </div>
       </Band>
 
-      <Band id="infrastructure" tone="infrastructure">
+      <Band id="developers" tone="infrastructure">
         <div className="grid gap-14 lg:grid-cols-[0.78fr_1.22fr]">
           <div>
             <Badge>Developer infrastructure</Badge>
             <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Circle enables payment. Angora governs the paid-intelligence workflow.
+              Built around Circle/x402, Angora governs the paid-intelligence workflow.
             </h2>
           </div>
           <div className="grid gap-8 md:grid-cols-2">
@@ -779,14 +797,14 @@ function Home({ setMode, openConsole }) {
           <div>
             <Badge>Built for market-agent tracks</Badge>
             <h2 className="mt-6 max-w-lg text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
-              Built for agents that need paid signals before action.
+              Market intelligence is the first demo layer on the gateway.
             </h2>
             <p className="mt-6 text-base font-medium leading-8 text-slate-600">
-              Prediction markets, arbitrage, perpetual futures, social trading, portfolio management, paid signal providers, and proof workflows.
+              Prediction markets, arbitrage, perpetual futures, social trading, portfolio management, paid signal providers, and proof workflows can all sit on top of the same infrastructure.
             </p>
           </div>
           <div className="flex flex-wrap gap-x-10 gap-y-5 text-sm font-medium text-slate-700 lg:pt-10">
-            {rfpAreas.map((item) => (
+            {tracks.map((item) => (
               <span key={item} className="inline-flex items-center gap-2 transition hover:text-cyan-800">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-500/80 shadow-[0_0_14px_rgba(6,182,212,0.38)]" />
                 {item}
@@ -796,7 +814,7 @@ function Home({ setMode, openConsole }) {
         </div>
       </Band>
 
-      <Band id="proof" tone="proof">
+      <Band id="proof-surface" tone="proof">
         <div className="relative overflow-hidden rounded-[2rem] border border-slate-200/55 bg-white/50 p-8 shadow-[0_24px_80px_rgba(15,42,61,0.055)] backdrop-blur-xl md:p-10">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_24%,rgba(34,211,238,0.10),transparent_30%),linear-gradient(145deg,rgba(255,255,255,0.78),transparent_42%)]" />
           <div className="relative grid items-start gap-12 lg:grid-cols-[0.74fr_1.26fr]">
@@ -805,10 +823,19 @@ function Home({ setMode, openConsole }) {
               <h2 className="mt-6 max-w-lg text-4xl font-semibold leading-[1.12] tracking-[-0.028em] text-slate-950 md:text-[2.75rem]">
                 Every paid signal should leave an inspectable trail.
               </h2>
-              <p className="mt-5 max-w-xl text-base font-medium leading-8 text-slate-600">
-                The proof surface makes the operational truth visible: what was bought, who was paid, why they were selected, what was blocked, whether delivery matched, and which proof receipt supports the recommendation.
-              </p>
+            <p className="mt-5 max-w-xl text-base font-medium leading-8 text-slate-600">
+              The proof surface makes the operational truth visible: what was bought, who was paid, why they were selected, what was blocked, whether delivery matched, and which proof receipt supports the recommendation.
+            </p>
+            <div className="mt-8 space-y-4 border-l border-cyan-200/70 pl-6">
+              {proofTimeline.map(([event, detail]) => (
+                <div key={event} className="relative">
+                  <span className="absolute -left-[29px] top-2 h-2 w-2 rounded-full bg-cyan-500/70 shadow-[0_0_14px_rgba(6,182,212,0.28)]" />
+                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">{event}</p>
+                  <p className="mt-1 text-sm font-medium text-slate-700">{detail}</p>
+                </div>
+              ))}
             </div>
+          </div>
             <div className="rounded-[1.65rem] border border-slate-200/70 bg-white/74 p-5 shadow-[0_20px_60px_rgba(15,42,61,0.065)] backdrop-blur-md">
               <div className="flex flex-col gap-4 border-b border-slate-200/60 pb-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
@@ -816,8 +843,8 @@ function Home({ setMode, openConsole }) {
                     <ShieldCheck className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-950">BTC prediction-market mission</p>
-                    <p className="text-xs font-medium text-slate-400">mission_7f32 - recommendation.monitor.created</p>
+                    <p className="text-sm font-medium text-slate-950">BTC prediction-market execution</p>
+                    <p className="text-xs font-medium text-slate-400">exec_7f32 - recommendation.monitor.created</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -836,7 +863,7 @@ function Home({ setMode, openConsole }) {
               <div className="mt-5 border-t border-cyan-200/55 pt-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700/75">Recommendation</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-cyan-700/75">Output</p>
                     <p className="mt-1 text-sm font-medium text-slate-900">Monitor - signal strength not yet sufficient for execution.</p>
                   </div>
                   <div className="text-left sm:text-right">
@@ -876,6 +903,70 @@ function Band({ id, tone = "white", children }) {
     <section id={id} className={cx("relative left-1/2 -ml-[50vw] w-screen scroll-mt-28 border-t border-slate-200/45 py-24", toneClass)}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">{children}</div>
     </section>
+  );
+}
+
+function MeshVisual() {
+  const routePath = "M360 112 C360 168 360 216 360 282 C440 240 502 214 594 178 C590 264 548 337 505 394 C454 444 410 466 360 486 C282 484 206 470 132 410";
+  const proofPath = "M132 410 C170 292 246 244 360 282 C360 168 360 132 360 112";
+
+  return (
+    <div className="relative isolate min-h-[590px] overflow-hidden rounded-[2rem] bg-white/46 shadow-[0_24px_76px_rgba(15,42,61,0.06)] ring-1 ring-cyan-900/[0.028] backdrop-blur-xl">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(34,211,238,0.105),transparent_36%),radial-gradient(circle_at_12%_20%,rgba(14,165,233,0.045),transparent_31%),radial-gradient(circle_at_84%_82%,rgba(45,212,191,0.065),transparent_34%),linear-gradient(145deg,rgba(255,255,255,0.95),rgba(235,248,252,0.66)_54%,rgba(246,251,253,0.96)_100%)]" />
+      <div className="absolute inset-0 opacity-[0.04] [background-image:radial-gradient(rgba(15,118,110,.5)_1px,transparent_1px)] [background-size:32px_32px]" />
+      <div className="absolute left-7 top-7 z-10 text-[9px] font-semibold uppercase tracking-[0.22em] text-slate-300">Live gateway execution</div>
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 720 610" fill="none" aria-hidden="true">
+        <defs>
+          <radialGradient id="landingSignalDot" cx="0" cy="0" r="1">
+            <stop stopColor="#ffffff" />
+            <stop offset="0.5" stopColor="#67e8f9" stopOpacity="0.86" />
+            <stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="landingCoreSoft" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(360 282) rotate(90) scale(68)">
+            <stop stopColor="#ffffff" />
+            <stop offset="0.45" stopColor="#e0f7ff" />
+            <stop offset="1" stopColor="#67e8f9" stopOpacity="0.12" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="360" cy="292" rx="236" ry="188" stroke="#0e7490" strokeOpacity="0.022" />
+        <ellipse cx="360" cy="292" rx="164" ry="130" stroke="#0e7490" strokeOpacity="0.03" />
+        <ellipse cx="360" cy="292" rx="96" ry="76" stroke="#0e7490" strokeOpacity="0.035" />
+        <path d={routePath} stroke="#06b6d4" strokeWidth="0.5" strokeOpacity="0.04" strokeLinecap="round" />
+        <path d="M360 282 C446 300 520 310 632 308" stroke="#64748b" strokeOpacity="0.032" strokeWidth="0.5" strokeDasharray="3 11" />
+        <path d="M360 282 C280 218 205 180 112 176" stroke="#ef4444" strokeOpacity="0.032" strokeWidth="0.5" strokeDasharray="2 11" />
+        <circle r="4.8" fill="url(#landingSignalDot)">
+          <animateMotion dur="10.8s" repeatCount="indefinite" path={routePath} />
+          <animate attributeName="opacity" values="0;0.8;0.8;0" keyTimes="0;0.08;0.9;1" dur="10.8s" repeatCount="indefinite" />
+        </circle>
+        <circle r="2.2" fill="#ffffff" opacity="0.32">
+          <animateMotion dur="10.8s" begin="6.8s" repeatCount="indefinite" path={proofPath} />
+          <animate attributeName="opacity" values="0;0.38;0.38;0" keyTimes="0;0.15;0.75;1" dur="10.8s" begin="6.8s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="360" cy="282" r="63" fill="url(#landingCoreSoft)" />
+        <circle cx="360" cy="282" r="43" fill="rgba(255,255,255,0.9)" stroke="#67e8f9" strokeOpacity="0.22" />
+        <circle cx="360" cy="282" r="28" fill="rgba(224,247,255,0.55)" stroke="#06b6d4" strokeOpacity="0.12" />
+        <circle cx="360" cy="282" r="4.8" fill="#0891b2" />
+        <circle cx="360" cy="112" r="7" fill="#0ea5e9" opacity="0.78" />
+        <circle cx="594" cy="178" r="8" fill="#10b981" opacity="0.82" />
+        <circle cx="505" cy="394" r="8" fill="#22c55e" opacity="0.82" />
+        <circle cx="360" cy="486" r="8" fill="#06b6d4" opacity="0.82" />
+        <circle cx="132" cy="410" r="8" fill="#14b8a6" opacity="0.82" />
+        <circle cx="632" cy="308" r="4.5" fill="#64748b" opacity="0.18" />
+        <circle cx="112" cy="176" r="4.5" fill="#ef4444" opacity="0.16" />
+        <text x="360" y="72" textAnchor="middle" className="fill-slate-400 text-[9px] font-semibold uppercase tracking-[0.22em]">SDK request</text>
+        <text x="360" y="94" textAnchor="middle" className="fill-slate-800 text-[13px] font-semibold">Paid-intelligence call</text>
+        <text x="632" y="142" textAnchor="end" className="fill-emerald-700/65 text-[9px] font-semibold uppercase tracking-[0.22em]">Route</text>
+        <text x="632" y="164" textAnchor="end" className="fill-slate-800 text-[13px] font-semibold">Selected provider</text>
+        <text x="545" y="418" textAnchor="start" className="fill-emerald-700/65 text-[9px] font-semibold uppercase tracking-[0.22em]">Policy</text>
+        <text x="545" y="440" textAnchor="start" className="fill-slate-800 text-[13px] font-semibold">Policy gate</text>
+        <text x="360" y="526" textAnchor="middle" className="fill-cyan-700/65 text-[9px] font-semibold uppercase tracking-[0.22em]">Settled</text>
+        <text x="360" y="548" textAnchor="middle" className="fill-slate-800 text-[13px] font-semibold">Arc / x402</text>
+        <text x="96" y="438" textAnchor="start" className="fill-teal-700/65 text-[9px] font-semibold uppercase tracking-[0.22em]">Proof</text>
+        <text x="96" y="460" textAnchor="start" className="fill-slate-800 text-[13px] font-semibold">Proof receipt</text>
+        <text x="360" y="274" textAnchor="middle" className="fill-slate-950 text-[16px] font-semibold">Angora Mesh</text>
+        <text x="360" y="300" textAnchor="middle" className="fill-cyan-700/72 text-[9px] font-semibold uppercase tracking-[0.22em]">route - gate - pay - receipt - reconcile</text>
+      </svg>
+    </div>
   );
 }
 
