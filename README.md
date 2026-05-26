@@ -492,7 +492,7 @@ result = client.run_agent_mission({
 })
 ```
 
-The SDKs are integrated in this repository and have publish-ready package metadata. Registry publication requires npm/PyPI credentials on the publishing machine.
+The SDKs are integrated in this repository. The Python SDK is published on PyPI, and the TypeScript SDK has publish-ready npm package metadata.
 
 The hosted Gateway exposes a public OpenAPI contract:
 
@@ -545,10 +545,10 @@ WEBHOOK_SIGNING_SECRET=...
 | Local JSON storage | Implemented |
 | PostgreSQL schema | Included |
 | TypeScript SDK | Builds and packs locally |
-| Python SDK | Builds locally |
+| Python SDK | Published on PyPI as `angorapay==0.1.0` |
 | Full checks | Passing |
 | npm publishing | Package metadata and publish script ready; registry login required |
-| PyPI publishing | Package metadata and publish script ready; Python + PyPI login required |
+| PyPI publishing | Completed: https://pypi.org/project/angorapay/ |
 | hosted gateway deployment | Live on Vultr at `http://108.61.173.24/angora-app/` |
 | real Circle/x402 production config | Not completed |
 | PostgreSQL repository adapters | Not completed |
