@@ -166,8 +166,10 @@ export async function buildLlmRecommendation(input: {
       responseName: "recommendation",
       system,
       user: {
-        context: input.context,
-        decisions: input.decisions.map((decision) => ({
+        userGoal: input.context.userGoal,
+        specialistAgent: input.context.specialistAgent,
+        marketTarget: input.context.marketTarget,
+        providerDecisions: input.decisions.map((decision) => ({
           category: decision.category,
           status: decision.status,
           providerId: decision.providerId,
@@ -179,14 +181,15 @@ export async function buildLlmRecommendation(input: {
           receiptId: decision.receipt?.receiptId,
           outputHash: decision.receipt?.outputHash,
           settlementStatus: decision.receipt?.settlementStatus,
+          liveData: (decision.execution as Record<string, unknown> | undefined)?.data ?? null,
         })),
-        fallback: input.fallback,
+        instructions: "Derive confidence (0-100) independently from the live provider data and route scores above. Do not copy from any provided example values.",
         expectedJson: {
-          action: "short action id",
-          confidence: "integer 0-100",
-          summary: "plain English recommendation",
-          reasons: ["evidence-based reason"],
-          guardrail: "clear production safety condition",
+          action: "short action id e.g. enter_small, monitor, avoid, follow_reduced_size, reject",
+          confidence: "integer 0-100 based on evidence strength",
+          summary: "2-3 sentence plain English recommendation grounded in the live data",
+          reasons: ["specific evidence-based reason from provider data"],
+          guardrail: "one clear production safety condition",
         },
       },
     });

@@ -1694,6 +1694,9 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                   {(recommendation.action || "monitor").replace(/_/g, " ")}
                 </span>
                 <span className="text-xs text-slate-500">{recommendation.confidence}% confidence</span>
+                {latestResult.llmSource === "openai" && (
+                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-black text-violet-700 ring-1 ring-violet-100">GPT-4o mini</span>
+                )}
               </div>
               <p className="text-sm leading-6 text-slate-700">{recommendation.summary}</p>
               {recommendation.reasons?.slice(0, 3).map((r) => (
@@ -1749,7 +1752,7 @@ function AgentChatPanel({ runAgentMission, agentGoal, setAgentGoal, agentRunning
                 <RouteLine label="Blocked" value={String(blockedCount)} tone={blockedCount ? "bad" : "neutral"} />
                 <RouteLine label="USDC spent" value={`${latestResult.totals?.usdcRouted || "0"} USDC`} tone="good" />
                 <RouteLine label="Arc receipts" value={String(receipts.length)} tone="good" />
-                <RouteLine label="Reasoning" value="gpt-4o-mini" tone="good" />
+                <RouteLine label="Reasoning" value={latestResult.llmSource === "openai" ? (latestResult.llmModel || "gpt-4o-mini") : "deterministic"} tone={latestResult.llmSource === "openai" ? "good" : "warn"} />
               </div>
               {receipts.length > 0 && (
                 <div className="mt-4 border-t border-slate-200 pt-4">
@@ -2418,11 +2421,25 @@ function ProvidersWorkspace({ live }) {
         ]}
       />
       <Glass className="border-y border-slate-200 p-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
+        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+          <div className="flex-1">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Circle Agent Marketplace</p>
-            <p className="mt-1 text-sm font-black text-slate-950">AngoraPay Mesh connects to the Circle paid-API network — agents discover and pay for real services.</p>
-            <p className="mt-2 text-xs leading-5 text-slate-500">Our service registry mirrors the pattern from <strong>agents.circle.com/services</strong>: each provider exposes an x402 endpoint that returns data only after USDC payment clears on Arc testnet.</p>
+            <p className="mt-1 text-sm font-black text-slate-950">Each provider in this registry follows the Circle x402 pattern — data is delivered only after USDC payment clears on Arc testnet.</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {[
+                ["odds", "Polymarket gamma API", "Prediction market implied probability, volume, and liquidity."],
+                ["market_data", "Kraken Ticker", "Live bid/ask, spread, and 24h volume for crypto pairs."],
+                ["sentiment / social", "Alternative.me Fear & Greed", "Daily index (0–100) and 7-day crowd-bias trend."],
+                ["risk", "Kraken OHLC", "Hourly close prices → annualised volatility and regime tag."],
+              ].map(([cat, name, desc]) => (
+                <div key={cat} className="rounded-lg border border-slate-100 bg-white/60 p-3">
+                  <p className="font-mono text-[10px] font-black text-cyan-700">{cat}</p>
+                  <p className="mt-1 text-xs font-black text-slate-950">{name}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{desc}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-[11px] leading-5 text-slate-400">Swap any of these for a real registered provider on the Circle marketplace — no changes to mission orchestration needed.</p>
           </div>
           <a href="https://agents.circle.com/services" target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-950 transition hover:border-cyan-200 hover:bg-cyan-50">
             <ArrowRight className="h-3 w-3" />Browse Circle marketplace

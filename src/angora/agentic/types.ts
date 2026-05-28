@@ -176,6 +176,8 @@ export interface AgentMissionResult {
     reasons: string[];
     guardrail: string;
   };
+  llmSource: "openai" | "deterministic_fallback";
+  llmModel: string | null;
   receipts: RuntimeReceipt[];
   traces: AgentTraceEvent[];
   checkpoints: MissionCheckpoint[];

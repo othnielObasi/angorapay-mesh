@@ -1,6 +1,65 @@
 import { readJsonFile, stateFile, writeJsonFile } from "./state-dir.js";
 import type { ServiceManifest, ServiceCategory } from "./types.js";
 
+// Circle Agent Marketplace providers (agents.circle.com/services)
+// These use real x402 payment-gated endpoints — active when KAIROS_ENABLE_REAL_X402=true.
+const CIRCLE_MARKETPLACE_SERVICES: ServiceManifest[] = [
+  {
+    serviceId: "blockrun-polymarket-odds",
+    providerId: "blockrun",
+    name: "BlockRun — Polymarket Odds",
+    category: "odds",
+    description: "Live Polymarket prediction market odds via Circle Agent Marketplace. $0.001 USDC per call on Arc testnet.",
+    price: "0.001",
+    currency: "USDC",
+    x402Url: "https://nano.blockrun.ai/v1/polymarket/markets",
+    proofRequired: true,
+    verified: true,
+    trustScore: 96,
+    avgLatencyMs: 320,
+    policyTags: ["prediction_market", "odds", "proof_enabled", "circle_marketplace", "polymarket"],
+    rfpTracks: ["RFP 02 - Prediction Market Trader Intelligence", "RFP 03 - Prediction Market Verticals"],
+    inputSchema: { market: "string", limit: "number" },
+    outputSchema: { impliedProbability: "number", bestVenue: "string", confidence: "number" },
+  },
+  {
+    serviceId: "blockrun-kalshi-odds",
+    providerId: "blockrun",
+    name: "BlockRun — Kalshi Odds",
+    category: "odds",
+    description: "Live Kalshi event market odds via Circle Agent Marketplace. $0.001 USDC per call on Arc testnet.",
+    price: "0.001",
+    currency: "USDC",
+    x402Url: "https://nano.blockrun.ai/v1/kalshi/markets",
+    proofRequired: true,
+    verified: true,
+    trustScore: 95,
+    avgLatencyMs: 350,
+    policyTags: ["prediction_market", "odds", "proof_enabled", "circle_marketplace", "kalshi"],
+    rfpTracks: ["RFP 02 - Prediction Market Trader Intelligence", "RFP 03 - Prediction Market Verticals"],
+    inputSchema: { event: "string" },
+    outputSchema: { impliedProbability: "number", bestVenue: "string", confidence: "number" },
+  },
+  {
+    serviceId: "quicknode-market-data",
+    providerId: "quicknode",
+    name: "QuickNode — Blockchain Market Data",
+    category: "market_data",
+    description: "On-chain market data and token pricing via QuickNode x402 API on Circle Marketplace. $0.0001 USDC per call.",
+    price: "0.0001",
+    currency: "USDC",
+    x402Url: "https://x402.api.quicknode.com/addon/v1/market/prices",
+    proofRequired: true,
+    verified: true,
+    trustScore: 97,
+    avgLatencyMs: 180,
+    policyTags: ["market_data", "on_chain", "low_latency", "proof_enabled", "circle_marketplace"],
+    rfpTracks: ["RFP 01 - Perpetual Futures Trading Agent", "RFP 04 - Adaptive Portfolio Manager", "RFP 05 - Cross-Platform Arbitrage Agent"],
+    inputSchema: { asset: "string", chain: "string" },
+    outputSchema: { asset: "string", price: "number", source: "string" },
+  },
+];
+
 const SERVICES: ServiceManifest[] = [
   {
     serviceId: "prediction-market-odds",
@@ -206,9 +265,9 @@ const CUSTOM_SERVICES_FILE = stateFile("custom-provider-services.json");
 function loadCustomServices(): ServiceManifest[] { return readJsonFile<ServiceManifest[]>(CUSTOM_SERVICES_FILE, []); }
 function saveCustomServices(rows: ServiceManifest[]) { writeJsonFile(CUSTOM_SERVICES_FILE, rows); }
 
-/** Lists built-in demo services plus tenant/provider-registered services. */
+/** Lists Circle marketplace, built-in demo, and tenant/provider-registered services. */
 export function listServices(): ServiceManifest[] {
-  return [...SERVICES, ...loadCustomServices()];
+  return [...CIRCLE_MARKETPLACE_SERVICES, ...SERVICES, ...loadCustomServices()];
 }
 
 /** Registers or updates a provider service without requiring a redeploy. */

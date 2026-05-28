@@ -376,6 +376,8 @@ export async function runAgentMission(input: AgentMissionInput): Promise<AgentMi
     context,
     decisions,
     recommendation,
+    llmSource: recommendationResult.source,
+    llmModel: recommendationResult.model ?? null,
     receipts,
     traces,
     checkpoints,
